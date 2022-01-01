@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use GuzzleHttp\Client as Http; // L6
+use Illuminate\Support\Facades\Http;
 use App\Services\Xbot;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -204,9 +204,11 @@ class XbotController extends Controller
             ];
         }
         // TODO: 从数据库中获取自定义的callback
+        // 不知道为什么暂时发送给本laravel却卡死！
         // $callback = 'http://xxx.yy.com:xxx/api/xxx';
         // $http = new Http();
-        // $http->post($callback, ['json' => $sendToDevelop]);
+        // Http::post($callback, $sendToDevelop); //测试连通性，或放到队列中去执行！
+        // Log::debug('webhook',['send to develop/webhook done', $sendToDevelop]);
         return response()->json(null);
     }
 }

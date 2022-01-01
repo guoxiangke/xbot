@@ -97,7 +97,7 @@ final class Xbot {
     	$this->request('MT_UPDATE_ROOM_MEMBER_MSG', get_defined_vars());
     }
 
-    private function send($type = 'MT_SEND_TEXTMSG', $data){
+    private function send($type, $data){
     	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
         $this->http->post($this->endPoint, ['json' => $data]);
     }
