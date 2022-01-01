@@ -10,9 +10,11 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
+use Plank\Metable\Metable;
 
 class User extends Authenticatable
 {
+    use Metable;
     use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;

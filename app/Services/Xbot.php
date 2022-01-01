@@ -12,9 +12,9 @@ final class Xbot {
     private string $endPoint = '/';
     public int $clientId;
     public $botWxid;
-    
+
     //多台机器运行，每个机器多个bot登陆
-    public function __construct($clientId, $botWxid, $address){
+    public function __construct($botWxid, $address, $clientId){
         $this->http = new Http([
             'base_uri' => $address,
             'verify' => false,
@@ -26,7 +26,7 @@ final class Xbot {
     private function request($type, $data = []){
     	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
         // Log::debug("POST_RAW-" . $type, [$this->botWxid, $data]);
-        return $this->http->post($this->endPoint, ['json' => $data]);
+        return rescue(fn() =>  $this->http->post($this->endPoint, ['json' => $data]), null, false);
     }
 
     public function getSelfInfo(){
@@ -46,7 +46,7 @@ final class Xbot {
     public function refund($transferid){
         $this->request('MT_REFUSE_FRIEND_WCPAY_MSG', get_defined_vars());
     }
-    
+
     public function addFriendBySearch($search){
         $this->request('MT_SEARCH_CONTACT_MSG', get_defined_vars());
     }
@@ -97,17 +97,13 @@ final class Xbot {
     	$this->request('MT_UPDATE_ROOM_MEMBER_MSG', get_defined_vars());
     }
 
-    private function send($type, $data){
-    	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
-        $this->http->post($this->endPoint, ['json' => $data]);
-    }
 
     public function sendText($content, $to_wxid='filehelper'){
-        $this->send('MT_SEND_TEXTMSG', get_defined_vars());
+        $this->request('MT_SEND_TEXTMSG', get_defined_vars());
     }
 
     public function sendAtText($content, $at_list, $to_wxid){
-        $this->send('MT_SEND_CHATROOM_ATMSG', get_defined_vars());
+        $this->request('MT_SEND_CHATROOM_ATMSG', get_defined_vars());
     }
 
     public function sendLink(
@@ -117,12 +113,12 @@ final class Xbot {
         $title='test',
         $desc='desc'
     ){
-        $this->send('MT_SEND_LINKMSG', get_defined_vars());
+        $this->request('MT_SEND_LINKMSG', get_defined_vars());
     }
 
 
     public function sendXMLLink($xml, $to_wxid='filehelper'){
-        return $this->send('MT_SEND_XMLMSG', get_defined_vars());
+        return $this->request('MT_SEND_XMLMSG', get_defined_vars());
     }
 
     //直接入群
@@ -131,7 +127,7 @@ final class Xbot {
             "room_wxid"=>$room_wxid,
             'member_list'=>[$who]
         ];
-        return $this->send('MT_INVITE_TO_ROOM_MSG', $data);
+        return $this->request('MT_INVITE_TO_ROOM_MSG', $data);
     }
     //TODO 需要维护一个群的成员数量在数据库中 MT_INVITE_TO_ROOM_MSG <40
     //邀请入群
@@ -140,7 +136,7 @@ final class Xbot {
             "room_wxid"=>$room_wxid,
             'member_list'=>[$who]
         ];
-        return $this->send('MT_INVITE_TO_ROOM_REQ_MSG', $data);
+        return $this->request('MT_INVITE_TO_ROOM_REQ_MSG', $data);
     }
 
 
@@ -149,11 +145,11 @@ final class Xbot {
             "room_wxid"=>$room_wxid,
             'member_list'=>[$who]
         ];
-        return $this->send('MT_DEL_ROOM_MEMBER_MSG', $data);
+        return $this->request('MT_DEL_ROOM_MEMBER_MSG', $data);
     }
 
     public function autoAcceptTranster($transferid){
-        return $this->send('MT_ACCEPT_WCPAY_MSG', get_defined_vars());
+        return $this->request('MT_ACCEPT_WCPAY_MSG', get_defined_vars());
     }
 
     public function sendMusic($to, $musicUrl, $title='', $desc=''){

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\WechatBot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Services\Xbot;
@@ -11,41 +13,44 @@ use Illuminate\Support\Facades\Log;
 
 class XbotController extends Controller
 {
-    public function callback(Request $request, $address){
+
+    public function callback(Request $request, $token){
         $type = $request['type']??'null';
         $clientId = $request['client_id'];
         if(!($clientId && $type)) {
-            Log::debug(__CLASS__, [$request->all(),'❌参数错误']);
+            Log::error(__CLASS__, [$request->all(),'参数错误']);
             return response()->json(null);
         }
         $data = $request['data'];
 
-        // TODO
-        //TODO bot信息 写入数据库，对应Bot model 
-        $address = base64_decode($address); // http://x.2.2.1:123
-        $cacheKey = $address . '.' . $clientId;
-        // TODO cache不可靠！需要写入数据库来缓存并查询 client_id 和 bot的对应关系
-        $bots = Cache::get('xbots', []); //除非手动清空了缓存，那缓存就不可靠？then 写入数据库
-        $botWxid = $bots[$cacheKey]??'null'; // 肯定有值？
-        $xGroup = config('xbot.xGroup') ;//// xbot群
-        $filehelper = 'filehelper'; //文件传输助手
+        $personalAccessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+        if(is_null($personalAccessToken)){
+            Log::error(__CLASS__, ['参数Token错误']);
+            return response()->json(null);
+        }
+        $user = User::find($personalAccessToken->tokenable_id); // $botOwnerUser
 
-        // 1.获取到登陆二维码 写入数据库
+        // TODO UI前端设置！// 必须有值，需要提取设置
+        $address = $user->getMeta('xbot.address', '');
+        $botWxid = $user->getMeta('xbot.wxid', '');
+
+        $cacheKey = $token;
+        // 1.获取到登陆二维码
         if($type == 'MT_RECV_QRCODE_MSG') {
             $qr =  $data['code'];
             Cache::put("xbots.{$cacheKey}.loginQr", $qr, 30);
-            // TODO 前端刷新获取二维码
-            // 或使用 Broadcasting：https://laravel.com/docs/8.x/broadcasting 
-            Log::debug('获取到登陆二维码', [$cacheKey, $qr]);
+            // TODO 前端刷新获取二维码  或使用 Broadcasting：https://laravel.com/docs/8.x/broadcasting
+            Log::debug(__CLASS__, ['获取到登陆二维码', $cacheKey, $qr]);
+            $user->setMeta('xbot.login_at', null);
+            $user->setMeta('xbot.data', null);
+            $user->setMeta('xbot.client_id', null);
             return response()->json(null);
         }
         // 2.登陆成功 写入数据库
         if($type == 'MT_USER_LOGIN'){
-            // $bot->login_at=now()
-            //TODO： Cache:: client_id:wxboId
-            $bots = Cache::get('xbots', []);
-            $bots[$cacheKey] = $data['wxid'];
-            Cache::put('xbots', $bots);
+            $user->setMeta('xbot.login_at', now());
+            $user->setMeta('xbot.data', $data);
+            $user->setMeta('xbot.client_id', $clientId);
             return response()->json(null);
         }
         //TODO 用户登陆出，$bot->login_at=null
@@ -54,22 +59,22 @@ class XbotController extends Controller
             // 在网页上点登出
             // 开发者调用登出
 
-
         if(true){
             $ignoreHooks = [
+                "MT_WX_WND_CHANGE_MSG"=>'',
+                "MT_DEBUG_LOG" =>'调试信息',
                 "MT_UNREAD_MSG_COUNT_CHANGE_MSG" => '未读消息',
                 "MT_DATA_WXID_MSG" => '从网络获取信息',
                 "MT_TALKER_CHANGE_MSG" => '客户端点击头像'
             ];
             if(in_array($type, array_keys($ignoreHooks))){ //未读消息
-                // Log::debug('INGOREHOOK', [ $type, $ignoreHooks[$type]]);
                 return response()->json(null);
             }
             // MT_RECV_OTHER_APP_MSG
                 //音乐消息🎵  "wx_sub_type":3, "wx_type":49
             $ignoreRAW = ['MT_RECV_TEXT_MSG','MT_RECV_OTHER_APP_MSG'];
             if(!in_array($type, $ignoreRAW)){
-                Log::debug("CALLBACK-RAW-" . $type, [$botWxid, $request->all()]);
+                Log::debug("CALLBACK-RAW-" . $type, [$request->all()]);
             }
         }
         // 忽略所有 自己给自己发的信息
@@ -77,7 +82,7 @@ class XbotController extends Controller
             return response()->json(null);
         }
         //************************************************
-        $xbot = new Xbot($clientId, $botWxid, $address);
+        $xbot = new Xbot($botWxid, $address, $clientId);
         //************************************************
 
         //自动////自动////自动////自动////自动//
@@ -85,7 +90,7 @@ class XbotController extends Controller
         // "des":"收到转账0.10元。如需收钱，请点此升级至最新版本",
         $switchOn = true; //需要用户可以在后台来改
         if($switchOn && $type == 'MT_RECV_WCPAY_MSG'){
-            // "feedesc":"￥0.10", 
+            // "feedesc":"￥0.10",
             // substr('￥0.10',3) + 1 = 1.1 x 100 = 110分
             $xml = xStringToArray($data['raw_msg']);
             $transferid = $xml['appmsg']['wcpayinfo']['transferid'];
@@ -148,7 +153,6 @@ class XbotController extends Controller
                 'text' => $data['text'],
             ];
         }
-        
 
         // 收到图片/发送图片消息的CALLBACK
         if($type == 'MT_RECV_PICTURE_MSG'){
@@ -187,10 +191,11 @@ class XbotController extends Controller
 
             //TODO 彩蛋:谁在线，在线时长！
             if($msg=='whoami'){
-                $xbot->sendText("I am active！\n" .$botWxid, $replyTo);
+                $time = $user->getMeta('xbot.login_at', now())->diffForHumans(now());
+                $xbot->sendText("已登陆 $time\n设备ID: {$clientId}\nUserID: {$user->name}", $replyTo);
                 return response()->json(null);
             }
-            if($msg=='quit'){
+            if($msg=='logout'){
                 $xbot->quit();
                 return response()->json(null);
             }
