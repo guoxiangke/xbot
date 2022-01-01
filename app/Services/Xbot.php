@@ -1,0 +1,164 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
+use GuzzleHttp\Client as Http; // L6
+use Illuminate\Support\Facades\Log;
+
+final class Xbot {
+    public $http;
+    private string $endPoint = '/';
+    public int $clientId;
+    public $botWxid;
+    
+    //多台机器运行，每个机器多个bot登陆
+    public function __construct($clientId, $botWxid, $address){
+        $this->http = new Http([
+            'base_uri' => $address,
+            'verify' => false,
+        ]);
+        $this->clientId = $clientId;
+        $this->botWxid = $botWxid;
+    }
+
+    private function request($type, $data = []){
+    	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
+        // Log::debug("POST_RAW-" . $type, [$this->botWxid, $data]);
+        return $this->http->post($this->endPoint, ['json' => $data]);
+    }
+
+    public function getSelfInfo(){
+    	$this->request('MT_DATA_OWNER_MSG');
+    }
+
+    // 主动退出windows微信，并切换二维码
+    public function quit(){
+        $this->request('MT_RECV_QRCODE_MSG');
+    }
+
+
+    public function agreenFriend($scene, $v1, $v2){
+    	$this->request('MT_ACCEPT_FRIEND_MSG', get_defined_vars());
+    }
+
+    public function refund($transferid){
+        $this->request('MT_REFUSE_FRIEND_WCPAY_MSG', get_defined_vars());
+    }
+    
+    public function addFriendBySearch($search){
+        $this->request('MT_SEARCH_CONTACT_MSG', get_defined_vars());
+    }
+
+    public function addFriendBySearchCallback($v1, $v2, $source_type=3, $remark='hi'){
+        $this->request('MT_ADD_SEARCH_CONTACT_MSG', get_defined_vars());
+    }
+
+
+    public function toVoiceText($msgid){
+        $this->request('MT_TRANS_VOICE_MSG', get_defined_vars());
+    }
+
+    public function getImage($src_file, $dest_file, $size){
+        $this->request('MT_DECRYPT_IMG_MSG', get_defined_vars());
+    }
+
+    // 要发送的文件，必须存放在 C:\Users\Public\Documents\ 里
+    public function sendFile($to_wxid,$file){
+        $file = "C:\\Users\\Public\\Documents\\$file";
+        $this->request('MT_SEND_FILEMSG', get_defined_vars());
+    }
+
+    // 要发送的图片，必须存放在 C:\Users\Public\Pictures\ 里
+    public function sendImage($to_wxid,$file){
+        $file = "C:\\Users\\Public\\Pictures\\$file";
+        $this->request('MT_SEND_IMGMSG', get_defined_vars());
+    }
+
+    public function getFriends(){
+    	$this->request('MT_DATA_FRIENDS_MSG');
+    }
+
+    public function getGroups(){
+    	$this->request('MT_DATA_CHATROOMS_MSG');
+    }
+
+    public function getGroupMemembers($room_wxid){
+    	$this->request('MT_DATA_CHATROOM_MEMBERS_MSG', get_defined_vars());
+    }
+
+    public function getMps(){
+    	$this->request('MT_DATA_PUBLICS_MSG');
+    }
+
+    //从网络更新群成员信息
+		public function updateGroupMemembers($room_wxid){
+    	$this->request('MT_UPDATE_ROOM_MEMBER_MSG', get_defined_vars());
+    }
+
+    private function send($type = 'MT_SEND_TEXTMSG', $data){
+    	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
+        $this->http->post($this->endPoint, ['json' => $data]);
+    }
+
+    public function sendText($content, $to_wxid='filehelper'){
+        $this->send('MT_SEND_TEXTMSG', get_defined_vars());
+    }
+
+    public function sendAtText($content, $at_list, $to_wxid){
+        $this->send('MT_SEND_CHATROOM_ATMSG', get_defined_vars());
+    }
+
+    public function sendLink(
+        $to_wxid,
+        $url='https://www.baidu.com',
+        $image_url='http://www.xxx.com/xxx.jpg',
+        $title='test',
+        $desc='desc'
+    ){
+        $this->send('MT_SEND_LINKMSG', get_defined_vars());
+    }
+
+
+    public function sendXMLLink($xml, $to_wxid='filehelper'){
+        return $this->send('MT_SEND_XMLMSG', get_defined_vars());
+    }
+
+    //直接入群
+    public function addMememberToGroup($room_wxid, $who){
+        $data = [
+            "room_wxid"=>$room_wxid,
+            'member_list'=>[$who]
+        ];
+        return $this->send('MT_INVITE_TO_ROOM_MSG', $data);
+    }
+    //TODO 需要维护一个群的成员数量在数据库中 MT_INVITE_TO_ROOM_MSG <40
+    //邀请入群
+    public function addMememberToGroupBig($room_wxid, $who){
+        $data = [
+            "room_wxid"=>$room_wxid,
+            'member_list'=>[$who]
+        ];
+        return $this->send('MT_INVITE_TO_ROOM_REQ_MSG', $data);
+    }
+
+
+    public function deleteGroupMemember($who,$room_wxid){
+        $data = [
+            "room_wxid"=>$room_wxid,
+            'member_list'=>[$who]
+        ];
+        return $this->send('MT_DEL_ROOM_MEMBER_MSG', $data);
+    }
+
+    public function autoAcceptTranster($transferid){
+        return $this->send('MT_ACCEPT_WCPAY_MSG', get_defined_vars());
+    }
+
+    public function sendMusic($to, $musicUrl, $title='', $desc=''){
+        $botWxid = $this->botWxid;
+        $xml = "<?xml version=\"1.0\"?><msg><appmsg appid=\"\" sdkver=\"0\"><title>$title</title><des>$desc</des><username /><action>view</action><type>3</type><showtype>0</showtype><content /><url>$musicUrl</url><lowurl>$musicUrl</lowurl><forwardflag>0</forwardflag><dataurl>$musicUrl</dataurl><lowdataurl /><contentattr>0</contentattr><streamvideo><streamvideourl /><streamvideototaltime>0</streamvideototaltime><streamvideotitle /><streamvideowording /><streamvideoweburl /><streamvideothumburl /><streamvideoaduxinfo /><streamvideopublishid /></streamvideo><canvasPageItem><canvasPageXml><![CDATA[]]></canvasPageXml></canvasPageItem><appattach><totallen>0</totallen><attachid /><cdnattachurl /><emoticonmd5></emoticonmd5><aeskey></aeskey><fileext /><islargefilemsg>0</islargefilemsg></appattach><extinfo /><androidsource>3</androidsource><thumburl /><mediatagname /><messageaction><![CDATA[]]></messageaction><messageext><![CDATA[]]></messageext><emoticongift><packageflag>0</packageflag><packageid /></emoticongift><emoticonshared><packageflag>0</packageflag><packageid /></emoticonshared><designershared><designeruin>0</designeruin><designername>null</designername><designerrediretcturl>null</designerrediretcturl></designershared><emotionpageshared><tid>0</tid><title>null</title><desc>null</desc><iconUrl>null</iconUrl><secondUrl /><pageType>0</pageType></emotionpageshared><webviewshared><shareUrlOriginal /><shareUrlOpen /><jsAppId /><publisherId /></webviewshared><template_id /><md5 /><weappinfo><username /><appid /><appservicetype>0</appservicetype><secflagforsinglepagemode>0</secflagforsinglepagemode><videopageinfo><thumbwidth>0</thumbwidth><thumbheight>0</thumbheight><fromopensdk>0</fromopensdk></videopageinfo></weappinfo><statextstr /><musicShareItem><musicDuration>0</musicDuration></musicShareItem><finderLiveProductShare><finderLiveID><![CDATA[]]></finderLiveID><finderUsername><![CDATA[]]></finderUsername><finderObjectID><![CDATA[]]></finderObjectID><finderNonceID><![CDATA[]]></finderNonceID><liveStatus><![CDATA[]]></liveStatus><appId><![CDATA[]]></appId><pagePath><![CDATA[]]></pagePath><productId><![CDATA[]]></productId><coverUrl><![CDATA[]]></coverUrl><productTitle><![CDATA[]]></productTitle><marketPrice><![CDATA[0]]></marketPrice><sellingPrice><![CDATA[0]]></sellingPrice><platformHeadImg><![CDATA[]]></platformHeadImg><platformName><![CDATA[]]></platformName><shopWindowId><![CDATA[]]></shopWindowId></finderLiveProductShare><findernamecard><username /><avatar><![CDATA[]]></avatar><nickname /><auth_job /><auth_icon>0</auth_icon><auth_icon_url /></findernamecard><finderGuarantee><scene><![CDATA[0]]></scene></finderGuarantee><directshare>0</directshare><gamecenter><namecard><iconUrl /><name /><desc /><tail /><jumpUrl /></namecard></gamecenter><patMsg><chatUser /><records><recordNum>0</recordNum></records></patMsg><secretmsg><issecretmsg>0</issecretmsg></secretmsg><websearch /></appmsg><fromusername>$botWxid</fromusername><scene>0</scene><appinfo><version>1</version><appname /></appinfo><commenturl /></msg>";
+        return $this->sendXMLLink($xml, $to);
+    }
+}
