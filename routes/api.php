@@ -24,5 +24,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // api/xbot/callback/ip%3Aport
     // https://winscp.net/eng/docs/session_url
     // $address = base64_encode('127.0.0.1:123');
-Route::post('/xbot/callback/{address}', [XbotController::class, 'callback']);
+// => API token : YtBKZrQe4hOYkrTkjVVHJS03p4cMmsknVukL5TwF
+Route::post('/xbot/callback/{token}', [XbotController::class, 'callback']);
 

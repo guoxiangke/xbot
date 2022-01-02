@@ -23,7 +23,7 @@ final class Xbot {
         $this->botWxid = $botWxid;
     }
 
-    private function request($type, $data = []){
+    private function request($type, $data = null){
     	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
         // Log::debug("POST_RAW-" . $type, [$this->botWxid, $data]);
         return rescue(fn() =>  $this->http->post($this->endPoint, ['json' => $data]), null, false);
@@ -33,8 +33,11 @@ final class Xbot {
     	$this->request('MT_DATA_OWNER_MSG');
     }
 
-    // 主动退出windows微信，并切换二维码
     public function quit(){
+        $this->request('MT_QUIT_LOGIN_MSG');
+    }
+
+    public function open(){
         $this->request('MT_RECV_QRCODE_MSG');
     }
 
