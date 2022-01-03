@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\XbotController;
+use App\Http\Controllers\WechatBotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,3 +28,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // => API token : YtBKZrQe4hOYkrTkjVVHJS03p4cMmsknVukL5TwF
 Route::post('/xbot/callback/{token}', [XbotController::class, 'callback']);
 
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::post('/wechat/send', [WechatBotController::class, 'send']);
+    Route::post('/wechat/add', [WechatBotController::class, 'add']);
+});

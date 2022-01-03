@@ -183,7 +183,8 @@ class XbotController extends Controller
         $switchOn = true;
         if ($switchOn && $type == 'MT_SEARCH_CONTACT_MSG') {
             Log::info(__CLASS__, [$botWxid, 'MT_SEARCH_CONTACT_MSG','主动+好友', $data['nickname'], $data['search']]);
-            $xbot->addFriendBySearchCallback($data['v1'], $data['v2']);
+            $remark = "朋友介绍"; //todo remark settings in FE
+            $xbot->addFriendBySearchCallback($data['v1'], $data['v2'], $remark);
             return response()->json(null);
         }
 
@@ -263,7 +264,8 @@ class XbotController extends Controller
             //TODO 彩蛋:谁在线，在线时长！
             if($msg=='whoami'){
                 $time = $wechatBot->login_at->diffForHumans(now());
-                $xbot->sendText("已登陆 $time\n设备ID: {$clientId}\n用户: {$wechatBot->user->name}", $replyTo);
+                $text = "已登陆 $time\n设备ID: {$clientId}\n用户: {$wechatBot->user->name}";
+                $xbot->sendText($replyTo, $text);
                 return response()->json(null);
             }
             if($msg=='logout'){//TODO bug！如果主动打开wx客户端？
@@ -286,7 +288,7 @@ class XbotController extends Controller
         // $callback = 'http://xxx.yy.com:xxx/api/xxx';
         // $http = new Http();
         // Http::post($callback, $sendToDevelop); //测试连通性，或放到队列中去执行！
-        Log::debug(__CLASS__, [$clientId, __LINE__, $sendToDevelop, 'last webhook2developer']);
+        Log::debug(__CLASS__, [$clientId, __LINE__, '开发者选项', $sendToDevelop]);
         return response()->json(null);
     }
 }

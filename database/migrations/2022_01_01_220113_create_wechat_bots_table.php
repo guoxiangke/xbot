@@ -18,7 +18,7 @@ class CreateWechatBotsTable extends Migration
 
             //根据token就知道在哪台机器上，需要在admin的后台设置
             $table->string('token')->index()->comment('绑定的rootUser的token，需要后台配置');
-            $table->foreignId('user_id')->comment('绑定的管理员user_id，需要后台配置');
+            $table->foreignId('user_id')->uniqid()->comment('绑定的管理员user_id，需要后台配置,一个用户只允许绑定一个wx');
             $table->string('wxid')->index()->unique()->comment('绑定的box wxid，需要后台配置');
             //client_id动态变化
             $table->unsignedInteger('client_id')->nullable()->default(null)->comment('动态变换');

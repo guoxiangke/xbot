@@ -54,7 +54,8 @@ final class Xbot {
         $this->request('MT_SEARCH_CONTACT_MSG', get_defined_vars());
     }
 
-    public function addFriendBySearchCallback($v1, $v2, $source_type=3, $remark='hi'){
+    // 通过微信搜索是3 手机号是15
+    public function addFriendBySearchCallback($v1, $v2, $remark='hi', $source_type=3){
         $this->request('MT_ADD_SEARCH_CONTACT_MSG', get_defined_vars());
     }
 
@@ -101,18 +102,16 @@ final class Xbot {
     }
 
 
-    public function sendText($content, $to_wxid='filehelper'){
+    public function sendText($to_wxid, $content){
         $this->request('MT_SEND_TEXTMSG', get_defined_vars());
     }
-
-    public function sendAtText($content, $at_list, $to_wxid){
+    //@人在群中
+    public function sendAtText($to_wxid, $content, $at_list){
         $this->request('MT_SEND_CHATROOM_ATMSG', get_defined_vars());
     }
 
-    public function sendLink(
-        $to_wxid,
-        $url='https://www.baidu.com',
-        $image_url='http://www.xxx.com/xxx.jpg',
+    public function sendLink($to_wxid, $url, 
+        $image_url='https://res.wx.qq.com/t/wx_fed/wechat-main-page/wechat-main-page-oversea-new/res/static/img/3ou3PnG.png',
         $title='test',
         $desc='desc'
     ){
@@ -120,7 +119,7 @@ final class Xbot {
     }
 
 
-    public function sendXMLLink($xml, $to_wxid='filehelper'){
+    private function sendXMLLink($xml, $to_wxid='filehelper'){
         return $this->request('MT_SEND_XMLMSG', get_defined_vars());
     }
 
@@ -155,9 +154,9 @@ final class Xbot {
         return $this->request('MT_ACCEPT_WCPAY_MSG', get_defined_vars());
     }
 
-    public function sendMusic($to, $musicUrl, $title='', $desc=''){
+    public function sendMusic($to_wxid, $url, $title='', $desc=''){
         $botWxid = $this->botWxid;
-        $xml = "<?xml version=\"1.0\"?><msg><appmsg appid=\"\" sdkver=\"0\"><title>$title</title><des>$desc</des><username /><action>view</action><type>3</type><showtype>0</showtype><content /><url>$musicUrl</url><lowurl>$musicUrl</lowurl><forwardflag>0</forwardflag><dataurl>$musicUrl</dataurl><lowdataurl /><contentattr>0</contentattr><streamvideo><streamvideourl /><streamvideototaltime>0</streamvideototaltime><streamvideotitle /><streamvideowording /><streamvideoweburl /><streamvideothumburl /><streamvideoaduxinfo /><streamvideopublishid /></streamvideo><canvasPageItem><canvasPageXml><![CDATA[]]></canvasPageXml></canvasPageItem><appattach><totallen>0</totallen><attachid /><cdnattachurl /><emoticonmd5></emoticonmd5><aeskey></aeskey><fileext /><islargefilemsg>0</islargefilemsg></appattach><extinfo /><androidsource>3</androidsource><thumburl /><mediatagname /><messageaction><![CDATA[]]></messageaction><messageext><![CDATA[]]></messageext><emoticongift><packageflag>0</packageflag><packageid /></emoticongift><emoticonshared><packageflag>0</packageflag><packageid /></emoticonshared><designershared><designeruin>0</designeruin><designername>null</designername><designerrediretcturl>null</designerrediretcturl></designershared><emotionpageshared><tid>0</tid><title>null</title><desc>null</desc><iconUrl>null</iconUrl><secondUrl /><pageType>0</pageType></emotionpageshared><webviewshared><shareUrlOriginal /><shareUrlOpen /><jsAppId /><publisherId /></webviewshared><template_id /><md5 /><weappinfo><username /><appid /><appservicetype>0</appservicetype><secflagforsinglepagemode>0</secflagforsinglepagemode><videopageinfo><thumbwidth>0</thumbwidth><thumbheight>0</thumbheight><fromopensdk>0</fromopensdk></videopageinfo></weappinfo><statextstr /><musicShareItem><musicDuration>0</musicDuration></musicShareItem><finderLiveProductShare><finderLiveID><![CDATA[]]></finderLiveID><finderUsername><![CDATA[]]></finderUsername><finderObjectID><![CDATA[]]></finderObjectID><finderNonceID><![CDATA[]]></finderNonceID><liveStatus><![CDATA[]]></liveStatus><appId><![CDATA[]]></appId><pagePath><![CDATA[]]></pagePath><productId><![CDATA[]]></productId><coverUrl><![CDATA[]]></coverUrl><productTitle><![CDATA[]]></productTitle><marketPrice><![CDATA[0]]></marketPrice><sellingPrice><![CDATA[0]]></sellingPrice><platformHeadImg><![CDATA[]]></platformHeadImg><platformName><![CDATA[]]></platformName><shopWindowId><![CDATA[]]></shopWindowId></finderLiveProductShare><findernamecard><username /><avatar><![CDATA[]]></avatar><nickname /><auth_job /><auth_icon>0</auth_icon><auth_icon_url /></findernamecard><finderGuarantee><scene><![CDATA[0]]></scene></finderGuarantee><directshare>0</directshare><gamecenter><namecard><iconUrl /><name /><desc /><tail /><jumpUrl /></namecard></gamecenter><patMsg><chatUser /><records><recordNum>0</recordNum></records></patMsg><secretmsg><issecretmsg>0</issecretmsg></secretmsg><websearch /></appmsg><fromusername>$botWxid</fromusername><scene>0</scene><appinfo><version>1</version><appname /></appinfo><commenturl /></msg>";
-        return $this->sendXMLLink($xml, $to);
+        $xml = "<?xml version=\"1.0\"?><msg><appmsg appid=\"\" sdkver=\"0\"><title>$title</title><des>$desc</des><username /><action>view</action><type>3</type><showtype>0</showtype><content /><url>$url</url><lowurl>$url</lowurl><forwardflag>0</forwardflag><dataurl>$url</dataurl><lowdataurl /><contentattr>0</contentattr><streamvideo><streamvideourl /><streamvideototaltime>0</streamvideototaltime><streamvideotitle /><streamvideowording /><streamvideoweburl /><streamvideothumburl /><streamvideoaduxinfo /><streamvideopublishid /></streamvideo><canvasPageItem><canvasPageXml><![CDATA[]]></canvasPageXml></canvasPageItem><appattach><totallen>0</totallen><attachid /><cdnattachurl /><emoticonmd5></emoticonmd5><aeskey></aeskey><fileext /><islargefilemsg>0</islargefilemsg></appattach><extinfo /><androidsource>3</androidsource><thumburl /><mediatagname /><messageaction><![CDATA[]]></messageaction><messageext><![CDATA[]]></messageext><emoticongift><packageflag>0</packageflag><packageid /></emoticongift><emoticonshared><packageflag>0</packageflag><packageid /></emoticonshared><designershared><designeruin>0</designeruin><designername>null</designername><designerrediretcturl>null</designerrediretcturl></designershared><emotionpageshared><tid>0</tid><title>null</title><desc>null</desc><iconUrl>null</iconUrl><secondUrl /><pageType>0</pageType></emotionpageshared><webviewshared><shareUrlOriginal /><shareUrlOpen /><jsAppId /><publisherId /></webviewshared><template_id /><md5 /><weappinfo><username /><appid /><appservicetype>0</appservicetype><secflagforsinglepagemode>0</secflagforsinglepagemode><videopageinfo><thumbwidth>0</thumbwidth><thumbheight>0</thumbheight><fromopensdk>0</fromopensdk></videopageinfo></weappinfo><statextstr /><musicShareItem><musicDuration>0</musicDuration></musicShareItem><finderLiveProductShare><finderLiveID><![CDATA[]]></finderLiveID><finderUsername><![CDATA[]]></finderUsername><finderObjectID><![CDATA[]]></finderObjectID><finderNonceID><![CDATA[]]></finderNonceID><liveStatus><![CDATA[]]></liveStatus><appId><![CDATA[]]></appId><pagePath><![CDATA[]]></pagePath><productId><![CDATA[]]></productId><coverUrl><![CDATA[]]></coverUrl><productTitle><![CDATA[]]></productTitle><marketPrice><![CDATA[0]]></marketPrice><sellingPrice><![CDATA[0]]></sellingPrice><platformHeadImg><![CDATA[]]></platformHeadImg><platformName><![CDATA[]]></platformName><shopWindowId><![CDATA[]]></shopWindowId></finderLiveProductShare><findernamecard><username /><avatar><![CDATA[]]></avatar><nickname /><auth_job /><auth_icon>0</auth_icon><auth_icon_url /></findernamecard><finderGuarantee><scene><![CDATA[0]]></scene></finderGuarantee><directshare>0</directshare><gamecenter><namecard><iconUrl /><name /><desc /><tail /><jumpUrl /></namecard></gamecenter><patMsg><chatUser /><records><recordNum>0</recordNum></records></patMsg><secretmsg><issecretmsg>0</issecretmsg></secretmsg><websearch /></appmsg><fromusername>$botWxid</fromusername><scene>0</scene><appinfo><version>1</version><appname /></appinfo><commenturl /></msg>";
+        return $this->sendXMLLink($xml, $to_wxid);
     }
 }
