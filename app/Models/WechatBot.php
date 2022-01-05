@@ -58,10 +58,10 @@ class WechatBot extends Model
         return new Xbot($this->wxid, $clientAddress, $clientId);
     }
 
-    private function _send($to, WechatContent $wchatContent){
-        $type = WechatContent::TYPES[$wchatContent->type]; //0=>text
+    private function _send($to, WechatContent $wechatContent){
+        $type = WechatContent::TYPES[$wechatContent->type]; //0=>text
         $xbot = $this->xbot();
-        $request = $wchatContent->content; //json->array
+        $request = $wechatContent->content;
         if($type == 'text')     $xbot->sendText($to, $request['content']);  // TODO template!
 
         if($type == 'at')       $xbot->sendAtText($to, $request['content'], $request['at']);

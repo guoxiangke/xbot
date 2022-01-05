@@ -4,21 +4,21 @@ namespace App\Services;
 
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
-use GuzzleHttp\Client as Http; // L6
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 final class Xbot {
-    public $http;
+    public $http; // PendingRequest
     private string $endPoint = '/';
     public int $clientId;
     public $botWxid;
 
     //多台机器运行，每个机器多个bot登陆
-    public function __construct($botWxid, $address, $clientId){
-        $this->http = new Http([
-            'base_uri' => $address,
-            'verify' => false,
-        ]);
+    public function __construct($botWxid, $baseUrl, $clientId){
+        $this->http = Http::withOptions([])
+            ->acceptJson()
+            ->baseUrl($baseUrl)
+            ->withoutVerifying();
         $this->clientId = $clientId;
         $this->botWxid = $botWxid;
     }
@@ -26,7 +26,7 @@ final class Xbot {
     private function request($type, $data = null){
     	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
         // Log::debug("POST_RAW-" . $type, [$this->botWxid, $data]);
-        return rescue(fn() =>  $this->http->post($this->endPoint, ['json' => $data]), null, false);
+        return rescue(fn() =>  $this->http->post($this->endPoint, $data), null, []);
     }
 
     public function getSelfInfo(){

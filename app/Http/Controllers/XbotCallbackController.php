@@ -118,6 +118,7 @@ class XbotCallbackController extends Controller
             'MT_DECRYPT_IMG_MSG',
             'MT_RECV_EMOJI_MSG',
             'MT_RECV_FILE_MSG',
+            // 'MT_DATA_OWNER_MSG', // 获取到bot信息
         ];
         if(!in_array($type, $ignoreRAW)){
             Log::debug("CALLBACK-RAW-" . $type, [$request->all()]);
@@ -179,7 +180,7 @@ class XbotCallbackController extends Controller
         $xbot = $wechatBot->xbot($clientId);
         //************************************************
         if(isset($data['raw_msg'])) $xml = xStringToArray($data['raw_msg']);
-        if($data['to_wxid'] == "filehelper") {
+        if(isset($data['to_wxid']) && $data['to_wxid'] == "filehelper") {
             Log::debug(__CLASS__, [$clientId, __LINE__, '自己发给自己的filehelper消息，暂不处理！']);
             return response()->json(null);
         }
