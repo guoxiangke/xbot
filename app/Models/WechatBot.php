@@ -5,7 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 use Plank\Metable\Metable;
 // use Spatie\Activitylog\Traits\LogsActivity;
 use Mvdnbrk\EloquentExpirable\Expirable;
@@ -31,6 +33,20 @@ class WechatBot extends Model
         return $this->belongsTo(User::class);
     }
 
+    // bot和contact关系 N:N
+    protected $touches = ['contacts']; //https://github.com/laravel/framework/issues/31597
+    public function contacts(): BelongsToMany // @see https://laravel.com/docs/8.x/eloquent-relationships#many-to-many
+    {
+        // $contact = $bot->contacts->where('userName','gh_xxx')->first()
+        // $contact->pivot->remark
+        // $contact->pivot->seat_user_id
+        // $contact->pivot->config
+        return $this->belongsToMany(WechatContact::class, 'wechat_bot_contacts')
+            ->withTimestamps()
+            ->withPivot(['remark','seat_user_id']);
+    }
+
+
     // '无法找到设备绑定位置，请rootUser设置token:clientAddress绑定'
     public function xbot($clientId=null){
         if(!$clientId) {
@@ -42,7 +58,7 @@ class WechatBot extends Model
         return new Xbot($this->wxid, $clientAddress, $clientId);
     }
 
-    public function send($to, WechatContent $wchatContent){
+    private function _send($to, WechatContent $wchatContent){
         $type = WechatContent::TYPES[$wchatContent->type]; //0=>text
         $xbot = $this->xbot();
         $request = $wchatContent->content; //json->array
@@ -53,13 +69,61 @@ class WechatBot extends Model
         // if($type == 'file')     $xbot->sendFile($to, $request['url']);
         // if($type == 'image')    $xbot->sendImage($to, $request['url']);
         if($type == 'music')    $xbot->sendMusic($to, $request['url'], $request['title'], $request['desc']);
-        if($type == 'link')     $xbot->sendLink($to, $request['url'],  $request['image'], $request['title'], $request['desc']);
+        if($type == 'link')     $xbot->sendLink($to, $request['image'], $request['url'],  $request['title'], $request['desc']);
     }
 
-    // 批量发送
-    public function sendTo($tos, WechatContent $wchatContent){
+    // 批量发送 batch 第一个参数为数组[]
+    public function send($tos, WechatContent $wchatContent){
         foreach ($tos as $to) {
-            $this->send($to, $wchatContent);
+            $this->_send($to, $wchatContent);
         }
     }
+
+    public function init(){
+        $xbot = $this->xbot();
+        $xbot->getFriends();
+        //需要执行2次 getRooms()
+        $xbot->getRooms();//第一次初始化数据
+        $xbot->getRooms();//第二次attach group meta
+        $xbot->getPublics();
+    }
+
+    public function syncContacts($contacts, $type){
+        $botOwnerId = $this->user_id;
+        $attachs = [];
+        foreach ($contacts as $data) {
+            $data['type'] = WechatContact::CALLBACKTYPES[$type];
+            $data['nickname'] = $data['nickname']??$data['wxid']; //默认值为null的情况
+            $data['avatar'] = $data['avatar']??WechatBotContact::DEFAULT_AVATAR; //默认值为null的情况
+            $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
+            ($contact = WechatContact::firstWhere('wxid', $data['wxid']))
+                ? $contact->update($data) // 更新资料
+                : $contact = WechatContact::create($data);
+
+            $wechatBotContact = WechatBotContact::where('wechat_bot_id', $this->id)
+                ->where('wechat_contact_id', $contact->id)->first();
+
+            // 已经存在的不用更新，防止CRM备注被覆盖
+            if($wechatBotContact){
+                // 如果是群，更新群meta
+                if($contact->type == 2){//2=群
+                    $groupData =  Arr::only($data, ['is_manager', 'member_list', 'manager_wxid', 'total_member']);
+                    $wechatBotContact->setMeta('group', $groupData);
+                }
+                // 已经存在的不用更新，防止CRM备注被覆盖
+                continue; 
+            }
+
+            ;// @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
+            $attachs[$contact->id] = [
+                'wxid' => $contact->wxid,
+                'remark' => $data['remark']??$data['nickname'],
+                'seat_user_id' => $botOwnerId, //默认坐席为bot管理员
+            ];
+        }
+
+        $this->contacts()->syncWithoutDetaching($attachs);
+        Log::debug(__METHOD__,['已同步', $this->wxid,  $type, count($contacts), count($attachs)]);
+    }
+
 }

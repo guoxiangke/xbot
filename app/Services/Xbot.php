@@ -80,11 +80,17 @@ final class Xbot {
         $this->request('MT_SEND_IMGMSG', get_defined_vars());
     }
 
+    public function getAllContacts(){
+        $this->getFriends();
+        $this->getRooms();
+        $this->getPublics();
+    }
+
     public function getFriends(){
     	$this->request('MT_DATA_FRIENDS_MSG');
     }
 
-    public function getGroups(){
+    public function getRooms(){
     	$this->request('MT_DATA_CHATROOMS_MSG');
     }
 
@@ -92,7 +98,7 @@ final class Xbot {
     	$this->request('MT_DATA_CHATROOM_MEMBERS_MSG', get_defined_vars());
     }
 
-    public function getMps(){
+    public function getPublics(){
     	$this->request('MT_DATA_PUBLICS_MSG');
     }
 

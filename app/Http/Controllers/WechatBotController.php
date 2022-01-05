@@ -15,14 +15,21 @@ class WechatBotController extends Controller
     // {"type":"text", "to":"bluesky_still", "data": {"content": "API主动发送 文本/链接/名片/图片/视频 消息到好友/群"}}
     // {"type":"at", "to" :"23896218687@chatroom", "data": {"at":["wxid_xxxxxx","wxid_xxxxxxx"],"content": "{$@}消息到好友/群{$@}"}}
     public function send(Request $request){
-        $wechatBot = WechatBot::where('user_id', auth()->id())
+        $bindUserId = auth()->id();
+        if(!$bindUserId) {
+            return [
+                'success' => false,
+                'message' => '用户绑定数据认证失败！请检查/重新生成token'
+            ];
+        }
+        $wechatBot = WechatBot::where('user_id', $bindUserId)
             ->whereNotNull('client_id')
             ->whereNotNull('login_at')
             ->first();
         if(!$wechatBot) {
             return [
                 'success' => false,
-                'message' => '设备不在线'
+                'message' => '设备不在线',
             ];
         }
        $wechatContent =  WechatContent::make([
@@ -30,7 +37,11 @@ class WechatBotController extends Controller
             'type' => array_search($request['type'], WechatContent::TYPES), //text=>0 这里使用0～9方便数据库存储数字
             'content' => $request['data'],
         ]);
-        return $wechatBot->send($request['to'], $wechatContent);
+        $wechatBot->send([$request['to']], $wechatContent);
+        return [
+            'success' => true,
+            'message' => '已提交设备发送',
+        ];
     }
 
     // {"telephone":"13112345678"}
