@@ -118,6 +118,7 @@ class XbotCallbackController extends Controller
             'MT_DECRYPT_IMG_MSG',
             'MT_RECV_EMOJI_MSG',
             'MT_RECV_FILE_MSG',
+            'MT_DECRYPT_IMG_MSG_SUCCESS',
             // 'MT_DATA_OWNER_MSG', // 获取到bot信息
         ];
         if(!in_array($type, $ignoreRAW)){
@@ -235,14 +236,14 @@ class XbotCallbackController extends Controller
         }
 
         // ✅ 收到语音消息，即刻调用转文字
-        // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》 /xbot/mp3/
+        // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》 /xbot/voice/
         if($type == 'MT_RECV_VOICE_MSG'){
             $msgid = $data['msgid'];
             Log::debug(__CLASS__, [$clientId, __LINE__, $clientId, $type, '语音消息']);
             // TODO 
             // 1. 自动同步到 xbot/silk/wxs1692.tmp
             // 2. 自动触发 转换mp3动作  xbot/mp3/$data['msgid'].mp3
-            $content = "/xbot/mp3/{$data['msgid']}.mp3";
+            $content = "/xbot/voice/{$data['msgid']}.mp3";
             $xbot->toVoiceText($msgid);
         }
         // ✅ 提取转成的文字
@@ -260,23 +261,22 @@ class XbotCallbackController extends Controller
             $content = $xml['emoji']['@attributes']['cdnurl'];
         }
         // ✅ 收到图片
+        // 监控上传文件夹1 C:\Users\Public\Pictures\ =》 /xbot/image/
         if($type == 'MT_RECV_PICTURE_MSG'){
             $src_file = $data['image'];
             $msgid = $data['msgid'];
             $size = $xml['img']['@attributes']['length'];
-            if(isset($xml['img']['@attributes']['md5'])){
+            // if(isset($xml['img']['@attributes']['md5'])){
                 $md5 = $xml['img']['@attributes']['md5'];
                 $dest_file = "C:\\Users\\Public\\Pictures\\{$md5}.png";
-                // wait for 2 seconds 2 000 000
-                // usleep(500000);
-                sleep(1);
-                // $size = $xml['img']['@attributes']['length']??$xml['img']['@attributes']['hdlength']??'7765';
+                // usleep(1000000); // sleep(1);
                 $res = $xbot->getImage($src_file, $dest_file, $size);
-            }
+            // }
             // else{ //TODO test 主动发送的图片回调！
             //     Log::debug(__CLASS__, [$type, '主动发送的图片回调！','INGORE', '不再二次存储', $msgid, $length]);
             // }
-            $content = "/xbot/images/{$md5}.png"; // config('xbot.upyun').
+            $content = "/xbot/image/{$md5}.png";
+            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '收到图片，已请求下载解密', $content]);
         }
         // ✅  文件消息
         // 监控上传文件夹3 C:\Users\Administrator\Documents\WeChat Files\  =》 /xbot/file/
@@ -335,12 +335,8 @@ class XbotCallbackController extends Controller
                 'msgid' => $data['msgid'],
             ]);
         }
-        // TODO: 从数据库中获取自定义的callback
-        // 不知道为什么暂时发送给本laravel却卡死！
-        // $callback = 'http://xxx.yy.com:xxx/api/xxx';
-        // $http = new Http();
-        // Http::post($callback, $content); //测试连通性，或放到队列中去执行！
-        Log::debug(__CLASS__, [$clientId, __LINE__, '开发者选项', $content]);
+        // 开发者选项 =》 WechatMessageObserver
+        Log::debug(__CLASS__, [$clientId, __LINE__, 'end']);//已执行到最后一行
         return response()->json(null);
     }
 }
