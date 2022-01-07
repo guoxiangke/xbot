@@ -79,6 +79,12 @@ class WechatBot extends Model
         }
     }
 
+    public function logout(){
+        $xbot = $this->xbot();
+        $xbot->quit();
+        $xbot->open();
+    }
+    
     public function init(){
         $xbot = $this->xbot();
         $xbot->getFriends();
@@ -86,6 +92,8 @@ class WechatBot extends Model
         $xbot->getRooms();//第一次初始化数据
         $xbot->getRooms();//第二次attach group meta
         $xbot->getPublics();
+        // @see  XbotCallbackController MT_DATA_OWNER_MSG 
+        $xbot->getSelfInfo();
     }
 
     public function syncContacts($contacts, $type){

@@ -25,7 +25,7 @@ class CreateWechatBotContactsTable extends Migration
             $table->string('remark')->nullable()->index()->comment('crm备注');//可以搜索
             $table->string('wxid')->index(); //可以搜索
             $table->foreignId('seat_user_id')->comment('转接/分配/负责的客服，默认为bot拥有者/管理者');
-
+            $table->softDeletes();
             $table->timestamps();
         });
     }

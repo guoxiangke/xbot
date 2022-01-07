@@ -33,7 +33,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 // TODO：
     // https://github.com/spatie/laravel-webhook-client
     // webhook client need verified with aravel-webhook-client
-Route::any('/webhook/xbot', function (Request $request) {
-    Log::debug('webhook', ['开发者选项', $request->all()]);
+Route::post('/webhook/xbot', function (Request $request) {
+    Log::debug('WebhookCalled', ['Demo WebhookCalled', $request->all()]);
     return response()->json(null);
 });

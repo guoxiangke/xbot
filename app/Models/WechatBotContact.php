@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Plank\Metable\Metable;
 
 class WechatBotContact extends Model
 {
+    use SoftDeletes;
     use HasFactory;
     use Metable;
     // use \Spatie\Tags\HasTags;

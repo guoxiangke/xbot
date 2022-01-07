@@ -17,6 +17,7 @@ class WechatMessage extends Model
         'MT_RECV_VOICE_MSG',
         'MT_RECV_PICTURE_MSG',
         'MT_RECV_FILE_MSG',
+        'MT_RECV_VIDEO_MSG',
     ];
     const TYPES_TEXT = [
         'text',             //0
@@ -24,6 +25,7 @@ class WechatMessage extends Model
         'voice',            //2
         'image',            //3
         'file',             //4
+        'video',             //5
     ];
 
     protected $appends = ['isSentByBot', 'contents'];
@@ -45,6 +47,7 @@ class WechatMessage extends Model
             case 2: //voice
             case 3: //image
             case 4: //file
+            case 5: //video
                 $content = config('xbot.upyun') . $value;
                 break;
             

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Livewire\Wechat;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -20,3 +20,11 @@ Route::get('/', function () {
 Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
+
+Route::group([
+    'middleware' => ['auth:sanctum', 'verified'],
+    'prefix'=>'channels/wechat', 
+    'as'=>'channel.wechat.',
+    ], function () {
+        Route::get('/', Wechat::class)->name('weixin');
+});

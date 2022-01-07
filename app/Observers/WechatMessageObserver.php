@@ -21,9 +21,19 @@ class WechatMessageObserver
         $wechatMessage->to; // load ::with('to')
         $wechatBot = $wechatMessage->wechatBot->load('meta');
         
-        $webhookOn = $wechatBot->getMeta('webhook', true); // 已开启webhook
-        $webhookUrl = $wechatBot->getMeta('webhookUrl', '/api/webhook/xbot');
-        $webhookSecret = $wechatBot->getMeta('webhookSecret', 'verified-token');
+        //TODO 只转发 部分群
+        $config = $wechatBot->getMeta('xbot.config', [
+            'isListenRoom' => false,
+            'isListenRoomAll' => false,
+            'isWebhook' => false,
+            'webhookUrl' => '',
+            'webhookSecret' => '',
+        ]);
+
+        $webhookOn = $config['isWebhook'];
+        $webhookUrl = $config['webhookUrl'];
+        $webhookSecret = $config['webhookSecret'];
+
         if($webhookOn && $webhookUrl && $webhookSecret){
             $data = [
                 'msgid' => $wechatMessage->id,
@@ -34,8 +44,8 @@ class WechatMessageObserver
             ];
             WebhookCall::create()
                 ->url($webhookUrl)
-                ->doNotSign()
-                // ->useSecret($webhookSecret)
+                // ->doNotSign()
+                ->useSecret($webhookSecret)
                 ->payload($data)
                 ->dispatchSync();//dispatch Now
 
