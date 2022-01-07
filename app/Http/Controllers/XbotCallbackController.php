@@ -394,17 +394,26 @@ class XbotCallbackController extends Controller
             $replyTo = $data['from_wxid']; //消息发送者
             if($isRoom) $replyTo = $data['room_wxid'];
             if($data['from_wxid'] == $wechatBot->wxid) $replyTo = $data['to_wxid']; //自己给别人聊天时，发关键词 响应信息
-            //TODO 彩蛋:谁在线，在线时长！
+            // 彩蛋:谁在线，在线时长！
             if($content=='whoami'){
                 $time = $wechatBot->login_at->diffForHumans();
                 $text = "已登陆 $time\n时间: {$wechatBot->login_at}\n设备ID: {$clientId}\n用户: {$wechatBot->user->name}";
                 $xbot->sendText($replyTo, $text);
+                // 针对文本 命令的 响应，标记 已响应，后续 关键词不再触发（return in observe）。
+                // 10s内响应，后续hook如果没有处理，就丢弃，不处理了！
+                // 如果其他资源 已经响应 关键词命令了，不再推送给第三方webhook了
+                Cache::put('xbot.replied-'.$data['msgid'], true, 5);
             }
+            // AutoReply TODO 关键词自动回复，
+                // 回复模版变量消息
+                // API发送模版消息
+            // 响应 预留 关键词 群配置？ 
+            // 资源：预留 关键词
+                //  600 + 601～699   # LY 中文：拥抱每一天 getLy();
+                //  7000 7001～7999  # Album 自建资源 Album 关键词触发 getAlbum();
+                // #100  #100～#999  # LTS getLts();
         }
-
-
-        // Log::debug(__CLASS__, [$clientId, __LINE__, '开发者选项', $request->all()]);
-        // return response()->json(null);
+        
         // 把接收的消息写入 WechatMessage
         $recordWechatMessageTypes = [
             'MT_RECV_TEXT_MSG', 

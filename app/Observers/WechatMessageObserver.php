@@ -17,7 +17,10 @@ class WechatMessageObserver
      */
     public function created(WechatMessage $wechatMessage)
     {
-        // $wechatMessage = WechatMessage::find(3);
+        // 如果其他资源 已经响应 关键词命令了，不再推送给第三方webhook了
+        $isReplied = Cache::get('xbot.replied-'.$wechatMessage->msgid, false);
+        if($isReplied) return;
+
         $wechatMessage->to; // load ::with('to')
         $wechatBot = $wechatMessage->wechatBot->load('meta');
         
