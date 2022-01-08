@@ -17,9 +17,10 @@ class CreateWechatContactsTable extends Migration
             $table->id();
             $table->unsignedTinyInteger('type')->default(0)->comment('0公众号，1联系人，2群');
             $table->string('wxid')->index(); //可以搜索
-            $table->string('nickname')->index(); //可以搜索
-            $table->string('remark')->index(); //可以搜索
-            $table->string('avatar');
+            // 如果是群，陌生人，只有一个wxid，其他都为空
+            $table->string('nickname')->index()->default(''); //可以搜索
+            $table->string('remark')->index()->default(''); //可以搜索
+            $table->string('avatar')->default('');
 
             $table->unsignedTinyInteger('sex')->default(0)->comment('0未知，1男，2女');
             $table->string('account')->default('')->nullable()->comment('');

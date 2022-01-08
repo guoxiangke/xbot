@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Wechat;
+use App\Http\Livewire\WebChat;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -27,4 +28,5 @@ Route::group([
     'as'=>'channel.wechat.',
     ], function () {
         Route::get('/', Wechat::class)->name('weixin');
+        Route::get('/webchat', WebChat::class)->name('webchat');
 });

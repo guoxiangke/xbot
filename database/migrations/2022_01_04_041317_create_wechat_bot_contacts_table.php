@@ -22,7 +22,7 @@ class CreateWechatBotContactsTable extends Migration
             // https://www.codecheef.org/article/laravel-tips-to-set-foreign-key-in-laravel-migration
             $table->foreignId('wechat_bot_id')->index();
             $table->foreignId('wechat_contact_id')->index();
-            $table->string('remark')->nullable()->index()->comment('crm备注');//可以搜索
+            $table->string('remark')->default('')->index()->comment('crm备注');//可以搜索
             $table->string('wxid')->index(); //可以搜索
             $table->foreignId('seat_user_id')->comment('转接/分配/负责的客服，默认为bot拥有者/管理者');
             $table->softDeletes();

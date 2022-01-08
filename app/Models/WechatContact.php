@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class WechatContact extends Model
 {
     use HasFactory;
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
-
+    protected $appends = ['isRoom'];
     use SoftDeletes;
 
     // 0公众号，1联系人，2群
@@ -31,7 +32,9 @@ class WechatContact extends Model
         '男',
         '女'
     ];
- 
+    public function getIsRoomAttribute(){
+        return Str::endsWith($this->wxid, '@chatroom')?true:false;
+    }
     public function conversations()
     {
         // 为什么 Conversion 不显示所有的？

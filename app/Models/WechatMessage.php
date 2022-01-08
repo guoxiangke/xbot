@@ -28,7 +28,7 @@ class WechatMessage extends Model
         'video',             //5
     ];
 
-    protected $appends = ['isSentByBot', 'contents'];
+    protected $appends = ['isSentByBot'];
     public function getIsSentByBotAttribute()
     {
         return $this->from?false:true;
@@ -43,6 +43,7 @@ class WechatMessage extends Model
         // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》 /xbot/voice/
         // ✅ 收到图片
         // 监控上传文件夹1 C:\Users\Public\Pictures\ =》 /xbot/image/
+        $content = $value;
         switch ($this->type) {
             case 2: //voice
             case 3: //image

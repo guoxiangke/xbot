@@ -21,6 +21,7 @@ class CreateWechatMessagesTable extends Migration
 
             $table->unsignedTinyInteger('type')->comment('MT_RECV_TEXT_MSG：1');
             $table->foreignId('wechat_bot_id')->index()->comment('bot微信号');
+            // 特殊：bot的陌生人(群友)发送消息到群
             $table->foreignId('from')->index()->nullable()->comment('消息发送者from:Null为bot发送的');
             $table->foreignId('conversation')->index()->comment('会话对象to:wechat_bot_contact_id');
             $table->foreignId('seat_user_id')->index()->nullable()->comment('主动回复时的客服ID');
