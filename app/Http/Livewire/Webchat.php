@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 
-class WebChat extends Component
+class Webchat extends Component
 {
 
     public function render()
