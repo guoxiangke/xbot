@@ -15,11 +15,13 @@
         "livewire/livewire": "^2.5",
         "mvdnbrk/laravel-model-expires": "^1.8",
         "plank/laravel-metable": "^5.1",
+        "predis/predis": "^1.1",
         "spatie/laravel-activitylog": "^4.3",
         "spatie/laravel-permission": "^5.4",
         "spatie/laravel-webhook-server": "^3.1"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.6",
         "facade/ignition": "^2.5",
         "fakerphp/faker": "^1.9.1",
         "laravel/sail": "^1.0.1",

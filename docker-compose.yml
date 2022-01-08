@@ -20,6 +20,7 @@ services:
       SESSION_DRIVER: redis
       QUEUE_DRIVER: redis
       REDIS_HOST: redis
+      REDIS_CLIENT: predis
     volumes:
       - ./docker/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
       - .env.docker:/var/www/html/.env
