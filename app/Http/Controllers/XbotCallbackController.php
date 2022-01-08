@@ -39,9 +39,9 @@ class XbotCallbackController extends Controller
         //////////////////////////一看到token，就知道在哪台机器上运行
         // ，然后根据token查询wechatBot表，查询绑定的wxid
         //通过token找Windows机器的地址
-        $rootUser = User::firstOrFail();//请先创建一个user
-        $tokens = $rootUser->getMeta('xbot.token', []);
-        $address = $tokens[$token];
+        // $rootUser = User::firstOrFail();//请先创建一个user
+        // $tokens = $rootUser->getMeta('xbot.token', []);
+        // $address = $tokens[$token];
         //////////////////////////
 
         $cacheKey = $token;
