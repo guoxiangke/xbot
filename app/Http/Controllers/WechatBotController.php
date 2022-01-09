@@ -29,7 +29,7 @@ class WechatBotController extends Controller
         if(!$wechatBot) {
             return [
                 'success' => false,
-                'message' => '设备不在线',
+                'message' => '设备不在线,或改用户未绑定设备'
             ];
         }
        $wechatContent =  WechatContent::make([

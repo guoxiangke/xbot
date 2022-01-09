@@ -76,8 +76,8 @@ class XbotCallbackController extends Controller
                 }
             }
             Cache::set("xbots.{$cacheKey}.qrPool", $qrPool);
-
             Log::debug(__CLASS__, [$clientId, __LINE__, $data['nickname'], '登陆成功','，已弹出qrPool']);
+
             $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
             $wechatBot->login_at = now();
             $wechatBot->client_id = $clientId;
@@ -90,7 +90,7 @@ class XbotCallbackController extends Controller
         }
 
         if($type == 'MT_USER_LOGOUT'){
-            Log::debug(__CLASS__, [$clientId, __LINE__, 'MT_USER_LOGOUT']);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $data['wxid'], 'MT_USER_LOGOUT']);
             $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
             $wechatBot->login_at = null;
             $wechatBot->client_id = null;
@@ -180,33 +180,33 @@ class XbotCallbackController extends Controller
         $syncContactTypes = ['MT_DATA_FRIENDS_MSG', 'MT_DATA_CHATROOMS_MSG', 'MT_DATA_PUBLICS_MSG' ];
         if(in_array($type, $syncContactTypes)){
             $wechatBot->syncContacts($data, $type);
-            Log::debug(__CLASS__, [$clientId, __LINE__, '获取联系人', $type]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '获取联系人', $type]);
             return response()->json(null);
         }
 
 
         //??? 说明是被动响应的信息，丢弃，不然自己给自己聊天了！
         // if(!$wechatBot) {
-        //     Log::debug(__CLASS__, [$clientId, __LINE__, $type, '被动响应的信息', '已丢弃']);
+        //     Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '被动响应的信息', '已丢弃']);
         //     return response()->json(null);
         // }
         if(!($wechatBot || $botWxid)){
-            Log::error(__CLASS__, [$clientId, __LINE__, $request->all()]);
+            Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $request->all()]);
         }
 
         if($isRoom){
             if($data['from_wxid'] == $wechatBot->wxid) {
-                Log::debug(__CLASS__, [$clientId, __LINE__, '自己响应的群消息']);
+                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '自己响应的群消息']);
                 // return response()->json(null);
             }else{
                 // 接收到群消息！群消息里，没有wxid, from_wxid = 发送者，to_wxid=wx@room room_wxid=wx@room
-                Log::debug(__CLASS__, [$clientId, __LINE__, '接收到群消息']);
+                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '接收到群消息']);
                 if(!$config['isListenRoom']){
-                    Log::debug(__CLASS__, [$clientId, __LINE__, '终止执行1']);
+                    Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '终止执行,没有监听群消息']);
                     return response()->json(null);
                 }
                 if(!$config['isListenRoomAll']){
-                    Log::debug(__CLASS__, [$clientId, __LINE__, '终止执行2']);
+                    Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '终止执行，没有监听所有群消息']);
                     return response()->json(null);
                 }
                 //go to next(); //TODO 如果监听群消息，但全部监听？
@@ -214,7 +214,7 @@ class XbotCallbackController extends Controller
         }
         // else{
         //     if(isset($data['from_wxid']) && $data['from_wxid'] == $data['to_wxid']){
-        //         Log::debug(__CLASS__, [$clientId, __LINE__, '自己发给自己消息，即不发送给develope' , $request->all()]);
+        //         Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '自己发给自己消息，即不发送给develope' , $request->all()]);
         //         //因bot发的信息（通过关键词响应的信息）也要记录，所以继续走下去吧！不return了！
         //         // return response()->json(null);
         //     }
@@ -228,13 +228,13 @@ class XbotCallbackController extends Controller
             if(Str::startsWith($tmpData, '<?xml ') || Str::startsWith($tmpData, '<msg')) {
                  $xml = xStringToArray($tmpData);
             }else{
-                Log::error(__CLASS__, [$clientId, __LINE__, 'raw data not xml']);
+                Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, 'raw data not xml']);
                 // MT_RECV_SYSTEM_MSG "raw_msg":"你已添加了天空蔚蓝，现在可以开始聊天了。"
                 $data['msg'] = $data['raw_msg'];
             }
         }
         if(isset($data['to_wxid']) && $data['to_wxid'] == "filehelper") {
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '自己发给自己的filehelper消息，暂不处理！']);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '自己发给自己的filehelper消息，暂不处理！']);
             return response()->json(null);
         }
 
@@ -263,7 +263,7 @@ class XbotCallbackController extends Controller
 
         // ✅ 搜索用户信息后的callback，主动+好友
         if ($type == 'MT_SEARCH_CONTACT_MSG') {
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '主动+好友', $data['nickname'], $data['search']]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '主动+好友', $data['nickname'], $data['search']]);
             $remark = "朋友介绍"; //todo remark settings in FE
             $xbot->addFriendBySearchCallback($data['v1'], $data['v2'], $remark);
             return response()->json(null);
@@ -282,14 +282,14 @@ class XbotCallbackController extends Controller
 
             $fromnickname = $attributes['fromnickname'];
             $content = $attributes['content'];
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, "收到{$fromnickname}的好友请求:{$content}"]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, "收到{$fromnickname}的好友请求:{$content}"]);
             return response()->json(null);
         }
 
         // ✅ 手动同意好友请求 发送 欢迎信息
         $switchOn = $config['isWelcome'];
         if($switchOn && $type == 'MT_CONTACT_ADD_NOITFY_MSG'){
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '同意好友请求 发送 欢迎信息']);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '同意好友请求 发送 欢迎信息']);
             $xbot->sendText($data['wxid'], $config['weclomeMsg']);
             // 写入数据库
             $wechatBotContact = WechatBotContact::query()
@@ -325,7 +325,7 @@ class XbotCallbackController extends Controller
                 ->where('wechat_bot_id', $wechatBot->id)
                 ->first()
                 ->delete();
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '主动删除好友']);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '主动删除好友']);
         }
         
 
@@ -333,7 +333,7 @@ class XbotCallbackController extends Controller
         // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》/xbot/silk/ => /xbot/voice/
         if($type == 'MT_RECV_VOICE_MSG'){
             $msgid = $data['msgid'];
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '语音消息']);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '语音消息']);
             // TODO 
             // 1. 自动同步到 xbot/silk/wxs1692.tmp
             // 2. 自动触发 转换mp3动作  xbot/mp3/$data['msgid'].mp3
@@ -347,7 +347,7 @@ class XbotCallbackController extends Controller
                 'msgid' => $data['msgid'],
                 'content' => $data['text'],
             ]);
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '语音消息转文本', $data]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '语音消息转文本', $data]);
             return response()->json(null);
         }
         // ✅ 收到gif表情
@@ -366,19 +366,19 @@ class XbotCallbackController extends Controller
             $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$msgid}.png";
             $xbot->getImage($src_file, $dest_file, $size);
             $content = "/xbot/images/{$msgid}.png";
-            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '收到|发送图片，已请求下载解密', $content]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '收到|发送图片，已请求下载解密', $content]);
         }
         // ✅  文件消息
         // 监控上传文件夹3 C:\Users\Administrator\Documents\WeChat Files\  =》 /xbot/file/
         if($type == 'MT_RECV_FILE_MSG'){
             $file = str_replace('C:\\Users\\Public\\Pictures\\','/xbot/', $data['file']);
             $content =  str_replace('\\','/', $file);
-            Log::debug(__CLASS__, [$clientId, __LINE__, $clientId, $type, '文件消息', $data['file'], $content]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $clientId, $type, '文件消息', $data['file'], $content]);
         }
         if($type == 'MT_RECV_VIDEO_MSG'){
             $file = str_replace('C:\\Users\\Public\\Pictures\\','/xbot/', $data['video']);
             $content =  str_replace('\\','/', $file);
-            Log::debug(__CLASS__, [$clientId, __LINE__, $clientId, $type, '视频消息', $data['video'], $content]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $clientId, $type, '视频消息', $data['video'], $content]);
         }
 
         if($type == 'MT_RECV_TEXT_MSG'){ //接收到 个人/群 文本消息
@@ -394,7 +394,7 @@ class XbotCallbackController extends Controller
                 // 针对文本 命令的 响应，标记 已响应，后续 关键词不再触发（return in observe）。
                 // 10s内响应，后续hook如果没有处理，就丢弃，不处理了！
                 // 如果其他资源 已经响应 关键词命令了，不再推送给第三方webhook了
-                Cache::put('xbot.replied-'.$data['msgid'], true, 5);
+                Cache::put('xbot.replied-'.$data['msgid'], true, 10);
             }
             // AutoReply TODO 关键词自动回复，
                 // 回复模版变量消息
@@ -428,7 +428,7 @@ class XbotCallbackController extends Controller
             }else{
                 $from = WechatBotContact::where('wxid', $fromWxid)->first();
                 if(!$from) {
-                    Log::error(__CLASS__, [$clientId, __LINE__, '期待有个fromId but no from!']);
+                    Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '期待有个fromId but no from!']);
                 }else{
                     $fromId = $from->id;
                 }
@@ -442,7 +442,7 @@ class XbotCallbackController extends Controller
                 ->where('wechat_bot_id', $wechatBot->id)
                 ->first();
             if(!$conversation) {
-                Log::debug(__CLASS__, [$clientId, __LINE__,  $conversationWxid, '给不是好友的人发的信息，即把他删了，对方又请求好友了，我没答应，此时还可以发信息']);
+                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid,  $conversationWxid, '给不是好友的人发的信息，即把他删了，对方又请求好友了，我没答应，此时还可以发信息']);
                 // 下一步，搜索好友，加好友
                 $xbot->addFriendBySearch($conversationWxid);
                 return response()->json(null);
@@ -457,7 +457,7 @@ class XbotCallbackController extends Controller
             ]);
         }
         // 开发者选项 =》 WechatMessageObserver
-        Log::debug(__CLASS__, [$clientId, __LINE__, 'end']);//已执行到最后一行
+        Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, 'end']);//已执行到最后一行
         return response()->json(null);
     }
 }
