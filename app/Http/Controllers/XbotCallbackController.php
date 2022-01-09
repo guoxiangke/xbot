@@ -36,14 +36,6 @@ class XbotCallbackController extends Controller
             return response()->json(null);
         }
 
-        //////////////////////////一看到token，就知道在哪台机器上运行
-        // ，然后根据token查询wechatBot表，查询绑定的wxid
-        //通过token找Windows机器的地址
-        // $rootUser = User::firstOrFail();//请先创建一个user
-        // $tokens = $rootUser->getMeta('xbot.token', []);
-        // $address = $tokens[$token];
-        //////////////////////////
-
         $cacheKey = $token;
         // 1.获取到登陆二维码
         // 缓存以供前端调用扫码（2个client同一个id，如果已登陆的，不显示二维码！）

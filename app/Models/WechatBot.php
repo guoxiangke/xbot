@@ -53,8 +53,7 @@ class WechatBot extends Model
             $clientId = $this->client_id;
         }
         $user = User::find(1);
-        $tokens = $user->getMeta('xbot.token');
-        $clientAddress = $tokens[$this->token];
+        $clientAddress = WechatClient::where('token', $this->token)->value('location');
         return new Xbot($this->wxid, $clientAddress, $clientId);
     }
 
