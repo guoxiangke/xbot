@@ -80,6 +80,7 @@ class XbotCallbackController extends Controller
 
             $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
             $wechatBot->login_at = now();
+            $wechatBot->is_live_at = now();
             $wechatBot->client_id = $clientId;
             $wechatBot->save();
             $wechatBot->setMeta('xbot', $data);
@@ -93,6 +94,7 @@ class XbotCallbackController extends Controller
             Log::debug(__CLASS__, [$clientId, __LINE__, $data['wxid'], 'MT_USER_LOGOUT']);
             $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
             $wechatBot->login_at = null;
+            $wechatBot->is_live_at = null;
             $wechatBot->client_id = null;
             $wechatBot->save();
             // 不再清空绑定的xbot信息
@@ -102,7 +104,9 @@ class XbotCallbackController extends Controller
         // MT_DATA_OWNER_MSG
         if($type == 'MT_DATA_OWNER_MSG') {
             $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
-            $wechatBot->setMeta('xbot', $data); //account avatar nickname wxid 
+            // 程序崩溃时，login_at 还在，咋办？ 
+            $wechatBot->update(['is_live_at'=>now()]);
+            $wechatBot->setMeta('xbot', $data); //account avatar nickname wxid
         }
 
         //TODO 用户登陆出，$bot->login_at=null
@@ -161,6 +165,10 @@ class XbotCallbackController extends Controller
         $wechatBot = WechatBot::where('token', $token)
             ->where('client_id', $clientId)
             ->first();
+        if(!$wechatBot) {
+            Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, ' 不存在wechatBot？设备已下线！']);
+            return response()->json(null);
+        }
         //*********************************************************
         $botWxid = $data['to_wxid']??null;
 
@@ -457,7 +465,7 @@ class XbotCallbackController extends Controller
             ]);
         }
         // 开发者选项 =》 WechatMessageObserver
-        Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, 'end']);//已执行到最后一行
+        Log::debug(__CLASS__, [$clientId, __LINE__, $type, $wechatBot->wxid, 'THE END OF CALLBACK']);//已执行到最后一行
         return response()->json(null);
     }
 }

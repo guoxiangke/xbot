@@ -24,6 +24,11 @@ class CreateWechatBotsTable extends Migration
             $table->unsignedInteger('client_id')->nullable()->default(null)->comment('动态变换');
 
             $table->timestamp('login_at')->nullable()->default(null)->comment('null 代表已下线，用schedule检测is_live');
+
+            // 程序崩溃时，login_at 还在，咋办？ 
+            // 每小时发送 is_live 命令给命令助手，如果在线，更新 live_at 为当前时间。
+            // 每小时+1分钟 check，如果 live_at diff now > 3分钟，则代表已崩溃离线，需要手动重启，发信息给管理员
+            $table->timestamp('is_live_at')->nullable()->default(null)->comment('last_check_live_at');
             $table->expires()->default(now()->addMonth(1))->comment('默认1个月内有效，超过需要付费');
 
             $table->softDeletes();

@@ -7,6 +7,7 @@
 <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8  space-y-4">
     
     <div class="info">
+        @if($isLive)
         <figure class="md:flex bg-gray-100 rounded-xl p-8 md:p-0">
             <img class="w-36 h-36  mx-auto" src="{{ $xbotInfo['avatar']??$defaultAvatar }}" alt="{{ $xbotInfo['nickname'] }}" title="{{ $xbotInfo['nickname'] }}的头像">
             <div class="pt-0 md:p-8 space-y-4">
@@ -16,9 +17,9 @@
                 <figcaption class="font-medium">
                     <div class="text-gray-500">
                         <br/>登录时间：{{ $loginAt }} 
-                        <br/>有效期： 
-                        <br/>登录设备ID: 2
-                        <br/>登录设备IP: 2
+                        <br/>有效期： {{ $wechatBot->expires_at }}
+                        <br/>登录设备ID: {{ $wechatBot->client_id }}
+                        <br/>登录设备Token:  {{ $wechatBot->token }}
                         <br/>请使用下面👇的“退出Bot登录”按钮退出！
                     </div>
                     
@@ -28,8 +29,12 @@
                 </figcaption>
             </div>
         </figure>
+        @else
+         <img class="w-36 h-36  mx-auto" src="{{ $loginQr }}">
+        @endif
 
-        @if($isLogin)
+
+        @if($isLive)
         <div>
             <x-input.toggle 
                 wire:model="config.isAutoAgree"

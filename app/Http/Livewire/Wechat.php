@@ -29,7 +29,7 @@ class Wechat extends Component
     public $config;
 
     public $isBind = false;
-    public $isLogin = false;
+    public $isLive = false;
     public $loginQr = false;
     public $msg;
     public function mount()
@@ -40,6 +40,8 @@ class Wechat extends Component
             $this->msg = '当前账户暂未绑定wxid, 请与管理员联系！';
             return;
         }
+        $wechatBot->isLive(); //检测是否在线？
+        $wechatBot->refresh();
         $this->wechatBot = $wechatBot;
 
         // $wechatBot->removeMeta('xbot');
@@ -48,9 +50,10 @@ class Wechat extends Component
             'avatar' => 'avatar',
             'nickname' => 'nickname',
             'wxid' => 'wxid',
-        ]);// 
-        $this->isLogin = $wechatBot->login_at;
-        if(!$this->isLogin){
+        ]);
+
+        $this->isLive = $wechatBot->is_live_at;
+        if(!$this->isLive){
             $cacheKey = $wechatBot->token;
             $qrPool = Cache::get("xbots.{$cacheKey}.qrPool", []);
             if($qrPool){
@@ -61,7 +64,6 @@ class Wechat extends Component
                 $this->msg = '请使用账户绑定的wxid,扫码登陆！';
             }
         }
-        // dd($this->avatar);
         $this->loginAt = optional($wechatBot->login_at)->diffForHumans();
 
         // $wechatBot->removeMeta('xbot.config');

@@ -17,7 +17,7 @@ use App\Models\User;
 class WechatBot extends Model
 {
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
-    protected $dates = ['created_at', 'updated_at', 'deleted_at', 'login_at'];
+    protected $dates = ['created_at', 'updated_at', 'deleted_at', 'login_at', 'is_live_at'];
 
     use HasFactory;
     use SoftDeletes;
@@ -82,6 +82,25 @@ class WechatBot extends Model
         $xbot = $this->xbot();
         $xbot->quit();
         $xbot->open();
+    }
+
+    // 程序崩溃时，login_at 还在，咋办？ 
+    public function isLive(){
+        $this->xbot()->getSelfInfo();
+        sleep(5); //给callback5秒时间 执行 MT_DATA_OWNER_MSG，更新 is_live_at，然后 refresh，获取最新的 检测时间。
+        $lastCheck = $this->is_live_at;
+        $this->refresh();
+        Log::error(__CLASS__, [__LINE__, $this->wxid, $this->client_id, 'XbotIsLive 2次检测时间', $lastCheck, $this->is_live_at]);
+        
+        // Try 3 time? TODO. 第1次没反应时，却在线，怎么办？
+        if ($this->is_live_at->diffInMinutes() > 1){ // 如果时间大于1分钟 则代表离线
+            // $this->logout();//对此client_id调一次二维码，如果此clientId被别人使用了呢？岂不是把别人下线了？
+            Log::error(__CLASS__, [__LINE__, 'XbotIsLive 程序崩溃时,已下线！', $this->wxid, $this->client_id]);
+            $this->login_at = null;
+            $this->is_live_at = null;
+            $this->client_id = null;
+            $this->save();
+        }
     }
     
     public function init(){

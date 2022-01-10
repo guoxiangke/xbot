@@ -41,21 +41,15 @@ class XbotIsLive extends Command
      */
     public function handle()
     {
+        // 程序崩溃时，login_at 还在，咋办？ 
+        // 每5分钟执行一次 MT_DATA_OWNER_MSG
+        // if ($wechatBot->is_live_at->diffInMinutes() > 5) 则代表离线，清空login_at
         WechatBot::query()
             ->whereNotNull('client_id')
             ->whereNotNull('login_at')
+            ->whereNotNull('is_live_at')
             ->each(function(WechatBot $wechatBot){
-                // 主动调用一个 MT_DATA_OWNER_MSG 接口
-                // 只有这里主动调用这个 接口
-                $time = $wechatBot->login_at->diffForHumans();
-                $content = "登陆时间: {$wechatBot->login_at} $time\n设备ID: {$wechatBot->clientId}\n用户: {$wechatBot->user->name}";
-
-               $wechatContent =  WechatContent::make([
-                    'name' => 'tmpSendStructure',
-                    'type' => 0, //text=>0
-                    'content' => compact('content'),
-                ]);
-                $wechatBot->send(['filehelper'], $wechatContent);
+                $wechatBot->isLive();
             });
     }
 }
