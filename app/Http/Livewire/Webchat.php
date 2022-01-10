@@ -96,7 +96,8 @@ class Webchat extends Component
 
         $this->remarks = WechatBotContact::query()
             ->where('wechat_bot_id', $this->wechatBot->id)
-            ->pluck('remark','wechat_contact_id')
+            ->where('type', '>', 0) //0公众号
+            ->pluck('remark','id')
             ->toArray();
     }
     public function insertEmoji($emoji)

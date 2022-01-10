@@ -212,11 +212,12 @@
                         ? $seatUsers[$message['seat_user_id']]['name']
                         : $wechatBot->remark;
                     
+                    $meta = $wechatBot->getMeta('xbot');
                     $avatar = $message['seat_user_id']
                         ? $seatUsers[$message['seat_user_id']]['profile_photo_url']
-                        : ($wechatBot->bigHead?:$defaultAvatar);
+                        : $meta['avatar'];
                   }else{
-                    $name = $contactsArray[$message['from']]['remark']?$contactsArray[$message['from']]['remark']:($message['from']%100);
+                    $name = $contactsArray[$message['from']]['remark']??($message['from']%100);
                     $fallbackAvatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
                     $avatar =  $contactsArray[$message['from']]['contact']['avatar']?:$fallbackAvatar;
                   }
@@ -234,7 +235,7 @@
                         </svg>
                       </span>
 
-                      <div class="str-chat__avatar str-chat__avatar--circle" title="solitary-shadow-5" style="display:block ;width: 32px; height: 32px; flex-basis: 32px; line-height: 32px; font-size: 16px;">
+                      <div class="str-chat__avatar str-chat__avatar--circle" title="" style="display:block ;width: 32px; height: 32px; flex-basis: 32px; line-height: 32px; font-size: 16px;">
                         <img data-testid="avatar-img" 
                           src="{{ $avatar }}"
                           alt="{{ $name }}"
