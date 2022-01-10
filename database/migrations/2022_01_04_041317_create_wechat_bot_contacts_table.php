@@ -16,6 +16,7 @@ class CreateWechatBotContactsTable extends Migration
         Schema::create('wechat_bot_contacts', function (Blueprint $table) {
             $table->id();
 
+            $table->unsignedTinyInteger('type')->default(3)->comment('0公众号，1联系人，2群, 3群陌生人');
             // bot和contact关系 N:N
             // @see https://laravel.com/docs/8.x/eloquent-relationships#many-to-many
 

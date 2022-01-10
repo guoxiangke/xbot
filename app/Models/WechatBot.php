@@ -118,7 +118,7 @@ class WechatBot extends Model
         $botOwnerId = $this->user_id;
         $attachs = [];
         foreach ($contacts as $data) {
-            $data['type'] = WechatContact::CALLBACKTYPES[$type];
+            $data['type'] = WechatContact::CALLBACKTYPES[$type]; //0公众号，1联系人，2群
             $data['nickname'] = $data['nickname']??$data['wxid'];
             $data['avatar'] = $data['avatar']??'';
             $data['remark'] = $data['remark']??$data['nickname']??$data['wxid'];
@@ -137,20 +137,28 @@ class WechatBot extends Model
                     $wechatBotContact->setMeta('group', $groupData);
                     
                     // 把群成员 也 写入 wechat_contact 数据库，以供webchat 群回话调用
+                    // 但要给一个特殊的type:3群陌生人
                     foreach ($data['member_list'] as $wxid) {
                         $gContact = WechatContact::firstWhere('wxid', $wxid);
                         if(!$gContact){
                             $gContact = WechatContact::create([
+                                // 'type' => 1, //默认为1 联系人 
                                 'wxid' => $wxid,
                                 'remark' => $wxid,
                                 'nickname9' => $wxid,
                             ]);
                         }
-                        $attachs[$gContact->id] = [
-                            'wxid' => $gContact->wxid,
-                            'remark' => $gContact->remark??$gContact->wxid,
-                            'seat_user_id' => $botOwnerId, //默认坐席为bot管理员
-                        ];
+
+                        
+                        $gBotContact = WechatBotContact::firstWhere('wxid', $wxid);
+                        if(!$gBotContact){ // if已经存在，说明是好友
+                            $attachs[$gContact->id] = [
+                                'type' => 3,// 群成员 特殊的type:3群陌生人
+                                'wxid' => $gContact->wxid,
+                                'remark' => $gContact->remark??$gContact->wxid,
+                                'seat_user_id' => $botOwnerId, //默认坐席为bot管理员
+                            ];
+                        }
                     }
                 }
                 // 已经存在的不用更新，防止CRM备注被覆盖
@@ -159,6 +167,7 @@ class WechatBot extends Model
 
             ;// @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
             $attachs[$contact->id] = [
+                'type' => $data['type'],
                 'wxid' => $contact->wxid,
                 'remark' => $data['remark']??$data['nickname']??$contact->wxid,
                 'seat_user_id' => $botOwnerId, //默认坐席为bot管理员

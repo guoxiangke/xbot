@@ -19,6 +19,7 @@ class WechatContact extends Model
         'public'=>0, // 0
         'friend'=>1, // 1
         'room'=>2, // 2 group
+        'stranger'=>3, // 3 group stranger
     ];
     // 0公众号，1联系人，2群
     const CALLBACKTYPES = [
