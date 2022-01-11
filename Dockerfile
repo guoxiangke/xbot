@@ -1,70 +1,74 @@
-#
-# PHP Dependencies
-# https://laravel-news.com/multi-stage-docker-builds-for-laravel
-#
-FROM composer:1 as vendor
+FROM php:8.0-apache-bullseye
 
-COPY database/ database/
-
-COPY composer.json composer.json
-# COPY composer.lock composer.lock
-# COPY auth.json auth.json
-
-RUN composer install \
-    --no-dev \
-    --ignore-platform-reqs \
-    --no-interaction \
-    --no-plugins \
-    --no-scripts \
-    --prefer-dist
-
-#
-# Frontend
-## node v14.16.0
-FROM node:lts as frontend
-COPY . /app
-WORKDIR /app
-
-# RUN npm config set registry http://registry.npm.taobao.org
-RUN npm install && npm run production
-
-#
-# Application
-#
-FROM drupal:8.9-apache
-# https://hub.docker.com/_/drupal
-
-# install the PHP extensions  pcntl
-RUN set -ex; \
+# install the PHP extensions we need
+RUN set -eux; \
+  \
+  if command -v a2enmod; then \
+    a2enmod rewrite; \
+  fi; \
+  \
+  savedAptMark="$(apt-mark showmanual)"; \
+  \
   apt-get update; \
   apt-get install -y --no-install-recommends \
-    vim \
-    libonig-dev\
-    ffmpeg \
-  ; \
-  docker-php-ext-install -j "$(nproc)" \
-    mbstring \
-    pcntl \
-    bcmath \
+    libfreetype6-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libpq-dev \
+    libzip-dev \
   ; \
   \
-  rm -rf /var/lib/apt/lists/* \
-  && rm -rf /var/www/html \
-  && mkdir /var/www/html
+  docker-php-ext-configure gd \
+    --with-freetype \
+    --with-jpeg=/usr \
+  ; \
+  \
+  docker-php-ext-install -j "$(nproc)" \
+    gd \
+    opcache \
+    pdo_mysql \
+    pdo_pgsql \
+    zip \
+    pcntl \
+  ; \
+  \
+# reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
+  apt-mark auto '.*' > /dev/null; \
+  apt-mark manual $savedAptMark; \
+  ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
+    | awk '/=>/ { print $3 }' \
+    | sort -u \
+    | xargs -r dpkg-query -S \
+    | cut -d: -f1 \
+    | sort -u \
+    | xargs -rt apt-mark manual; \
+  \
+  apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+  rm -rf /var/lib/apt/lists/*
 
-COPY . /var/www/html
-COPY --from=vendor /app/vendor/ /var/www/html/vendor/
-COPY --from=frontend /app/public/ /var/www/html/public/
+# set recommended PHP.ini settings
+# see https://secure.php.net/manual/en/opcache.installation.php
+RUN { \
+    echo 'opcache.memory_consumption=128'; \
+    echo 'opcache.interned_strings_buffer=8'; \
+    echo 'opcache.max_accelerated_files=4000'; \
+    echo 'opcache.revalidate_freq=60'; \
+    echo 'opcache.fast_shutdown=1'; \
+  } > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
-COPY docker/start.sh /usr/local/bin/start
-WORKDIR /var/www/html
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/
 
-RUN chown -R www-data:www-data storage bootstrap/cache \
-  && chmod -R ug+rwx storage bootstrap/cache \
-  && chmod u+x /usr/local/bin/start
 
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public/
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
+
+#RUN /usr/sbin/apachectl stop
+#RUN  apache2-foreground
+#service apache2 restart
+
+COPY ./start.sh /usr/local/bin/start
+RUN chmod u+x /usr/local/bin/start
 CMD ["/usr/local/bin/start"]
+
