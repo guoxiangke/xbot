@@ -17,6 +17,12 @@ use Livewire\WithFileUploads;
 class Webchat extends Component
 {
 
+    public function getListeners(){
+        return [
+            "echo-private:xbot.{$this->wechatBot->id},WechatMessageCreated" => '$refresh',
+        ];
+    }
+ 
     public function render()
     {
         $conversations = $this->getConversations();

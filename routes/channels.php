@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
+use App\Models\WechatBot;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,4 +16,10 @@ use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
+});
+
+Broadcast::channel('xbot.{xbotId}', function ($user, $xbotId) {
+    $botOwnerUid = $user->currentTeam->owner->id;
+    $wechatBot = WechatBot::firstWhere('user_id', $botOwnerUid);
+    return  (int) $wechatBot->id ===  (int) $xbotId;
 });

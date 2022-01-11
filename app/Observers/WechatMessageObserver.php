@@ -7,6 +7,7 @@ use App\Models\WechatMessage;
 use Illuminate\Support\Facades\Log;
 use Spatie\WebhookServer\WebhookCall;
 use Illuminate\Support\Facades\Cache;
+use App\Events\WechatMessageCreated;
 
 class WechatMessageObserver
 {
@@ -18,8 +19,12 @@ class WechatMessageObserver
      */
     public function created(WechatMessage $wechatMessage)
     {
-        // 如果是bot响应/发送的消息，不再转发
+        // 前端实时刷新
+        WechatMessageCreated::dispatch($wechatMessage);
+
+        // 如果是bot响应的消息，不再转发
         if(is_null($wechatMessage->from)) return;
+        // 如果是坐席发送的信息？
 
         // 如果其他资源 已经响应 关键词命令了，不再推送给第三方webhook了
         $isReplied = Cache::get('xbot.replied-'.$wechatMessage->msgid, false);
@@ -56,7 +61,7 @@ class WechatMessageObserver
                 ->payload($data)
                 ->dispatchSync();//dispatch Now
 
-            Log::debug(__METHOD__, ['WebhookCall', $wechatBot->wxid, $data]);
+            Log::debug(__METHOD__, [__LINE__, $wechatBot->wxid, $data]);
         }
     }
 }

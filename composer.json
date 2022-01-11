@@ -17,6 +17,7 @@
         "mvdnbrk/laravel-model-expires": "^1.8",
         "plank/laravel-metable": "^5.1",
         "predis/predis": "^1.1",
+        "pusher/pusher-php-server": "^7.0",
         "spatie/laravel-activitylog": "^4.3",
         "spatie/laravel-permission": "^5.4",
         "spatie/laravel-webhook-server": "^3.1"
