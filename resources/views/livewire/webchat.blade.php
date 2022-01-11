@@ -219,7 +219,8 @@
                   }else{
                     $name = $contactsArray[$message['from']]['remark']??($message['from']%100);
                     $fallbackAvatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
-                    $avatar =  $contactsArray[$message['from']]['contact']['avatar']?:$fallbackAvatar;
+                    
+                    $avatar =  $contactsArray[$message['from']]['contact']?$contactsArray[$message['from']]['contact']['avatar']:$fallbackAvatar;
                   }
                 @endphp
 
@@ -263,6 +264,10 @@
         
 
                             @case(1)
+                                <div class="str-chat__message-attachment str-chat__message-attachment--image str-chat__message-attachment--image str-chat__message-attachment--image--">
+                                  <img class="str-chat__message-attachment--img m-type-gif" src="{{ $content }}" data-testid="image-test">
+                                </div>
+                                @break
                             @case(3)
                                 <div class="str-chat__message-attachment str-chat__message-attachment--image str-chat__message-attachment--image str-chat__message-attachment--image--">
                                   <img class="str-chat__message-attachment--img" src="{{ $content }}" data-testid="image-test">
@@ -271,7 +276,7 @@
                             @case(2)
                               <div>
                                 <p>收到音频消息</p>
-                                <audio class='audio' preload="none" controls src='{{ $message["content"] }}' controlslist="nodownload" />
+                                <audio style="width: 200px;" class='audio' preload="none" controls src='{{ $message["content"] }}' controlslist="nodownload" />
                               </div>
                                 @break
                             @case(5)
@@ -565,6 +570,9 @@
   }
   .str-chat.dark .str-chat__messaging-input{
     color: #fff;
+  }
+  .str-chat__message-attachment--image img.m-type-gif {
+    width: 100px;
   }
 </style>
 <script>
