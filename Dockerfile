@@ -68,7 +68,7 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 #RUN  apache2-foreground
 #service apache2 restart
 
-COPY ./docke/start.sh /usr/local/bin/start
+COPY ./docker/start.sh /usr/local/bin/start
 RUN chmod u+x /usr/local/bin/start
 CMD ["/usr/local/bin/start"]
 
