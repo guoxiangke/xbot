@@ -75,7 +75,10 @@ class Webchat extends Component
 
         $this->user = auth()->user();
         $this->seatUsers = $this->user->currentTeam->allUsers()->keyBy('id')->toArray();
-        $this->wechatBot = WechatBot::where('user_id', $this->user->id)->firstOrFail();//todo
+        // 多客服助手！bot属于某个team的
+        $botOwnerId = $this->user->currentTeam->owner->id;
+        // if($botOwnerId == $this->user->id) //说明是管理员！
+        $this->wechatBot = WechatBot::where('user_id', $botOwnerId)->firstOrFail();//todo
 
         $this->editing = new WechatContent([
             'name'=>'请输入发送内容...', 
@@ -291,7 +294,7 @@ class Webchat extends Component
                     $addMoreIds = $contactIds->diff(collect($this->contacts)->keys());
                     // Log::debug(__METHOD__, ['新消息中，包含的 addMoreIds', count($this->contacts), $addMoreIds->toArray()]);
                     if($addMoreIds->count()){
-                        $contacts = WechatContact::whereIn('id', $addMoreIds->all())->get();
+                        $contacts = WechatBotContact::whereIn('id', $addMoreIds->all())->get();
                         $this->contacts = $this->contacts + $contacts->keyBy('id')->toArray();
                         // Log::debug(__METHOD__, ['新消息中 新增的 contacts', count($this->contacts), $contacts->toArray()]);
                     }

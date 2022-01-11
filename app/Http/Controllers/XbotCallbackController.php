@@ -510,7 +510,17 @@ class XbotCallbackController extends Controller
                 //  7000 7001～7999  # Album 自建资源 Album 关键词触发 getAlbum();
                 // #100  #100～#999  # LTS getLts();
         }
-
+        if($type == 'MT_RECV_OTHER_APP_MSG') {
+            if($data['wx_type'] == 49){
+                $content = '音乐消息[已回复]，请到手机查看！';
+                // 收到音频消息
+                if(isset($data['wx_sub_type']) && $data['wx_sub_type']==3){
+                    $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['url']}";
+                }
+                //更改TYPE 执行下面的内容
+                $type = 'MT_RECV_TEXT_MSG';
+            }
+        }
         // 把接收的消息写入 WechatMessage
         $recordWechatMessageTypes = [
             'MT_RECV_TEXT_MSG',
@@ -531,7 +541,10 @@ class XbotCallbackController extends Controller
                 // $fromId = null;
                 $conversationWxid = $data['to_wxid'];
             }else{
-                $from = WechatBotContact::where('wxid', $fromWxid)->first();
+                $from = WechatBotContact::query()
+                    ->where('wechat_bot_id', $wechatBot->id)
+                    ->where('wxid', $fromWxid)
+                    ->first();
                 if(!$from) {
                     Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '期待有个fromId but no from!']);
                 }else{
