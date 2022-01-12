@@ -20,7 +20,7 @@ class WechatMessageCreated implements ShouldBroadcast
      *
      * @var \App\Models\WechatMessage
      */
-    public $wechatMessage;
+    protected $wechatMessage;
 
 
     /**
@@ -41,5 +41,15 @@ class WechatMessageCreated implements ShouldBroadcast
     public function broadcastOn()
     {
         return new PrivateChannel("xbot.".$this->wechatMessage->wechat_bot_id);
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array
+     */
+    public function broadcastWith()
+    {
+        return ['id' => $this->wechatMessage->id];
     }
 }
