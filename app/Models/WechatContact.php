@@ -50,4 +50,8 @@ class WechatContact extends Model
         $history = now()->subDays($this->type==2?30:60);
         return $this->hasMany(WechatMessage::class, 'conversation')->where('updated_at', '>', $history);
     }
+    
+    public function getAvatarAttribute($value){
+        return str_replace('http://', 'https://', $value);
+    }
 }
