@@ -63,7 +63,6 @@ class XbotCallbackController extends Controller
                 $wechatBot->login_at = null;
                 $wechatBot->client_id = null;
                 $wechatBot->save();
-                $wechatBot->setMeta('xbot', null);
             }
             return response()->json(null);
         }
@@ -85,6 +84,7 @@ class XbotCallbackController extends Controller
             $wechatBot->is_live_at = now();
             $wechatBot->client_id = $clientId;
             $wechatBot->save();
+            $data['avatar'] = str_replace('http://','https://', $data['avatar']);
             $wechatBot->setMeta('xbot', $data);
 
             Log::debug(__CLASS__, [$clientId, __LINE__, $data['nickname'], '下面执行初始化']);
@@ -99,8 +99,6 @@ class XbotCallbackController extends Controller
             $wechatBot->is_live_at = null;
             $wechatBot->client_id = null;
             $wechatBot->save();
-            // 不再清空绑定的xbot信息
-            // $wechatBot->setMeta('xbot', null);
             return response()->json(null);
         }
         // MT_DATA_OWNER_MSG
@@ -108,6 +106,7 @@ class XbotCallbackController extends Controller
             $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
             // 程序崩溃时，login_at 还在，咋办？
             $wechatBot->update(['is_live_at'=>now()]);
+            $data['avatar'] = str_replace('http://','https://', $data['avatar']);
             $wechatBot->setMeta('xbot', $data); //account avatar nickname wxid
         }
 
