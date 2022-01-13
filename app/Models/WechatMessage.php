@@ -51,7 +51,7 @@ class WechatMessage extends Model
             case 3: //image
             case 4: //file
             case 5: //video
-                $content = config('xbot.fileDomain') . $value;
+                $content = $this->wechatBot->wechatClient->file . $value;
                 break;
             
             // case 0: //text

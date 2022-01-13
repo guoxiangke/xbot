@@ -460,7 +460,8 @@ class XbotCallbackController extends Controller
             $xbot->toVoiceText($msgid);
             // dispach
             $content = "/storage/voices/{$wechatBot->wxid}/{$msgid}.mp3";
-            SilkConvertQueue::dispatch($file, $wechatBot->wxid, $msgid);
+            $silkDomain = $wechatClient->silk;
+            SilkConvertQueue::dispatch($file, $wechatBot->wxid, $msgid, $silkDomain);
 
             Log::debug(__CLASS__, [$clientId, __LINE__, $file, $content, '语音消息=》SilkConvertQueue']);
         }

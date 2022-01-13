@@ -16,7 +16,9 @@ class CreateWechatClientsTable extends Migration
         Schema::create('wechat_clients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('wechat_client_id')->index();
-            $table->string('location')->comment('Windows机器位置');
+            $table->string('location')->comment('Windows机器暴露的xbot');
+            $table->string('silk')->comment('Windows机器暴露的语音临时文件');
+            $table->string('file')->comment('Windows机器暴露的Wechat Files文件夹');
             $table->unsignedInteger('clients')->comment('可登陆几个微信');
             $table->timestamps();
         });

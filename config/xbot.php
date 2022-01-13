@@ -14,8 +14,4 @@ return [
     */
     'license' => env('XBOT_LICENSE', '=='),
     'xGroup' => env('XBOT_GROUP', 'xxx@chatroom'),
-
-    'silkDomain' => env('XBOT_SILK', 'silkWindowsTempExposeHttpWithPort'),
-    'voiceDomain' => env('XBOT_VOICE', 'Upyun voice mp3 domain'),
-    'fileDomain' => env('XBOT_FILE', 'WindowsFileExposeHttpWithPort'),
 ];

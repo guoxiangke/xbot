@@ -56,7 +56,7 @@ class WechatBot extends Model
         if(!$clientId) {
             $clientId = $this->client_id;
         }
-        $clientAddress = WechatClient::where('id', $this->wechat_client_id)->value('location');
+        $clientAddress = WechatClient::where('id', $this->wechat_client_id)->value('xbot');
         return new Xbot($this->wxid, $clientAddress, $clientId);
     }
 
