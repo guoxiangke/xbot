@@ -33,6 +33,10 @@ class WechatBot extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function wechatClient(){
+        return $this->hasOne(WechatClient::class, 'id', 'wechat_client_id');
+    }
+
     // bot和contact关系 N:N
     protected $touches = ['contacts']; //https://github.com/laravel/framework/issues/31597
     public function contacts(): BelongsToMany // @see https://laravel.com/docs/8.x/eloquent-relationships#many-to-many
@@ -52,8 +56,7 @@ class WechatBot extends Model
         if(!$clientId) {
             $clientId = $this->client_id;
         }
-        $user = User::find(1);
-        $clientAddress = WechatClient::where('token', $this->token)->value('location');
+        $clientAddress = WechatClient::where('id', $this->wechat_client_id)->value('location');
         return new Xbot($this->wxid, $clientAddress, $clientId);
     }
 

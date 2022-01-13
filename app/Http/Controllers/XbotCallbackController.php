@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\WechatBot;
+use App\Models\WechatClient;
 use App\Models\WechatContact;
 use App\Models\WechatBotContact;
 use App\Models\WechatMessage;
@@ -31,10 +32,9 @@ class XbotCallbackController extends Controller
         }
         $data = $request['data'];
 
-        //windows机器.env配置都使用admin的不带任何权限token
-        $personalAccessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
-        if(!($personalAccessToken && $personalAccessToken->tokenable_id == 1)){
-            Log::error(__CLASS__, [$clientId, __LINE__, $request->all(), '参数Token错误, 请联系管理员']);
+        $wechatClient = WechatClient::where('token', $token)->first();
+        if(!$wechatClient) {
+            Log::error(__CLASS__, [$clientId, __LINE__, $request->all(), '参数Token错误']);
             return response()->json(null);
         }
 
@@ -56,7 +56,7 @@ class XbotCallbackController extends Controller
             Log::debug(__CLASS__, [$clientId, __LINE__, $clientId, '获取到登陆二维码，已压入qrPool', $cacheKey, $qr]);
 
             //如果登陆中！
-            $wechatBot = WechatBot::where('token', $token)
+            $wechatBot = WechatBot::where('wechat_client_id', $wechatClient->id)
                 ->where('client_id', $clientId)
                 ->first();
             if($wechatBot){
@@ -165,7 +165,7 @@ class XbotCallbackController extends Controller
         //*********************************************************
         // 通过clientId 找到对应的wechatBot
         // 群消息中，没有Bot的wxid  "from_wxid":"xxx"  "to_wxid":"23887@chatroom"
-        $wechatBot = WechatBot::where('token', $token)
+        $wechatBot = WechatBot::where('wechat_client_id', $wechatClient->id)
             ->where('client_id', $clientId)
             ->first();
         if(!$wechatBot) {

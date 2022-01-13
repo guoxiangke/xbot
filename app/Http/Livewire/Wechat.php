@@ -54,7 +54,7 @@ class Wechat extends Component
 
         $this->isLive = $wechatBot->is_live_at;
         if(!$this->isLive){
-            $cacheKey = $wechatBot->token;
+            $cacheKey = $wechatBot->wechat_client_id;
             $qrPool = Cache::get("xbots.{$cacheKey}.qrPool", []);
             if($qrPool){
                 $qrWithCliendId = array_shift($qrPool);
