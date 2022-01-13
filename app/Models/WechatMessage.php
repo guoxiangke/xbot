@@ -45,11 +45,13 @@ class WechatMessage extends Model
         // 监控上传文件夹1 C:\Users\Public\Pictures\ =》 /xbot/image/
         $content = $value;
         switch ($this->type) {
-            case 2: //voice
+            // case 2: //voice
+                // $content = config('xbot.voiceDomain') . $value;
+                // break;
             case 3: //image
             case 4: //file
             case 5: //video
-                $content = config('xbot.upyun') . $value;
+                $content = config('xbot.fileDomain') . $value;
                 break;
             
             // case 0: //text

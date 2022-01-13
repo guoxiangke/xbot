@@ -58,6 +58,10 @@ RUN { \
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/
 
+COPY --from=mwader/static-ffmpeg:4.4.1 /ffmpeg /usr/local/bin/
+COPY --from=guoxiangke/silk /app/converter.sh /app/converter.sh
+COPY --from=guoxiangke/silk /app/silk /app/silk
+
 
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public/
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf

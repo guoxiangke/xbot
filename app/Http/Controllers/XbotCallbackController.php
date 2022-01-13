@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use App\Jobs\SilkConvertQueue;
 
 class XbotCallbackController extends Controller
 {
@@ -453,12 +454,16 @@ class XbotCallbackController extends Controller
         // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》/xbot/silk/ => /xbot/voice/
         if($type == 'MT_RECV_VOICE_MSG'){
             $msgid = $data['msgid'];
-            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '语音消息']);
-            // TODO
-            // 1. 自动同步到 xbot/silk/wxs1692.tmp
-            // 2. 自动触发 转换mp3动作  xbot/mp3/$data['msgid'].mp3
-            $content = "/voice/{$data['msgid']}.mp3";
+            $silk_file = $data['silk_file'];
+            // "silk_file":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\wxs40F9.tmp"
+            // wxs40F9.tmp
+            $file = str_replace('C:\\Users\\Administrator\\AppData\\Local\\Temp\\','', $silk_file);
             $xbot->toVoiceText($msgid);
+            // dispach
+            $content = "/storage/voices/{$wechatBot->wxid}/{$msgid}.mp3";
+            SilkConvertQueue::dispatch($file, $wechatBot->wxid, $msgid);
+
+            Log::debug(__CLASS__, [$clientId, __LINE__, $file, $content, '语音消息=》SilkConvertQueue']);
         }
         // ✅ 提取转成的文字
         // TODO 下面的post要带上 转换后的文字
