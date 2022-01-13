@@ -275,42 +275,39 @@
                                 @break
                             @case(2)
                               <div>
-                                <p>收到音频消息</p>
+                                <div data-testid="message-text-inner-wrapper" class="str-chat__message-text-inner str-chat__message-simple-text-inner">
+                                  <p>{{ optional(App\Models\WechatMessageVoice::where('msgid', $message['msgid']))->value('content') }} （AI语言转文字,仅供参考）</p>
+                                </div>
                                 <audio style="width: 200px;" class='audio' preload="none" controls src='{{ $message["content"] }}' controlslist="nodownload" />
                               </div>
                                 @break
                             @case(5)
                                 <video class='video' preload="none" controls src='{{ $content }}' controlslist="nodownload" />
                                 @break
-                            @case(444)
-                                @if(isset($message['content']['fileext']) && $message['content']['fileext']=='mp3')
-                                  <audio class='audio' controls src='{{$content}}?ext=.mp3' controlslist="nodownload" />
-                                  @break
-                                @endif
-
-                                @if($content!="暂未处理的49消息")
+                            @case(4)
                                 <div class="str-chat__message-attachment str-chat__message-attachment--file str-chat__message-attachment--file str-chat__message-attachment--file--">
                                   <div data-testid="attachment-file" class="str-chat__message-attachment-file--item">
-                                    @isset($message['content']['fileext'])
+                                     
                                     <svg viewBox="0 0 48 48" width="30" height="30" style="max-width: 100%;"><defs><clipPath id="pageRadius2"><rect x="4" y="0" rx="4" ry="4" width="40" height="48"></rect></clipPath><clipPath id="foldCrop"><rect width="40" height="12" transform="rotate(-45 0 12)"></rect></clipPath><linearGradient x1="100%" y1="0%" y2="100%" id="pageGradient2"><stop stop-color="white" stop-opacity="0.25" offset="0%"></stop><stop stop-color="white" stop-opacity="0" offset="66.67%"></stop></linearGradient></defs><g clip-path="url(#pageRadius2)"><path d="M4 0 h 28 L 44 12 v 36 H 4 Z" fill="whitesmoke"></path><path d="M4 0 h 28 L 44 12 v 36 H 4 Z" fill="url(#pageGradient2)"></path></g><g transform="translate(32 12) rotate(-90)"><rect width="40" height="48" fill="#dbdbdb" rx="4" ry="4" clip-path="url(#foldCrop)"></rect></g><g id="label"><rect fill="#a8a8a8" x="4" y="34" width="40" height="14" clip-path="url(#pageRadius2)"></rect></g><g id="labelText" transform="translate(4 34)">
                                       <text x="20" y="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="9" fill="white" text-anchor="middle" style="font-weight: bold; text-align: center; pointer-events: none; text-transform: none; user-select: none;">
-                                        {{$message['content']['fileext']}}
+                                        @php 
+                                          $basename = basename($content);
+                                          $parts = explode('.', $basename);
+                                          $ext = end($parts);
+                                        @endphp
+                                        {{ $ext }}
                                       </text></g>
-                                    </svg>
-                                    @endisset
+                                    </svg> 
+                                    @if($ext =='mp3')
+                                      <audio class='audio' controls src='{{$content}}?ext=.mp3' controlslist="nodownload" />
+                                    @elseif($ext =='mp4')
+                                      <video class='video' preload="none" controls src='{{ $content }}' controlslist="nodownload" />
+                                    @else
                                     <div class="str-chat__message-attachment-file--item-text">
-                                      <a href="{{$content}}?ext={{$message['content']['fileext']??'unknown'}}" target="_blank">{{$message['content']['title']??'unknown'}}</a>
-                                      @isset($message['content']['totallen'])
-                                      <span>{{$message['content']['totallen']/1000}} kB</span>
-                                      @endisset
+                                      <a href="{{$content}}" target="_blank">收到{{ $ext }}文件，点击查看</a>
                                     </div>
+                                    @endif
                                   </div>
-                                </div>
-                                @break
-                                @endif
-
-                                <div data-testid="message-text-inner-wrapper" class="str-chat__message-text-inner str-chat__message-simple-text-inner">
-                                  <p>{{ $content }}</p>
                                 </div>
                                 @break
                             @default

@@ -16,7 +16,7 @@ class CreateWechatContentsTable extends Migration
         Schema::create('wechat_contents', function (Blueprint $table) {
             $table->id();
             $table->string('name')->comment('简短话术描述、群发备注');
-            $table->foreignId('wechat_bot_id');
+            $table->foreignId('wechat_bot_id')->index()->comment('bot微信号');
             //TODO 可用变量 替换 
                 // 昵称、:nickName
                 // 备注、{$mark} 

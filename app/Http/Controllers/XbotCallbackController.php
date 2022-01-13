@@ -8,6 +8,7 @@ use App\Models\WechatBot;
 use App\Models\WechatContact;
 use App\Models\WechatBotContact;
 use App\Models\WechatMessage;
+use App\Models\WechatMessageFile;
 use App\Models\WechatMessageVoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -152,7 +153,7 @@ class XbotCallbackController extends Controller
             'MT_RECV_EMOJI_MSG',
             'MT_RECV_FILE_MSG',
             'MT_DECRYPT_IMG_MSG',
-            // 'MT_DECRYPT_IMG_MSG_SUCCESS',
+            'MT_DECRYPT_IMG_MSG_SUCCESS',
             'MT_DATA_OWNER_MSG', // 获取到bot信息
             'MT_RECV_VIDEO_MSG',
         ];
@@ -194,15 +195,24 @@ class XbotCallbackController extends Controller
             return response()->json(null);
         }
         // MT_ROOM_ADD_MEMBER_NOTIFY_MSG 新人入群
-        if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG'){
+        // MT_ROOM_CREATE_NOTIFY_MSG 被拉入群
+        if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
             $groupWxid = $data['room_wxid'];
             $gBotContact = WechatBotContact::withTrashed()
                 ->where('wechat_bot_id', $wechatBot->id)
                 ->firstWhere('wxid', $groupWxid);
+            // 
             if(!$gBotContact){
-                $type = 3; //群陌生人
+                // 群 不存在的话，创建该群
+                $groupContact = [
+                    'type' => 2,//群
+                    'wxid' => $groupWxid,
+                ];
+                ($contact = WechatContact::firstWhere('wxid', $gBotContact))
+                    ? $contact->update($groupContact) // 更新资料
+                    : $contact = WechatContact::create($groupContact);
                 $attachs[$contact->id] = [
-                    'type' => $type, //群陌生人
+                    'type' => 2, //群陌生人
                     'wxid' => $contact->wxid,
                     'remark' => $member['nickname']??$contact->wxid,
                     'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
@@ -259,7 +269,7 @@ class XbotCallbackController extends Controller
                     $isBotRemovedFromGroup = true;
                 }else{ //其他人 退群/被移出群
                     // 1.找到这个 陌生人id
-                    $gBotContact = WechatBotContact::query()
+                    $gBotContact = WechatBotContact::withTrashed()
                         ->where('wechat_bot_id', $wechatBot->id)
                         ->firstWhere('wxid', $member['wxid']);
                     // $content = "{$member['nickname']}被出群了";
@@ -275,7 +285,7 @@ class XbotCallbackController extends Controller
             //1. 删除 messages
             if($isBotRemovedFromGroup) {
                 $groupWxid = $data['room_wxid'];
-                $gBotContact = WechatBotContact::query()
+                $gBotContact = WechatBotContact::withTrashed()
                     ->where('wechat_bot_id', $wechatBot->id)
                     ->firstWhere('wxid', $groupWxid);
                     // ->where('type', 2) 群，一定是2
@@ -370,7 +380,12 @@ class XbotCallbackController extends Controller
         if ($type == 'MT_SEARCH_CONTACT_MSG') {
             Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '主动+好友', $data['search']]);
             $remark = "朋友介绍"; //todo remark settings in FE
-            $xbot->addFriendBySearchCallback($data['v1'], $data['v2'], $remark);
+            if(isset($data['v1']) && isset($data['v2'])){
+                $xbot->addFriendBySearchCallback($data['v1'], $data['v2'], $remark);
+            }else{
+                $xbot->getRooms(); //更新群
+                Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '主动+好友', $data]);
+            }
             return response()->json(null);
         }
 
@@ -442,7 +457,7 @@ class XbotCallbackController extends Controller
             // TODO
             // 1. 自动同步到 xbot/silk/wxs1692.tmp
             // 2. 自动触发 转换mp3动作  xbot/mp3/$data['msgid'].mp3
-            $content = "/xbot/voice/{$data['msgid']}.mp3";
+            $content = "/voice/{$data['msgid']}.mp3";
             $xbot->toVoiceText($msgid);
         }
         // ✅ 提取转成的文字
@@ -470,20 +485,29 @@ class XbotCallbackController extends Controller
             $size = $xml['img']['@attributes']['length'];
             $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$msgid}.png";
             $xbot->getImage($src_file, $dest_file, $size);
-            $content = "/xbot/images/{$msgid}.png";
+            $content = "/images/{$msgid}.png";
             Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '收到|发送图片，已请求下载解密', $content]);
+            
+            WechatMessageFile::create([
+                'wechat_bot_id' => $wechatBot->id,
+                'msgid' => $data['msgid'],
+                'path' => $dest_file, //Windows路径
+                'url' => $content, //文件链接
+            ]);
         }
         // ✅  文件消息
         // 监控上传文件夹3 C:\Users\Administrator\Documents\WeChat Files\  =》 /xbot/file/
-        if($type == 'MT_RECV_FILE_MSG'){
-            $file = str_replace('C:\\Users\\Public\\Pictures\\','/xbot/', $data['file']);
+        if($type == 'MT_RECV_FILE_MSG' || $type == 'MT_RECV_VIDEO_MSG'){
+            $originPath = $data['file']??$data['video'];
+            $file = str_replace('C:\\Users\\Public\\Pictures\\','/', $originPath);
             $content =  str_replace('\\','/', $file);
-            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $clientId, $type, '文件消息', $data['file'], $content]);
-        }
-        if($type == 'MT_RECV_VIDEO_MSG'){
-            $file = str_replace('C:\\Users\\Public\\Pictures\\','/xbot/', $data['video']);
-            $content =  str_replace('\\','/', $file);
-            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $clientId, $type, '视频消息', $data['video'], $content]);
+            WechatMessageFile::create([
+                'wechat_bot_id' => $wechatBot->id,
+                'msgid' => $data['msgid'],
+                'path' => $originPath, //Windows路径
+                'url' => $content, //文件链接
+            ]);
+            Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $clientId, $type, '文件|视频消息', $originPath, $content]);
         }
 
         if($type == 'MT_RECV_TEXT_MSG'){ //接收到 个人/群 文本消息
@@ -555,15 +579,17 @@ class XbotCallbackController extends Controller
             if($isRoom){
                 $conversationWxid = $data['room_wxid'];
             }
-            $conversation = WechatBotContact::query()
+            $conversation = WechatBotContact::withTrashed()
                 ->where('wxid', $conversationWxid)
                 ->where('wechat_bot_id', $wechatBot->id)
                 ->first();
             if(!$conversation) {
-                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid,  $conversationWxid, '给不是好友的人发的信息，即把他删了，对方又请求好友了，我没答应，此时还可以发信息']);
+                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid,  $conversationWxid, '给不是好友的人发的信息，即把他删了，对方又请求好友了，我没答应，此时还可以发信息|新群！']);
                 // 下一步，搜索好友，加好友
                 $xbot->addFriendBySearch($conversationWxid);
                 return response()->json(null);
+            }else{
+                $conversation->restore();
             }
             WechatMessage::create([
                 'type' => array_search($type, WechatMessage::TYPES), // 1文本
