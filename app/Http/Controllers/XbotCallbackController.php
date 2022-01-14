@@ -38,7 +38,7 @@ class XbotCallbackController extends Controller
             return response()->json(null);
         }
 
-        $cacheKey = $token;
+        $cacheKey = $wechatClient->id;
         // 1.获取到登陆二维码
         // 缓存以供前端调用扫码（2个client同一个id，如果已登陆的，不显示二维码！）
         if($type == 'MT_RECV_QRCODE_MSG') {
