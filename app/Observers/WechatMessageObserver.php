@@ -19,8 +19,14 @@ class WechatMessageObserver
      */
     public function created(WechatMessage $wechatMessage)
     {
-        // 前端实时刷新
-        WechatMessageCreated::dispatch($wechatMessage);
+        // 前端1h内实时刷新
+        // 目的：为了节约pusher
+        // @see Broadcast::channel('xbot.{xbotId}' ..
+        // 如果有用户打开webchat页面，则1h内，pusher数据实时刷新
+        // @see class WechatMessageCreated implements ShouldBroadcast
+        if(Cache::get("xbot.{$wechatMessage->wechat_bot_id}.webchat.pusher.live", false)){
+            WechatMessageCreated::dispatch($wechatMessage);
+        }
 
         // 如果是bot响应的消息，不再转发
         if(is_null($wechatMessage->from)) return;

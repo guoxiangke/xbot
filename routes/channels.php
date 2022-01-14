@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Broadcast;
 use App\Models\WechatBot;
+use Illuminate\Support\Facades\Cache;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,5 +23,12 @@ Broadcast::channel('xbot.{xbotId}', function ($user, $xbotId) {
     $botOwnerUid = $user->currentTeam->owner->id;
     $wechatBot = WechatBot::firstWhere('user_id', $botOwnerUid);
     if(!$wechatBot) return false;
-    return  (int) $wechatBot->id ===  (int) $xbotId;
+    if((int) $wechatBot->id ===  (int) $xbotId){
+        // 目的：为了节约pusher
+        // @see WechatMessageObserver@created()
+        // 如果有用户打开webchat页面，则30分钟内，pusher数据实时刷新
+        Cache::put("xbot.{$wechatBot->id}.webchat.pusher.live", true, 1800);
+        return true;
+    }
+    
 });
