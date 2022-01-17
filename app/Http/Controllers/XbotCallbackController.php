@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\WechatBot;
 use App\Models\WechatClient;
 use App\Models\WechatContact;
+use App\Models\WechatContent;
 use App\Models\WechatBotContact;
 use App\Models\WechatMessage;
 use App\Models\WechatMessageFile;
@@ -534,6 +535,22 @@ class XbotCallbackController extends Controller
                 // 回复模版变量消息
                 // API发送模版消息
             // 响应 预留 关键词 群配置？
+            $autoReply = true;
+            if($isRoom){
+                $wechatListenRooms = $wechatBot->getMeta('wechatListenRooms', []);
+                $autoReply = $wechatListenRooms[$replyTo]??false;
+            }
+            if($autoReply) {
+                $keywords = $wechatBot->autoReplies()->pluck('keyword','wechat_content_id');
+
+                foreach ($keywords as $wechatContentId => $keyword) {
+                    // TODO preg; @see https://laravel.com/docs/8.x/helpers#method-str-is
+                    if(Str::is($keyword, $content)){
+                        Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '关键词回复', $keyword]);
+                        $wechatBot->send([$replyTo], WechatContent::find($wechatContentId));
+                    }
+                }
+            }
             // 资源：预留 关键词
                 //  600 + 601～699   # LY 中文：拥抱每一天 getLy();
                 //  7000 7001～7999  # Album 自建资源 Album 关键词触发 getAlbum();

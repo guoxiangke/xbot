@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Plank\Metable\Metable;
 // use Spatie\Activitylog\Traits\LogsActivity;
 use Mvdnbrk\EloquentExpirable\Expirable;
@@ -50,6 +51,12 @@ class WechatBot extends Model
             ->withPivot(['remark','seat_user_id']);
     }
 
+    // WechatBot::find(1)->autoReplies()->create(['keyword'=>'hi','wechat_content_id'=>1]);
+    public function autoReplies()
+    {
+        return $this->hasMany(WechatAutoReply::class)
+            ->orderBy('updated_at','desc'); // 最近编辑的，作为第一个匹配来响应
+    }
 
     // '无法找到设备绑定位置，请rootUser设置token:clientAddress绑定'
     public function xbot($clientId=0){
@@ -68,14 +75,36 @@ class WechatBot extends Model
         $type = WechatContent::TYPES[$wechatContent->type];
         $xbot = $this->xbot();
         $request = $wechatContent->content;
-        if($type == 'text')     $xbot->sendText($to, $request['content']);  // TODO template!
+        if($type == 'text' || $type == 'at') {
+            // template :nickname :sex @bluesky_still
+            $content = $request['content'];
+            // :remark 备注或昵称 
+            // :name 好友自己设置的昵称 
+            // :seat 客服座席名字 
+            // 第:no号好友
+            if(Str::contains($content, [':remark', ':name', ':seat'])){
+                $contact = \App\Models\WechatBotContact::with('contact', 'seat')
+                        ->where('wxid', $to)
+                        ->firstOrFail();
+                $remark = $contact->remark;
+                $name = $contact->contact->nickname;
+                $seat = $contact->seat->name;
+                // $no = $contact->id;
 
-        if($type == 'at')       $xbot->sendAtText($to, $request['content'], $request['at']);
+                $content = preg_replace_array('/:remark/', [$remark], $content);
+                $content = preg_replace_array('/:name/', [$name], $content);
+                $content = preg_replace_array('/:seat/', [$seat], $content);
+                // $content = preg_replace_array('/:no/', [$no], $content);
+            }
+            if($type == 'text')     $xbot->sendText($to, $content);
+            if($type == 'at')       $xbot->sendAtText($to, $content, $request['at']);
+        }
+
         // TODO file&image!
         // if($type == 'file')     $xbot->sendFile($to, $request['url']);
         // if($type == 'image')    $xbot->sendImage($to, $request['url']);
-        if($type == 'music')    $xbot->sendMusic($to, $request['url'], $request['title'], $request['desc']);
-        if($type == 'link')     $xbot->sendLink($to, $request['image'], $request['url'],  $request['title'], $request['desc']);
+        if($type == 'music')    $xbot->sendMusic($to, $request['url'], $request['title'], $request['description']);
+        if($type == 'link')     $xbot->sendLink($to, $request['image'], $request['url'],  $request['title'], $request['description']);
     }
 
     // 批量发送 batch 第一个参数为数组[]

@@ -6,13 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Plank\Metable\Metable;
+use Spatie\Tags\HasTags;
 
 class WechatBotContact extends Model
 {
     use SoftDeletes;
     use HasFactory;
     use Metable;
-    // use \Spatie\Tags\HasTags;
+    use HasTags;
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
     const TYPES = WechatContact::TYPES;
     const DEFAULT_AVATAR = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0?wx_fmt=png';

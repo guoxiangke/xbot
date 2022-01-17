@@ -6,6 +6,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 final class Xbot {
     public $http; // PendingRequest
@@ -113,7 +114,12 @@ final class Xbot {
     }
     //@人在群中
     public function sendAtText($to_wxid, $content, $at_list){
-        $this->request('MT_SEND_CHATROOM_ATMSG', get_defined_vars());
+        // 判断如果不是群？
+        if(Str::endsWith($to_wxid, '@chatroom')){
+            $this->request('MT_SEND_CHATROOM_ATMSG', get_defined_vars());
+        }else{
+            $this->sendText($to_wxid, $content);
+        }
     }
 
     public function sendLink($to_wxid, $url, 

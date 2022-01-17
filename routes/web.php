@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Wechat;
 use App\Http\Livewire\Webchat;
+use App\Http\Livewire\WechatContent;
+use App\Http\Livewire\WechatBotContact;
+use App\Http\Livewire\WechatAutoReply;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -29,4 +32,7 @@ Route::group([
     ], function () {
         Route::get('/', Wechat::class)->name('weixin');
         Route::get('/webchat', Webchat::class)->name('webchat');
+        Route::get('/content', WechatContent::class)->name('content');
+        Route::get('/contact', WechatBotContact::class)->name('contact');
+        Route::get('/autoreply', WechatAutoReply::class)->name('autoreply');
 });
