@@ -80,7 +80,14 @@ class XbotCallbackController extends Controller
             Cache::set("xbots.{$cacheKey}.qrPool", $qrPool);
             Log::debug(__CLASS__, [$clientId, __LINE__, $data['nickname'], '登陆成功','，已弹出qrPool']);
 
-            $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
+            // Or没有提前绑定
+            $wechatBot = WechatBot::firstOrNew(
+                ['wxid' =>  $data['wxid']],
+                [
+                    'user_id' => 1, //TODO 默认绑定1号假用户
+                    'wechat_client_id' => $wechatClient->id,
+                ],
+            );
             $wechatBot->login_at = now();
             $wechatBot->is_live_at = now();
             $wechatBot->client_id = $clientId;
@@ -170,15 +177,13 @@ class XbotCallbackController extends Controller
             ->where('client_id', $clientId)
             ->first();
         if(!$wechatBot) {
-            Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, ' 不存在wechatBot？设备已下线！']);
+            Log::error(__CLASS__, [$clientId, __LINE__, $wechatClient->id, ' 不存在wechatBot？设备已下线！']);
             return response()->json(null);
         }
         //*********************************************************
         $botWxid = $data['to_wxid']??null;
 
         $content = ''; //写入 WechatMessage 的 content
-        $isRoom = $data['room_wxid']??false; //群
-
         $config = $wechatBot->getMeta('xbot.config', [
             'isAutoWcpay' => false, // MT_RECV_WCPAY_MSG
             'isAutoAgree' => false, // 自动同意好友请求
@@ -186,7 +191,54 @@ class XbotCallbackController extends Controller
             'weclomeMsg' => 'hi',
             'isListenRoom' => false,
             'isListenRoomAll' => false,
+            'isAutoReply' => false, // 关键词自动回复
         ]);
+
+        // AutoReply  响应 预留 关键词 + 群配置
+        $islistenMsg = true; //默认是记录消息，但是在群里，需要判断
+        $isAutoReply = $config['isAutoReply']??false;
+
+
+        $isRoom = $data['room_wxid']??false; //群
+        if($isRoom){
+            $isListenRooms = $wechatBot->getMeta('isListenRooms', []);
+            $isReplyRooms = $wechatBot->getMeta('isReplyRooms', []);
+
+            $replyTo = $data['room_wxid'];
+            $isAutoReply = $isReplyRooms[$replyTo]??false; // 选择某些群来响应关键词
+            if(!$config['isListenRoomAll']) //如果不是监听所有群消息，则从配置中取
+                $islistenMsg = $isListenRooms[$replyTo]??false; // 选择某些群来记录消息
+
+            if(isset($data['from_wxid']) && $data['from_wxid'] == $wechatBot->wxid) {
+                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '自己响应的群消息，只记录，不响应autoprely']);
+                // return response()->json(null);
+            }else{
+                // 接收到群消息！群消息里，没有wxid, from_wxid = 发送者，to_wxid=wx@room room_wxid=wx@room
+                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '接收到群消息']);
+                // 是否记录群消息: isListenRoom
+                // 是否记录所有的群消息: isListenRoomAll
+                if(!$config['isListenRoom']){
+                    Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '!终止执行,没有监听群消息']);
+                    $islistenMsg = false;
+                    // 有没有可能不记录，但是响应 关键词 回复？？
+                    // return response()->json(null);
+                }
+                // //  && $islistenMsg
+                // if(!($config['isListenRoomAll'] || $islistenMsg)){
+                //     Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '!终止执行，没有开启监听所有/本群消息']);
+                //     $islistenMsg = false;
+                //     // 有没有可能不记录，但是响应 关键词 回复？？
+                //     // return response()->json(null);
+                // }
+            }
+        }
+        // else{
+        //     if(isset($data['from_wxid']) && $data['from_wxid'] == $data['to_wxid']){
+        //         Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '自己发给自己消息，即不发送给develope' , $request->all()]);
+        //         //因bot发的信息（通过关键词响应的信息）也要记录，所以继续走下去吧！不return了！
+        //         // return response()->json(null);
+        //     }
+        // }
 
         // 初始化 联系人数据
         $syncContactTypes = ['MT_DATA_FRIENDS_MSG', 'MT_DATA_CHATROOMS_MSG', 'MT_DATA_PUBLICS_MSG' ];
@@ -202,7 +254,7 @@ class XbotCallbackController extends Controller
             $gBotContact = WechatBotContact::withTrashed()
                 ->where('wechat_bot_id', $wechatBot->id)
                 ->firstWhere('wxid', $groupWxid);
-            // 
+
             if(!$gBotContact){
                 // 群 不存在的话，创建该群
                 $groupContact = [
@@ -226,7 +278,7 @@ class XbotCallbackController extends Controller
                     Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $gBotContact->nickname, 'restored']);
                 }
             }
-            
+
             // 如果联系人不存在，则创建在wechatContact 和 wechatBotContact
             // 1.假设群已经存在，只需要处理新加入的群成员
             $attachs = [];
@@ -308,32 +360,6 @@ class XbotCallbackController extends Controller
         if(!($wechatBot || $botWxid)){
             Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $request->all()]);
         }
-
-        if($isRoom){
-            if(isset($data['from_wxid']) && $data['from_wxid'] == $wechatBot->wxid) {
-                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '自己响应的群消息']);
-                // return response()->json(null);
-            }else{
-                // 接收到群消息！群消息里，没有wxid, from_wxid = 发送者，to_wxid=wx@room room_wxid=wx@room
-                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '接收到群消息']);
-                if(!$config['isListenRoom']){
-                    Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '终止执行,没有监听群消息']);
-                    return response()->json(null);
-                }
-                if(!$config['isListenRoomAll']){
-                    Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '终止执行，没有监听所有群消息']);
-                    return response()->json(null);
-                }
-                //go to next(); //TODO 如果监听群消息，但全部监听？
-            }
-        }
-        // else{
-        //     if(isset($data['from_wxid']) && $data['from_wxid'] == $data['to_wxid']){
-        //         Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '自己发给自己消息，即不发送给develope' , $request->all()]);
-        //         //因bot发的信息（通过关键词响应的信息）也要记录，所以继续走下去吧！不return了！
-        //         // return response()->json(null);
-        //     }
-        // }
 
         //************************************************
         $xbot = $wechatBot->xbot($clientId);
@@ -493,7 +519,7 @@ class XbotCallbackController extends Controller
             $xbot->getImage($src_file, $dest_file, $size);
             $content = "/images/{$msgid}.png";
             Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $type, '收到|发送图片，已请求下载解密', $content]);
-            
+
             WechatMessageFile::create([
                 'wechat_bot_id' => $wechatBot->id,
                 'msgid' => $data['msgid'],
@@ -523,30 +549,20 @@ class XbotCallbackController extends Controller
             if($data['from_wxid'] == $wechatBot->wxid) $replyTo = $data['to_wxid']; //自己给别人聊天时，发关键词 响应信息
             // 彩蛋:谁在线，在线时长！
             if($content=='whoami'){
-                $time = $wechatBot->login_at->diffForHumans();
-                $text = "已登陆 $time\n时间: {$wechatBot->login_at}\n设备ID: {$clientId}\n用户: {$wechatBot->user->name}";
+                $time = optional($wechatBot->login_at)->diffForHumans();
+                $text = "已登陆 $time\n时间: {$wechatBot->login_at}\n设备: {$clientId}号端口@Windows{$wechatBot->wechat_client_id}\n用户: {$wechatBot->user->name}";
                 $xbot->sendText($replyTo, $text);
                 // 针对文本 命令的 响应，标记 已响应，后续 关键词不再触发（return in observe）。
                 // 10s内响应，后续hook如果没有处理，就丢弃，不处理了！
                 // 如果其他资源 已经响应 关键词命令了，不再推送给第三方webhook了
                 Cache::put('xbot.replied-'.$data['msgid'], true, 10);
             }
-            // AutoReply TODO 关键词自动回复，
-                // 回复模版变量消息
-                // API发送模版消息
-            // 响应 预留 关键词 群配置？
-            $autoReply = true;
-            if($isRoom){
-                $wechatListenRooms = $wechatBot->getMeta('wechatListenRooms', []);
-                $autoReply = $wechatListenRooms[$replyTo]??false;
-            }
-            if($autoReply) {
+            if($isAutoReply) {
                 $keywords = $wechatBot->autoReplies()->pluck('keyword','wechat_content_id');
-
                 foreach ($keywords as $wechatContentId => $keyword) {
                     // TODO preg; @see https://laravel.com/docs/8.x/helpers#method-str-is
                     if(Str::is($keyword, $content)){
-                        Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '关键词回复', $keyword]);
+                        Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, '关键词回复', $keyword]);
                         $wechatBot->send([$replyTo], WechatContent::find($wechatContentId));
                     }
                 }
@@ -577,7 +593,7 @@ class XbotCallbackController extends Controller
             'MT_RECV_VIDEO_MSG',
             'MT_RECV_SYSTEM_MSG',
         ];
-        if(in_array($type,$recordWechatMessageTypes)) {
+        if($islistenMsg && in_array($type,$recordWechatMessageTypes)) {
             $fromWxid = $data['from_wxid'];
             $conversationWxid = $data['from_wxid'];
             // 被动响应的信息+主动回复给filehelper的信息

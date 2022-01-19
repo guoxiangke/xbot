@@ -60,51 +60,47 @@ class WechatBot extends Model
 
     // '无法找到设备绑定位置，请rootUser设置token:clientAddress绑定'
     public function xbot($clientId=0){
-        if(!$clientId) {
-            $clientId = $this->client_id;
-            if(!$clientId) {
-                Log::error(__CLASS__,[__METHOD__,__LINE__, '无法找到设备绑定位置，请rootUser设置token:clientAddress绑定']);
-                return;
-            }
-        }
-        $clientAddress = WechatClient::where('id', $this->wechat_client_id)->value('xbot');
-        return new Xbot($this->wxid, $clientAddress, $clientId);
+        // 如果数据中存在，则从数据库中去，如果没有，从参数中取，如果还没有，给一个默认值1
+        $clientId = $this->client_id??$clientId??2;
+        $winClientUri = WechatClient::where('id', $this->wechat_client_id)->value('xbot');
+        return new Xbot($this->wxid, $winClientUri, $clientId);
     }
 
     private function _send($to, WechatContent $wechatContent){
         $type = WechatContent::TYPES[$wechatContent->type];
         $xbot = $this->xbot();
-        $request = $wechatContent->content;
+        $data = $wechatContent->content;
         if($type == 'text' || $type == 'at') {
             // template :nickname :sex @bluesky_still
-            $content = $request['content'];
+            $content = $data['content'];
             // :remark 备注或昵称 
-            // :name 好友自己设置的昵称 
+            // :nickname 好友自己设置的昵称 
             // :seat 客服座席名字 
             // 第:no号好友
-            if(Str::contains($content, [':remark', ':name', ':seat'])){
+            if(Str::contains($content, [':remark', ':nickname', ':seat'])){
                 $contact = \App\Models\WechatBotContact::with('contact', 'seat')
                         ->where('wxid', $to)
                         ->firstOrFail();
                 $remark = $contact->remark;
-                $name = $contact->contact->nickname;
+                $nickname = $contact->contact->nickname;
                 $seat = $contact->seat->name;
                 // $no = $contact->id;
 
                 $content = preg_replace_array('/:remark/', [$remark], $content);
-                $content = preg_replace_array('/:name/', [$name], $content);
+                $content = preg_replace_array('/:nickname/', [$nickname], $content);
                 $content = preg_replace_array('/:seat/', [$seat], $content);
                 // $content = preg_replace_array('/:no/', [$no], $content);
             }
             if($type == 'text')     $xbot->sendText($to, $content);
-            if($type == 'at')       $xbot->sendAtText($to, $content, $request['at']);
+            if($type == 'at')       $xbot->sendAtText($to, $content, $data['at']);
         }
 
         // TODO file&image!
-        // if($type == 'file')     $xbot->sendFile($to, $request['url']);
-        // if($type == 'image')    $xbot->sendImage($to, $request['url']);
-        if($type == 'music')    $xbot->sendMusic($to, $request['url'], $request['title'], $request['description']);
-        if($type == 'link')     $xbot->sendLink($to, $request['image'], $request['url'],  $request['title'], $request['description']);
+        // if($type == 'file')     $xbot->sendFile($to, $data['url']);
+        // if($type == 'image')    $xbot->sendImage($to, $data['url']);
+        if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
+        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], $data['description']);
+        if($type == 'link')     $xbot->sendLink($to, $data['image'], $data['url'],  $data['title'], $data['description']);
     }
 
     // 批量发送 batch 第一个参数为数组[]
@@ -129,7 +125,7 @@ class WechatBot extends Model
         Log::error(__CLASS__, [__LINE__, $this->wxid, $this->client_id, 'XbotIsLive 2次检测时间', $lastCheck, $this->is_live_at]);
         
         // Try 3 time? TODO. 第1次没反应时，却在线，怎么办？
-        if ($this->is_live_at->diffInMinutes() > 1){ // 如果时间大于1分钟 则代表离线
+        if (optional($this->is_live_at)->diffInMinutes() > 1){ // 如果时间大于1分钟 则代表离线
             // $this->logout();//对此client_id调一次二维码，如果此clientId被别人使用了呢？岂不是把别人下线了？
             Log::error(__CLASS__, [__LINE__, 'XbotIsLive 程序崩溃时,已下线！', $this->wxid, $this->client_id]);
             $this->login_at = null;

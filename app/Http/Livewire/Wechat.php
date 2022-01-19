@@ -77,6 +77,7 @@ class Wechat extends Component
             'isWebhook' => false,
             'webhookUrl' => 'http://192.168.168.117/api/webhook/xbot',
             'webhookSecret' => '123456',
+            'isAutoReply' => false, // 关键词自动回复
         ]);
 
     }
@@ -92,6 +93,7 @@ class Wechat extends Component
             'config.isWebhook',
             'config.webhookUrl',
             'config.webhookSecret',
+            'config.isAutoReply',
             ])
         ){
             $key = str_replace('config.', '', $name);

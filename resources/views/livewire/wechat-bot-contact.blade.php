@@ -214,8 +214,12 @@
 
                         @if($type=='group')
                         <label for="log_me" class="flex items-center">
-                            <x-jet-checkbox wire:model.defer="wechatListenRoom" :value="$wechatListenRoom"/>
+                            <x-jet-checkbox wire:model.defer="isListenRoom" :value="$isListenRoom"/>
                             <span class="ml-2 text-sm text-gray-600">监听本群消息</span>
+                        </label>
+                        <label for="log_me" class="flex items-center">
+                            <x-jet-checkbox wire:model.defer="isReplyRoom" :value="$isReplyRoom"/>
+                            <span class="ml-2 text-sm text-gray-600">响应本群关键词</span>
                         </label>
                         @endif
                     </div>

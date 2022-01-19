@@ -79,7 +79,6 @@ class WechatBotContact extends Component
         $currentTeamOwnerId = auth()->user()->currentTeam->owner->id;
         $this->wechatBot = WechatBot::where('user_id', $currentTeamOwnerId)->firstOrFail();
 
-        // $this->wechatBot = $wechatBot;
         $this->wechatBotId = $this->wechatBot->id;
         $this->editing = $this->makeBlankModel();
         $this->tagWith =  'wechat-contact-team-'.$currentTeamOwnerId;
@@ -87,7 +86,9 @@ class WechatBotContact extends Component
         // $tagB = Tag::findOrCreate('tagB', $this->tagWith);
         // $this->tags = Tag::getWithType($this->tagWith)->pluck('name','id')->toArray();
         // dd($this->tags);
-        $this->wechatListenRooms = $this->wechatBot->getMeta('wechatListenRooms', []);
+        $this->isListenRooms = $this->wechatBot->getMeta('isListenRooms', []);
+        $this->isReplyRooms = $this->wechatBot->getMeta('isReplyRooms', []);
+
     }
 
     public function friendDel(Model $wechatBotContact)
@@ -137,15 +138,18 @@ class WechatBotContact extends Component
         return Model::make(['date' => now(), 'status' => 'success']);
     }
 
-    public $wechatListenRoom = false;
-    public $wechatListenRoomKey;
-    public $wechatListenRooms;
+    public $isListenRoom = false;
+    public $isReplyRoom = false;
+    public $roomWxid;
+    public $isListenRooms;
+    public $isReplyRooms;
     public function edit(Model $model)
     {
         $this->useCachedRows();
         if ($this->editing->isNot($model)) $this->editing = $model;
-        $this->wechatListenRoomKey = $model->contact->wxid; // "26401104290@chatroom"
-        $this->wechatListenRoom = $this->wechatListenRooms[$this->wechatListenRoomKey]??false;
+        $this->roomWxid = $model->contact->wxid; // "26401104290@chatroom"
+        $this->isListenRoom = $this->isListenRooms[$this->roomWxid]??false;
+        $this->isReplyRoom = $this->isReplyRooms[$this->roomWxid]??false;
         $this->showEditModal = true;
     }
 
@@ -169,9 +173,13 @@ class WechatBotContact extends Component
 
     public function updated($name,$value)
     {
-        if($name == 'wechatListenRoom'){
-            $this->wechatListenRooms[$this->wechatListenRoomKey] = $value;
-            $this->wechatBot->setMeta('wechatListenRooms', $this->wechatListenRooms);
+        if($name == 'isListenRoom'){
+            $this->isListenRooms[$this->roomWxid] = $value;
+            $this->wechatBot->setMeta('isListenRooms', $this->isListenRooms);
+        }
+        if($name == 'isReplyRoom'){
+            $this->isReplyRooms[$this->roomWxid] = $value;
+            $this->wechatBot->setMeta('isReplyRooms', $this->isReplyRooms);
         }
     }
 

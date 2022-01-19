@@ -112,6 +112,11 @@ final class Xbot {
     public function sendText($to_wxid, $content){
         $this->request('MT_SEND_TEXTMSG', get_defined_vars());
     }
+
+    public function sendContactCard($to_wxid, $card_wxid){
+        $this->request('MT_SEND_CARDMSG', get_defined_vars());
+    }
+    
     //@人在群中
     public function sendAtText($to_wxid, $content, $at_list){
         // 判断如果不是群？

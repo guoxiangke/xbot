@@ -7,6 +7,7 @@
 <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8  space-y-4">
     
     <div class="info">
+        {{$msg}}
         @if($isLive)
         <figure class="md:flex bg-gray-100 rounded-xl p-8 md:p-0">
             <img class="w-36 h-36  mx-auto" src="{{ $xbotInfo['avatar']??$defaultAvatar }}" alt="{{ $xbotInfo['nickname'] }}" title="{{ $xbotInfo['nickname'] }}的头像">
@@ -70,6 +71,13 @@
                 label="是否记录所有的群消息"
                 />
             @endif
+
+            <x-input.toggle 
+                wire:model="config.isAutoReply"
+                id="config.isAutoReply" 
+                :checked="$config['isAutoReply']"
+                label="关键词自动回复(仅好友，群需要另外配置)"
+                />
 
             <x-input.toggle 
                 wire:model="config.isAutoWcpay"
