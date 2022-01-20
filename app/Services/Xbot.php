@@ -78,7 +78,7 @@ final class Xbot {
         $this->request('MT_TRANS_VOICE_MSG', get_defined_vars());
     }
 
-    public function getImage($src_file, $dest_file, $size){
+    public function decryptImage($src_file, $dest_file, $size){
         $this->request('MT_DECRYPT_IMG_MSG', get_defined_vars());
     }
 

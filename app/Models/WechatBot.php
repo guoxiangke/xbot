@@ -15,6 +15,7 @@ use Mvdnbrk\EloquentExpirable\Expirable;
 use App\Services\Xbot;
 use App\Models\User;
 use App\Models\WechatBotContact;
+use App\Events\WechatBotLogin;
 
 class WechatBot extends Model
 {
@@ -63,9 +64,10 @@ class WechatBot extends Model
     public function xbot($clientId=0){
         // 如果数据中存在，则从数据库中去，如果没有，从参数中取，如果还没有，给一个默认值1
         $clientId = $this->client_id??$clientId??2;
-        $winClientUri = WechatClient::where('id', $this->wechat_client_id)->value('xbot');
-        Log::debug(__CLASS__, [__LINE__, $winClientUri , $this->wxid, $clientId]);
-        return new Xbot($winClientUri, $this->wxid,  $clientId);
+        $wechatClient = WechatClient::where('id', $this->wechat_client_id)->firstOrFail();
+        Log::debug(__CLASS__, [__LINE__, $wechatClient->token, $this->wxid, $clientId, '通过$wechatBot->xbot()->调用']);
+        $winClientUri = $wechatClient->xbot;
+        return new Xbot($winClientUri, $this->wxid, $clientId);
     }
 
     private function _send($to, WechatContent $wechatContent){
@@ -117,6 +119,20 @@ class WechatBot extends Model
         $xbot = $this->xbot();
         $xbot->quit();
         $xbot->loadQR();
+
+        $this->login_at = null;
+        $this->is_live_at = null;
+        $this->client_id = null;
+        $this->save();
+    }
+
+    public function login($clientId){
+        $this->login_at = now();
+        $this->is_live_at = now();
+        $this->client_id = $clientId;
+        $this->save();
+        // 登陆成功，通知前端刷新页面
+        WechatBotLogin::dispatch($this->id);
     }
 
     // 程序崩溃时，login_at 还在，咋办？ 

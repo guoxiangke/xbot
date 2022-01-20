@@ -21,10 +21,11 @@ class Wechat extends Component
     public $xbotInfo;
     public $loginAt;
 
-
-    
-
-    
+    public function getListeners(){
+        return [
+            "echo-private:xbot.login.{$this->wechatBot->id},WechatBotLogin" => '$refresh',
+        ];
+    }
 
     public $config;
 

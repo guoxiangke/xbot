@@ -4,7 +4,7 @@
     </h2>
 </x-slot>
 
-<div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8  space-y-4">
+<div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8  space-y-4" @if(!$isLive) wire:poll.10000ms @endif>
     
     <div class="info">
         {{$msg}}
@@ -20,7 +20,6 @@
                         <br/>上线时间：{{ $loginAt }}
                         <br/>上线设备: {{ $wechatBot->client_id }}号端口@Windows{{ $wechatBot->wechat_client_id }}
                         <br/>有效期： {{ $wechatBot->expires_at }}
-                        <br/>请使用下面👇的“退出Bot登录”按钮退出！
                     </div>
                     
                     <div class="mt-4">
