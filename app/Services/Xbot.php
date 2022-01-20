@@ -15,10 +15,10 @@ final class Xbot {
     public $botWxid;
 
     //多台机器运行，每个机器多个bot登陆
-    public function __construct($botWxid, $baseUrl, $clientId){
+    public function __construct($cliendUrl, $botWxid='null', $clientId=0){
         $this->http = Http::withOptions([])
             ->acceptJson()
-            ->baseUrl($baseUrl)
+            ->baseUrl($cliendUrl)
             ->withoutVerifying();
         $this->clientId = $clientId;
         $this->botWxid = $botWxid;
@@ -38,10 +38,23 @@ final class Xbot {
         $this->request('MT_QUIT_LOGIN_MSG');
     }
 
-    public function open(){
+    public function loadQR(){
         $this->request('MT_RECV_QRCODE_MSG');
     }
 
+    // 仅 MT_INJECT_WECHAT 不用 client id
+    public function newClient(){
+        $this->request('MT_INJECT_WECHAT');
+    }
+
+    public function closeClient($clientId=null){
+        if($clientId){ // called by WechatClient::close($clientId); 不带botWxid，只传clienId的关闭方法
+            $data = ['type'=>'MT_QUIT_WECHAT_MSG','client_id'=>$clientId];
+            return rescue(fn() =>  $this->http->post($this->endPoint, $data), null, []);
+        }else{ //called by $xbot->closeClient();
+            $this->request('MT_QUIT_WECHAT_MSG');
+        }
+    }
 
     public function agreenFriend($scene, $v1, $v2){
     	$this->request('MT_ACCEPT_FRIEND_MSG', get_defined_vars());
@@ -117,6 +130,11 @@ final class Xbot {
         $this->request('MT_SEND_CARDMSG', get_defined_vars());
     }
     
+    // 没有返回callback，直接就修改成功了
+    public function remark($wxid, $remark){
+        $this->request('MT_MOD_FRIEND_REMARK_MSG', get_defined_vars());
+    }
+
     //@人在群中
     public function sendAtText($to_wxid, $content, $at_list){
         // 判断如果不是群？

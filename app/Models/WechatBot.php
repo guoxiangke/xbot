@@ -63,7 +63,8 @@ class WechatBot extends Model
         // 如果数据中存在，则从数据库中去，如果没有，从参数中取，如果还没有，给一个默认值1
         $clientId = $this->client_id??$clientId??2;
         $winClientUri = WechatClient::where('id', $this->wechat_client_id)->value('xbot');
-        return new Xbot($this->wxid, $winClientUri, $clientId);
+        Log::debug(__CLASS__, [__LINE__, $this->wxid, $this->client_id, $clientId]);
+        return new Xbot($winClientUri, $this->wxid,  $clientId);
     }
 
     private function _send($to, WechatContent $wechatContent){
@@ -113,7 +114,7 @@ class WechatBot extends Model
     public function logout(){
         $xbot = $this->xbot();
         $xbot->quit();
-        $xbot->open();
+        $xbot->loadQR();
     }
 
     // 程序崩溃时，login_at 还在，咋办？ 
@@ -122,7 +123,7 @@ class WechatBot extends Model
         sleep(5); //给callback5秒时间 执行 MT_DATA_OWNER_MSG，更新 is_live_at，然后 refresh，获取最新的 检测时间。
         $lastCheck = $this->is_live_at;
         $this->refresh();
-        Log::error(__CLASS__, [__LINE__, $this->wxid, $this->client_id, 'XbotIsLive 2次检测时间', $lastCheck, $this->is_live_at]);
+        Log::info(__CLASS__, [__LINE__, $this->wxid, $this->client_id, 'XbotIsLive 2次检测时间', $lastCheck, $this->is_live_at]);
         
         // Try 3 time? TODO. 第1次没反应时，却在线，怎么办？
         if (optional($this->is_live_at)->diffInMinutes() > 1){ // 如果时间大于1分钟 则代表离线

@@ -164,6 +164,7 @@ class XbotCallbackController extends Controller
             'MT_DECRYPT_IMG_MSG_SUCCESS',
             'MT_DATA_OWNER_MSG', // 获取到bot信息
             'MT_RECV_VIDEO_MSG',
+            'MT_ROOM_CREATE_NOTIFY_MSG',
         ];
         if(!in_array($type, $ignoreRAW)){
             Log::debug(__CLASS__, [$clientId, __LINE__, $type, $request->all()]);
@@ -271,11 +272,11 @@ class XbotCallbackController extends Controller
                     'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
                 ];
                 $wechatBot->contacts()->syncWithoutDetaching($attachs);
-                Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $gBotContact->nickname, 'new group']);
+                Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, 'new group']);
             }else{
                 if($gBotContact->trashed()){
                     $gBotContact->restore();
-                    Log::error(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $gBotContact->nickname, 'restored']);
+                    Log::debug(__CLASS__, [$clientId, __LINE__, $wechatBot->wxid, $gBotContact->nickname, 'restored']);
                 }
             }
 

@@ -17,10 +17,9 @@
                 </blockquote>
                 <figcaption class="font-medium">
                     <div class="text-gray-500">
-                        <br/>登录时间：{{ $loginAt }} 
+                        <br/>上线时间：{{ $loginAt }}
+                        <br/>上线设备: {{ $wechatBot->client_id }}号端口@Windows{{ $wechatBot->wechat_client_id }}
                         <br/>有效期： {{ $wechatBot->expires_at }}
-                        <br/>登录设备ID: {{ $wechatBot->client_id }}
-                        <br/>登录设备Token:  {{ $wechatBot->token }}
                         <br/>请使用下面👇的“退出Bot登录”按钮退出！
                     </div>
                     

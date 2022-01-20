@@ -20,6 +20,7 @@ class CreateWechatBotsTable extends Migration
             $table->foreignId('wechat_client_id')->index();
             $table->foreignId('user_id')->uniqid()->comment('绑定的管理员user_id，需要后台配置,一个用户只允许绑定一个wx');
             $table->string('wxid')->index()->unique()->comment('绑定的box wxid，需要后台配置');
+            $table->string('name')->unique()->comment('bot名字remark描述');
             //client_id动态变化
             $table->unsignedInteger('client_id')->nullable()->default(null)->comment('动态变换');
 
