@@ -14,6 +14,7 @@ use Plank\Metable\Metable;
 use Mvdnbrk\EloquentExpirable\Expirable;
 use App\Services\Xbot;
 use App\Models\User;
+use App\Models\WechatBotContact;
 
 class WechatBot extends Model
 {
@@ -63,7 +64,7 @@ class WechatBot extends Model
         // 如果数据中存在，则从数据库中去，如果没有，从参数中取，如果还没有，给一个默认值1
         $clientId = $this->client_id??$clientId??2;
         $winClientUri = WechatClient::where('id', $this->wechat_client_id)->value('xbot');
-        Log::debug(__CLASS__, [__LINE__, $this->wxid, $this->client_id, $clientId]);
+        Log::debug(__CLASS__, [__LINE__, $winClientUri , $this->wxid, $clientId]);
         return new Xbot($winClientUri, $this->wxid,  $clientId);
     }
 
@@ -79,7 +80,8 @@ class WechatBot extends Model
             // :seat 客服座席名字 
             // 第:no号好友
             if(Str::contains($content, [':remark', ':nickname', ':seat'])){
-                $contact = \App\Models\WechatBotContact::with('contact', 'seat')
+                $contact = WechatBotContact::with('contact', 'seat')
+                        ->where('wechat_bot_id', $this->id)
                         ->where('wxid', $to)
                         ->firstOrFail();
                 $remark = $contact->remark;

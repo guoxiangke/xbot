@@ -140,7 +140,7 @@
                 </x-input.group>
                 <div class="mt-3 block text-sm font-medium leading-5 text-gray-700">
                     <ul>
-                    <li>文本： {"content": " :remark 备注 :nickname 昵称 :seat 客服座席名字 文本消息到好友/群"}</li>
+                    <li>文本： {"content": "备注: :remark\n昵称: :nickname \n客服座席名字: :seat\n群发文本模版消息到好友/群"}</li>
                     <li>链接： {"url": "https://weibo.com", "title": "测试链接到百度", "image": "https://www.upyun.com/static/logos/dangdang.png", "description": "其实我放的是微博的链接"}</li>
                     <li>音频： {"url": "https://xx.com/x.mp3", "title": "音乐标题", "description": "描述文字"}</li>
                     </ul>
