@@ -109,6 +109,19 @@ class XbotCallbackController extends Controller
             $wechatBot->save();
             return response()->json(null);
         }
+        // {"type":"MT_CLIENT_DISCONTECTED","client_id":4}
+        if($type == 'MT_CLIENT_DISCONTECTED'){
+            Log::error(__CLASS__, [$clientId, __LINE__, '主动退出windows微信客户端']);
+            $wechatBot = WechatBot::where('wechat_client_id', $wechatClient->id)
+                ->where('client_id', $clientId)
+                ->first();
+            $wechatBot->login_at = null;
+            $wechatBot->is_live_at = null;
+            $wechatBot->client_id = null;
+            $wechatBot->save();
+            return response()->json(null);
+        }
+
         // MT_DATA_OWNER_MSG
         if($type == 'MT_DATA_OWNER_MSG') {
             $wechatBot = WechatBot::where('wxid', $data['wxid'])->first();
@@ -165,12 +178,23 @@ class XbotCallbackController extends Controller
             'MT_DATA_OWNER_MSG', // 获取到bot信息
             'MT_RECV_VIDEO_MSG',
             'MT_ROOM_CREATE_NOTIFY_MSG',
+            'MT_CLIENT_CONTECTED', // 新增加一个客户端，调用获取QR，以供web登陆
+            // {"type":"MT_CLIENT_DISCONTECTED","client_id":4}
         ];
         if(!in_array($type, $ignoreRAW)){
             Log::debug(__CLASS__, [$clientId, __LINE__, $type, $request->all()]);
         }
         //**********************DEBUG IGNORE END***********************************
-
+        // 新增加一个客户端，主动调用获取QR，压入缓存，以供web登陆
+        // {"type":"MT_CLIENT_CONTECTED","client_id":8}
+        if($type == 'MT_CLIENT_CONTECTED'){
+            $xbot = new Xbot($wechatClient->xbot, $botWxid='null', $clientId);
+            $respose = $xbot->loadQR();
+            Log::debug(__CLASS__, [$clientId, __LINE__, $type, '新增加一个客户端，主动调用获取QR']);
+            return response()->json(null);
+        }
+        // 主动关闭 一个clientId
+        // {"type":"MT_CLIENT_DISCONTECTED","client_id":4}
         //*********************************************************
         // 通过clientId 找到对应的wechatBot
         // 群消息中，没有Bot的wxid  "from_wxid":"xxx"  "to_wxid":"23887@chatroom"

@@ -49,7 +49,7 @@
                 label="发送加好友欢迎信息"
                 />
             @if($config['isWelcome'])
-            <x-input.group for="weclomeMsg" label="加好友欢迎信息 {{$config['weclomeMsg']}}">
+            <x-input.group for="weclomeMsg" label="加好友欢迎信息">
                 <x-jet-input id="weclomeMsg" type="text" class="mt-1 block w-full"  autocomplete="weclomeMsg" 
                     wire:model="config.weclomeMsg"
                     wire:blur.stop="$set('config.weclomeMsg', $event.target.value)"
