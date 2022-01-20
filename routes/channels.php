@@ -32,3 +32,9 @@ Broadcast::channel('xbot.{xbotId}', function ($user, $xbotId) {
     }
     
 });
+Broadcast::channel('xbot.login.{xbotId}', function ($user, $xbotId) {
+    $botOwnerUid = $user->currentTeam->owner->id;
+    $wechatBot = WechatBot::firstWhere('user_id', $botOwnerUid);
+    if(!$wechatBot) return false;
+    return (int) $wechatBot->id ===  (int) $xbotId;
+});

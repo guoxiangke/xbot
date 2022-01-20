@@ -107,7 +107,6 @@ class Wechat extends Component
     public function logout()
     {
         $this->wechatBot->logout();
-        sleep(1);
         return redirect()->to('/channels/wechat');
     }
 }

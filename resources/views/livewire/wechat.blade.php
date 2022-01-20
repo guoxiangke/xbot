@@ -4,7 +4,7 @@
     </h2>
 </x-slot>
 
-<div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8  space-y-4" @if(!$isLive) wire:poll.10000ms @endif>
+<div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8  space-y-4" @if(!$isLive) wire:poll.60000ms @endif>
     
     <div class="info">
         {{$msg}}
