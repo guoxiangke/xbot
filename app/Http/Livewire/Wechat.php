@@ -23,7 +23,7 @@ class Wechat extends Component
 
     public function getListeners(){
         return [
-            "echo-private:xbot.login.{$this->wechatBot->id},WechatBotLogin" => '$refresh',
+            "echo-private:xbot.login.{$this->wechatBot->id},WechatBotLogin" => 'redirectPage',
         ];
     }
 
@@ -107,6 +107,10 @@ class Wechat extends Component
     public function logout()
     {
         $this->wechatBot->logout();
+        return redirect()->to('/channels/wechat');
+    }
+    public function redirectPage()
+    {
         return redirect()->to('/channels/wechat');
     }
 }
