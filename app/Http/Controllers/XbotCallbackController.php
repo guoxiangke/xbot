@@ -507,9 +507,10 @@ class XbotCallbackController extends Controller
             $file = str_replace('C:\\Users\\Administrator\\AppData\\Local\\Temp\\','', $silk_file);
             $xbot->toVoiceText($msgid);
             // dispach
-            $content = "/storage/voices/{$wechatBot->wxid}/{$msgid}.mp3";
+            $date = date("ym");
+            $content = "/storage/voices/{$date}/{$wechatBot->wxid}/{$msgid}.mp3";
             $silkDomain = $wechatClient->silk;
-            SilkConvertQueue::dispatch($file, $wechatBot->wxid, $msgid, $silkDomain);
+            SilkConvertQueue::dispatch($file, $wechatBot->wxid, $msgid, $silkDomain, $date);
 
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $file, $content, '语音消息=》SilkConvertQueue']);
         }
@@ -533,13 +534,14 @@ class XbotCallbackController extends Controller
             // 需要手动在windows上创建 files 文件夹 并 wx上设置 file 存储 文件夹 为  C:\Users\Public\Pictures\files
         //需要手动在云存储上 创建： /xbot/files  /xbot/images  /audios/silk =》 /audios/mp3
         if($type == 'MT_RECV_PICTURE_MSG'){
+            $date = date("ym");
             $src_file = $data['image'];
             $msgid = $data['msgid'];
             $size = $xml['img']['@attributes']['length'];
-            $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$msgid}.png";
+            $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$date}\\{$msgid}.png";
             $xbot->decryptImage($src_file, $dest_file, $size);
-            $content = "/images/{$msgid}.png";
-            Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '收到|发送图片，已请求下载解密', $src_file, $dest_file, $size, $content]);
+            $content = "/images/{$date}/{$msgid}.png";
+            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '收到|发送图片', $src_file, $dest_file, $size, $content]);
 
             WechatMessageFile::create([
                 'wechat_bot_id' => $wechatBot->id,

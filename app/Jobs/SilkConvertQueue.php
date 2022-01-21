@@ -19,17 +19,19 @@ class SilkConvertQueue implements ShouldQueue
     public $wxid;
     public $msgid;
     public $silkDomain;
+    public $date; // $date = date("ym");
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($file, $wxid, $msgid, $silkDomain)
+    public function __construct($file, $wxid, $msgid, $silkDomain, $date)
     {
         $this->file = $file; // wxs40F9.tmp
         $this->wxid = $wxid;
         $this->msgid = $msgid;
         $this->silkDomain = $silkDomain;
+        $this->date = $date;
     }
 
     /**
@@ -43,7 +45,8 @@ class SilkConvertQueue implements ShouldQueue
         // $cdn = "https://silk.yongbuzhixi.com{$path}";
         $url = $this->silkDomain . '/' . $this->file;
 
-        $silkDir = "/public/voices/{$this->wxid}/";
+        $date = $this->date;
+        $silkDir = "/public/voices/{$date}/{$this->wxid}/";
         $silkPath ="{$silkDir}{$this->msgid}.mp3";
         Storage::makeDirectory($silkDir);
         Storage::put($silkPath, file_get_contents($url));
