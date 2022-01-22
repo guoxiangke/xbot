@@ -61,11 +61,10 @@ class WechatBot extends Model
     }
 
     // '无法找到设备绑定位置，请rootUser设置token:clientAddress绑定'
-    public function xbot($clientId=0){
+    public function xbot($clientId=99){
         // 如果数据中存在，则从数据库中去，如果没有，从参数中取，如果还没有，给一个默认值1
-        $clientId = $this->client_id??$clientId??2;
+        $clientId = $this->client_id??$clientId??-1;
         $wechatClient = WechatClient::where('id', $this->wechat_client_id)->firstOrFail();
-        Log::debug(__CLASS__, [__LINE__, $wechatClient->token, $this->wxid, $clientId, '通过$wechatBot->xbot()->调用']);
         $winClientUri = $wechatClient->xbot;
         return new Xbot($winClientUri, $this->wxid, $clientId);
     }

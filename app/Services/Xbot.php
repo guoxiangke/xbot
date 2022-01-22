@@ -79,6 +79,7 @@ final class Xbot {
     }
 
     public function decryptImage($src_file, $dest_file, $size){
+        sleep(ceil($size/1000000)+1);
         $this->request('MT_DECRYPT_IMG_MSG', get_defined_vars());
     }
 

@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('xbot:islive')->hourly();
+        $schedule->command('islive')->cron("0 9-12,18-22 * * *");
     }
 
     /**

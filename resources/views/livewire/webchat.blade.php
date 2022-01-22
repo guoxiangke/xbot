@@ -60,13 +60,16 @@
                 @if($search)
                   @forelse ($searchIds as $contactId=>$remark)
                     @php
-                        $defaultAvatar = "https://ui-avatars.com/api/?name={$remark}&color=7F9CF5&background=EBF4FF";
+                        $avatar = "https://ui-avatars.com/api/?name={$remark}&color=7F9CF5&background=EBF4FF";
+                        if(isset($contactsArray[$contactId]['contact']['avatar'])){
+                          $avatar = $contactsArray[$contactId]['contact']['avatar'];
+                        }
                     @endphp
                     <div class="messaging-create-channel__user-result"
                       wire:click="$set('currentConversationId', {{$contactId}})">
                       <li class="messaging-create-channel__user-result">
                         <div data-testid="avatar" class="str-chat__avatar str-chat__avatar--circle" style="width: 40px; height: 40px; flex-basis: 40px; line-height: 40px; font-size: 20px;">
-                          <img data-testid="avatar-imgs" src="{{ $contactsArray[$contactId]['contact']['avatar']??$defaultAvatar }}" style="width: 40px; height: 40px; flex-basis: 40px; object-fit: cover;">
+                          <img data-testid="avatar-imgs" src="{{ $avatar }}" style="width: 40px; height: 40px; flex-basis: 40px; object-fit: cover;">
                         </div>
                         <div class="messaging-create-channel__user-result__details">
                           <span>{{$remark}}</span>
@@ -93,13 +96,16 @@
             $updatedAt = Illuminate\Support\Carbon::parse($time)->setTimezone('Asia/Shanghai')->toDateTimeString();
             $name = $remarks[$contactId]??'G'.$contactsArray[$contactId]['id'];
             // $name = $contactsArray[$contactId]['remark']?:'G'.$contactsArray[$contactId]['id'];
-            $fallbackAvatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
-            
+            $avatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
+            if(isset($contactsArray[$contactId]['contact']['avatar'])){
+              $avatar = $contactsArray[$contactId]['contact']['avatar'];
+            }
+
             $content = $conversation['content'];
         @endphp
         <div wire:click="$set('currentConversationId', {{$contactId}})" data-id="{{$cid}}" class="channel-preview__container {{ $currentConversationId===$contactId?'selected':'' }}">
           <div class="channel-preview__avatars">
-            <img data-testid="avatar-img" src="{{$contactsArray[$contactId]['contact']['avatar']?:$fallbackAvatar}}" alt="" class="str-chat__avatar-image str-chat__avatar-image--loaded">
+            <img data-testid="avatar-img" src="{{ $avatar }}" alt="" class="str-chat__avatar-image str-chat__avatar-image--loaded">
           </div>
           <div class="channel-preview__content-wrapper">
             <div class="channel-preview__content-top">
@@ -166,7 +172,13 @@
               </svg>
             </div>
             <div class="messaging__channel-header__avatars"> 
-              <img data-testid="avatar-img" src="{{ $contactsArray[$currentConversationId]['contact']['avatar']??$defaultAvatar }}" alt="" class="str-chat__avatar-image str-chat__avatar-image--loaded">
+              @php
+                $avatar = $defaultAvatar;
+                if(isset($contactsArray[$currentConversationId]['contact']['avatar'])){
+                  $avatar = $contactsArray[$currentConversationId]['contact']['avatar'];
+                }
+              @endphp
+              <img data-testid="avatar-img" src="$avatar" alt="" class="str-chat__avatar-image str-chat__avatar-image--loaded">
             </div>
             <div class="channel-header__name">{{ $remarks[$currentConversationId]??'暂无群名'.$contactsArray[$currentConversationId]['id'] }}</div>
             <div class="messaging__channel-header__right">
@@ -218,9 +230,11 @@
                         : $meta['avatar'];
                   }else{
                     $name = $contactsArray[$message['from']]['remark']??($message['from']%100);
-                    $fallbackAvatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
+                    $avatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
                     
-                    $avatar =  $contactsArray[$message['from']]['contact']?$contactsArray[$message['from']]['contact']['avatar']:$fallbackAvatar;
+                    if(isset($contactsArray[$message['from']]['contact'])){
+                      $avatar = $contactsArray[$message['from']]['contact']['avatar'];
+                    }
                   }
                 @endphp
 

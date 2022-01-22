@@ -147,7 +147,9 @@ class XbotCallbackController extends Controller
             "MT_DEBUG_LOG" =>'调试信息',
             "MT_UNREAD_MSG_COUNT_CHANGE_MSG" => '未读消息',
             "MT_DATA_WXID_MSG" => '从网络获取信息',
-            "MT_TALKER_CHANGE_MSG" => '客户端点击头像'
+            "MT_TALKER_CHANGE_MSG" => '客户端点击头像',
+            "MT_RECV_REVOKE_MSG" => 'xx 撤回了一条消息',
+            "MT_DECRYPT_IMG_MSG_TIMEOUT" => '图片解密超时',
         ];
         if(in_array($type, array_keys($ignoreHooks))){
             return response()->json(null);
@@ -171,11 +173,13 @@ class XbotCallbackController extends Controller
             'MT_RECV_FILE_MSG',
             'MT_DECRYPT_IMG_MSG',
             'MT_DECRYPT_IMG_MSG_SUCCESS',
+            // 'MT_DECRYPT_IMG_MSG_TIMEOUT',
             'MT_DATA_OWNER_MSG', // 获取到bot信息
             'MT_RECV_VIDEO_MSG',
             'MT_ROOM_CREATE_NOTIFY_MSG',
             'MT_CLIENT_CONTECTED', // 新增加一个客户端，调用获取QR，以供web登陆
             // {"type":"MT_CLIENT_DISCONTECTED","client_id":4}
+            'MT_RECV_REVOKE_MSG', //默认开启 消息防撤回！不再处理这个
         ];
         if(!in_array($type, $ignoreRAW)){
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $request->all()]);
@@ -348,6 +352,10 @@ class XbotCallbackController extends Controller
                         ->firstWhere('wxid', $member['wxid']);
                     // $content = "{$member['nickname']}被出群了";
                     // 2.群消息不变，他发的都删！
+                    if(!$gBotContact){
+                        Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, '！bot被出群了！消息删除了']);
+                        continue;
+                    }
                     WechatMessage::query()
                         ->where('from', $gBotContact->id)
                         ->delete();
@@ -537,10 +545,12 @@ class XbotCallbackController extends Controller
             $date = date("ym");
             $src_file = $data['image'];
             $msgid = $data['msgid'];
-            $size = $xml['img']['@attributes']['length'];
-            $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$date}\\{$msgid}.png";
+            $size = $xml['img']['@attributes']['hdlength']??$xml['img']['@attributes']['length'];
+            $md5 = $xml['img']['@attributes']['md5'];
+            $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$date}\\{$md5}.png";
+            // if file_exist($md5), 则不再下载！
             $xbot->decryptImage($src_file, $dest_file, $size);
-            $content = "/images/{$date}/{$msgid}.png";
+            $content = "/images/{$date}/{$md5}.png";
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '收到|发送图片', $src_file, $dest_file, $size, $content]);
 
             WechatMessageFile::create([
@@ -597,10 +607,30 @@ class XbotCallbackController extends Controller
         }
         if($type == 'MT_RECV_OTHER_APP_MSG') {
             if($data['wx_type'] == 49){
-                $content = '音乐消息[已回复]，请到手机查看！';
+                $content = '其他消息，请到手机查看！';
                 // 收到音频消息
-                if(isset($data['wx_sub_type']) && $data['wx_sub_type']==3){
-                    $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['url']}";
+                if(isset($data['wx_sub_type'])){
+                    switch ($data['wx_sub_type']) {
+                        case  3:
+                            $content = "音乐消息｜{$xml['appmsg']['title']} : {$xml['appmsg']['url']}";
+                            break;
+                        case  19: //聊天记录
+                            $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['des']}";
+                            break;
+                        case  36: //百度网盘
+                            $content = "{$xml['appmsg']['sourcedisplayname']} ｜ {$xml['appmsg']['title']} : {$xml['appmsg']['des']} : {$xml['appmsg']['url']} ";
+                            break;
+                        case  51:
+                            $content = "视频号｜{$xml['appmsg']['finderFeed']['nickname']} : {$xml['appmsg']['finderFeed']['desc']}";
+                            break;
+                        case  57:
+                            $content = "引用回复｜{$xml['appmsg']['title']}";
+                            break;
+                        default:
+                    Log::error(__CLASS__, [__LINE__, $clientId, $request->all(), '其他消息，请到手机查看！']);
+                            $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['url']}";
+                            break;
+                    }
                 }
                 //更改TYPE 执行下面的内容
                 $type = 'MT_RECV_TEXT_MSG';
@@ -662,7 +692,7 @@ class XbotCallbackController extends Controller
             ]);
         }
         // 开发者选项 =》 WechatMessageObserver
-        Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, 'THE END OF CALLBACK']);//已执行到最后一行
+        Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, '******************']);//已执行到最后一行
         return response()->json(null);
     }
 }

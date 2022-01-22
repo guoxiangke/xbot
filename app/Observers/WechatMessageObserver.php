@@ -24,8 +24,24 @@ class WechatMessageObserver
         // @see Broadcast::channel('xbot.{xbotId}' ..
         // 如果有用户打开webchat页面，则1h内，pusher数据实时刷新
         // @see class WechatMessageCreated implements ShouldBroadcast
-        if(Cache::get("xbot.{$wechatMessage->wechat_bot_id}.webchat.pusher.live", false)){
-            WechatMessageCreated::dispatch($wechatMessage);
+        // TODO 1s内来100条信息，只刷新一次
+        $wechatBotId = $wechatMessage->wechat_bot_id;
+        $countsKey = "unread.{$wechatBotId}.counts";
+        $counts = Cache::store('file')->increment($countsKey); //来了多少条消息
+
+        if(Cache::get("xbot.{$wechatBotId}.webchat.pusher.live", false)){
+            $lastTimesampKey = "unread.{$wechatBotId}.lastTimestamp";
+            $lastTimesamp = Cache::store('file')->get($lastTimesampKey, now());
+            $currentTimesamp = $wechatMessage->created_at;
+            $diff = $currentTimesamp->diffInSeconds($lastTimesamp);
+            if($diff>=3 || $counts>100){
+                WechatMessageCreated::dispatch($wechatMessage);
+                Cache::store('file')->set($lastTimesampKey, now());
+                Log::error(__CLASS__, [__LINE__, $wechatBotId, 'pusher', $counts,"条  diff= {$diff}"]);
+                Cache::store('file')->forget($countsKey); // 已实时推送
+            }else{
+                Log::error(__CLASS__, [__LINE__, $wechatBotId, '!pusher', $counts,"条  diff= {$diff}"]);
+            }
         }
 
         // 如果是bot响应的消息，不再转发
