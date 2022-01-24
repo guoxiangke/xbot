@@ -21,6 +21,10 @@ class WechatContact extends Model
         'group'=>2, // 2 group
         'stranger'=>3, // 3 group stranger
     ];
+    const TYPE_PUBLIC = 0;
+    const TYPE_FRIEND = 1;
+    const TYPE_GROUP = 2;
+    const TYPE_STRANGER = 3;
     // 0公众号，1联系人，2群
     const CALLBACKTYPES = [
         'MT_DATA_PUBLICS_MSG'=>0, // 0

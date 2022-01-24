@@ -159,7 +159,7 @@
 
 
     <!-- Delete Modal -->
-    <form wire:submit.prevent="sendByTags">
+    <form wire:submit.prevent="">
         <x-modal.dialog wire:model.defer="showBatchModal">
             <x-slot name="title">创建群发</x-slot>
 
@@ -190,9 +190,17 @@
             </x-slot>
 
             <x-slot name="footer">
-                <x-button.secondary wire:click="$set('showBatchModal', false)">Cancel</x-button.secondary>
-                <x-button.primary type="submit">发送</x-button.primary>
-                <x-button.primary wire:click="testSend">测试发送</x-button.primary>
+                <div class="flex justify-between">
+                    <div>
+                        <x-button.secondary wire:click="sendToAll('friends')">发送所有好友</x-button.secondary>
+                        <x-button.secondary wire:click="sendToAll('rooms')">发送所有群</x-button.secondary>
+                    </div>
+                    <div>
+                        <x-button.secondary wire:click="$set('showBatchModal', false)">Cancel</x-button.secondary>
+                        <x-button.primary wire:click="sendByTags">发送</x-button.primary>
+                        <x-button.primary wire:click="testSend">测试发送</x-button.primary>
+                    </div>
+                </div>
             </x-slot>
         </x-modal.dialog>
     </form>

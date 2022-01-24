@@ -42,15 +42,20 @@ class WechatBot extends Model
 
     // bot和contact关系 N:N
     protected $touches = ['contacts']; //https://github.com/laravel/framework/issues/31597
-    public function contacts(): BelongsToMany // @see https://laravel.com/docs/8.x/eloquent-relationships#many-to-many
+    // null = ALL
+    public function contacts($type=null): BelongsToMany // @see https://laravel.com/docs/8.x/eloquent-relationships#many-to-many
     {
         // $contact = $bot->contacts->where('userName','gh_xxx')->first()
         // $contact->pivot->remark
         // $contact->pivot->seat_user_id
         // $contact->pivot->config
-        return $this->belongsToMany(WechatContact::class, 'wechat_bot_contacts')
+        $relations = $this->belongsToMany(WechatContact::class, 'wechat_bot_contacts')
             ->withTimestamps()
             ->withPivot(['remark','seat_user_id']);
+        if(!is_null($type)){
+                $relations =  $relations->wherePivot('type', $type);
+        }
+        return $relations;
     }
 
     // WechatBot::find(1)->autoReplies()->create(['keyword'=>'hi','wechat_content_id'=>1]);
@@ -84,7 +89,8 @@ class WechatBot extends Model
                 $contact = WechatBotContact::with('contact', 'seat')
                         ->where('wechat_bot_id', $this->id)
                         ->where('wxid', $to)
-                        ->firstOrFail();
+                        ->first();
+                if(!$contact) return; // 发送给 filehelper, 没有！
                 $remark = $contact->remark;
                 $nickname = $contact->contact->nickname;
                 $seat = $contact->seat->name;

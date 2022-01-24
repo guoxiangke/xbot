@@ -159,6 +159,11 @@ final class Xbot {
         return $this->request('MT_SEND_XMLMSG', get_defined_vars());
     }
 
+    // $xbot->creatRoom('wxid1','wxid2','wxid3');
+    public function creatRoom(){
+        $this->request('MT_CREATE_ROOM_MSG', func_get_args());
+    }
+    
     //直接入群
     public function addMememberToGroup($room_wxid, $who){
         $data = [

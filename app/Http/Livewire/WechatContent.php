@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Models\WechatBot;
 use App\Models\WechatContent as Model;
+use App\Models\WechatContact;
 use Livewire\Component;
 
 use App\Http\Livewire\DataTable\WithSorting;
@@ -88,8 +89,20 @@ class WechatContent extends Component
 
     public function testSend()
     {
-        $wchatContent = Model::findOrFail($this->contentId);//TODO validate 必需是自己的内容
-        $this->wechatBot->send("filehelper", $wchatContent);
+        $wechatContent = Model::findOrFail($this->contentId);//TODO validate 必需是自己的内容
+        $this->wechatBot->send([$this->wechatBot->wxid], $wechatContent);
+    }
+
+    public function sendToAll($type='friends')
+    {
+        $wechatContactType = WechatContact::TYPE_FRIEND;
+        if($type != 'friends') $wechatContactType = WechatContact::TYPE_GROUP;
+
+        $wechatContent = Model::find($this->contentId);//TODO validate 必需是自己的内容
+        $this->showBatchModal = false;
+
+        $wechatContacts = $this->wechatBot->contacts($wechatContactType)->get()->pluck('wxid');
+        $this->wechatBot->send($wechatContacts, $wechatContent);
     }
 
     //TODO two forms validate
