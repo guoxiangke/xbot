@@ -94,6 +94,8 @@
             // $conversation = end($conversation); //最后一个对方发的消息
             $time = $conversation['updated_at']??now();
             $updatedAt = Illuminate\Support\Carbon::parse($time)->setTimezone('Asia/Shanghai')->toDateTimeString();
+            if(!isset($contactsArray[$contactId])) continue;
+
             $name = $remarks[$contactId]??'G'.$contactsArray[$contactId]['id'];
             // $name = $contactsArray[$contactId]['remark']?:'G'.$contactsArray[$contactId]['id'];
             $avatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
