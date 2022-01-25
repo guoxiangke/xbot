@@ -191,14 +191,26 @@
 
             <x-slot name="footer">
                 <div class="flex justify-between">
+
                     <div>
-                        <x-button.secondary wire:click="sendToAll('friends')">发送所有好友</x-button.secondary>
-                        <x-button.secondary wire:click="sendToAll('rooms')">发送所有群</x-button.secondary>
+                        <button class="relative w-fit h-fit px-2 py-0 text-sm border rounded focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition duration-150 ease-in-out text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border-indigo-600"
+                            onclick="confirm('Confirm 发送所有好友?') || event.stopImmediatePropagation()"  wire:click="sendToAll('friends')">
+                            <p>发送所有好友</p>
+                        </button>
+
+                        <button class="ml-4 relative w-fit h-fit px-2 py-0 text-sm border rounded focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition duration-150 ease-in-out text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border-indigo-600"
+                            onclick="confirm('Confirm 发送所有群?') || event.stopImmediatePropagation()" wire:click="sendToAll('rooms')">
+                            <p>发送所有群</p>
+                        </button>
                     </div>
                     <div>
                         <x-button.secondary wire:click="$set('showBatchModal', false)">Cancel</x-button.secondary>
-                        <x-button.primary wire:click="sendByTags">发送</x-button.primary>
-                        <x-button.primary wire:click="testSend">测试发送</x-button.primary>
+                        <button class="relative w-fit h-fit px-2 py-1 text-md border rounded-lg focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition duration-150 ease-in-out text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border-indigo-600"
+                            onclick="confirm('Confirm 发送给所选标签？') || event.stopImmediatePropagation()" wire:click="sendByTags">
+                            <p>发送</p>
+                        </button>
+
+                        <x-button.secondary wire:click="testSend">测试发送</x-button.secondary>
                     </div>
                 </div>
             </x-slot>

@@ -89,7 +89,7 @@ class WechatContent extends Component
 
     public function testSend()
     {
-        $wechatContent = Model::findOrFail($this->contentId);//TODO validate 必需是自己的内容
+        $wechatContent = Model::find($this->contentId);//TODO validate 必需是自己的内容
         $this->wechatBot->send([$this->wechatBot->wxid], $wechatContent);
     }
 
@@ -99,9 +99,8 @@ class WechatContent extends Component
         if($type != 'friends') $wechatContactType = WechatContact::TYPE_GROUP;
 
         $wechatContent = Model::find($this->contentId);//TODO validate 必需是自己的内容
-        $this->showBatchModal = false;
-
         $wechatContacts = $this->wechatBot->contacts($wechatContactType)->get()->pluck('wxid');
+        $this->showBatchModal = false;
         $this->wechatBot->send($wechatContacts, $wechatContent);
     }
 
