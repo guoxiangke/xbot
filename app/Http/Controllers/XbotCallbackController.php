@@ -296,7 +296,7 @@ class XbotCallbackController extends Controller
                     'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
                 ];
                 $wechatBot->contacts()->syncWithoutDetaching($attachs);
-                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, 'new group']);
+                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $groupWxid, $type, 'new group']);
             }else{
                 if($gBotContact->trashed()){
                     $gBotContact->restore();
@@ -546,7 +546,7 @@ class XbotCallbackController extends Controller
             $src_file = $data['image'];
             $msgid = $data['msgid'];
             $size = $xml['img']['@attributes']['hdlength']??$xml['img']['@attributes']['length'];
-            $md5 = $xml['img']['@attributes']['md5'];
+            $md5 = $xml['img']['@attributes']['md5']??$msgid;
             $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$date}\\{$md5}.png";
             // if file_exist($md5), 则不再下载！
             $xbot->decryptImage($src_file, $dest_file, $size);
@@ -628,7 +628,10 @@ class XbotCallbackController extends Controller
                             break;
                         default:
                     Log::error(__CLASS__, [__LINE__, $clientId, $request->all(), '其他消息，请到手机查看！']);
-                            $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['url']}";
+                            $content = $xml['appmsg']['title']??'';
+                            $content .= $xml['appmsg']['des']??'';
+                            $content .= $xml['appmsg']['desc']??'';
+                            $content .= $xml['appmsg']['url']??'';
                             break;
                     }
                 }
