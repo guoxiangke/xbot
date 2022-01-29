@@ -14,6 +14,7 @@
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
         "livewire/livewire": "^2.5",
+        "metowolf/meting": "^1.5",
         "mvdnbrk/laravel-model-expires": "^1.8",
         "plank/laravel-metable": "^5.1",
         "predis/predis": "^1.1",

@@ -109,7 +109,7 @@ class WechatBot extends Model
         // if($type == 'file')     $xbot->sendFile($to, $data['url']);
         // if($type == 'image')    $xbot->sendImage($to, $data['url']);
         if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
-        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], $data['description']);
+        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], $data['description']." 点击🎵收听 ");
         if($type == 'link')     $xbot->sendLink($to, $data['image'], $data['url'],  $data['title'], $data['description']);
     }
 

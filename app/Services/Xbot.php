@@ -109,7 +109,7 @@ final class Xbot {
     	$this->request('MT_DATA_CHATROOMS_MSG');
     }
 
-    public function getGroupMemembers($room_wxid){
+    public function getRoomMemembers($room_wxid){
     	$this->request('MT_DATA_CHATROOM_MEMBERS_MSG', get_defined_vars());
     }
 
@@ -118,7 +118,7 @@ final class Xbot {
     }
 
     //从网络更新群成员信息
-		public function updateGroupMemembers($room_wxid){
+	public function updateRoomMemembers($room_wxid){
     	$this->request('MT_UPDATE_ROOM_MEMBER_MSG', get_defined_vars());
     }
 
@@ -165,7 +165,7 @@ final class Xbot {
     }
     
     //直接入群
-    public function addMememberToGroup($room_wxid, $who){
+    public function addMememberToRoom($room_wxid, $who){
         $data = [
             "room_wxid"=>$room_wxid,
             'member_list'=>[$who]
@@ -174,7 +174,7 @@ final class Xbot {
     }
     //TODO 需要维护一个群的成员数量在数据库中 MT_INVITE_TO_ROOM_MSG <40
     //邀请入群
-    public function addMememberToGroupBig($room_wxid, $who){
+    public function addMememberToRoomBig($room_wxid, $who){
         $data = [
             "room_wxid"=>$room_wxid,
             'member_list'=>[$who]
@@ -183,7 +183,7 @@ final class Xbot {
     }
 
 
-    public function deleteGroupMemember($who,$room_wxid){
+    public function deleteRoomMemember($who,$room_wxid){
         $data = [
             "room_wxid"=>$room_wxid,
             'member_list'=>[$who]
