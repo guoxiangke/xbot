@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\WechatBot;
 use App\Models\WechatClient;
 use App\Models\WechatContact;
@@ -13,11 +12,9 @@ use App\Models\WechatMessage;
 use App\Models\WechatMessageFile;
 use App\Models\WechatMessageVoice;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use App\Services\Xbot;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Jobs\SilkConvertQueue;
 
@@ -162,7 +159,7 @@ class XbotCallbackController extends Controller
             'MT_SEARCH_CONTACT_MSG', //添加好友
             'MT_RECV_VOICE_MSG',
             // 'MT_RECV_FRIEND_MSG',
-            'MT_RECV_SYSTEM_MSG', // 
+            'MT_RECV_SYSTEM_MSG', //
             'MT_RECV_TEXT_MSG',
             'MT_RECV_OTHER_APP_MSG', //音乐消息🎵  "wx_sub_type":3, "wx_type":49
             'MT_DATA_FRIENDS_MSG',
@@ -180,6 +177,7 @@ class XbotCallbackController extends Controller
             'MT_CLIENT_CONTECTED', // 新增加一个客户端，调用获取QR，以供web登陆
             // {"type":"MT_CLIENT_DISCONTECTED","client_id":4}
             'MT_RECV_REVOKE_MSG', //默认开启 消息防撤回！不再处理这个
+            'MT_DATA_CHATROOM_MEMBERS_MSG',
         ];
         if(!in_array($type, $ignoreRAW)){
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $request->all()]);
@@ -274,7 +272,8 @@ class XbotCallbackController extends Controller
         }
         // MT_ROOM_ADD_MEMBER_NOTIFY_MSG 新人入群
         // MT_ROOM_CREATE_NOTIFY_MSG 被拉入群
-        if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
+        // MT_DATA_CHATROOM_MEMBERS_MSG 主动获取 群成员信息，入库
+        if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG' || $type == 'MT_DATA_CHATROOM_MEMBERS_MSG'){
             $groupWxid = $data['room_wxid'];
             $gBotContact = WechatBotContact::withTrashed()
                 ->where('wechat_bot_id', $wechatBot->id)
@@ -290,7 +289,7 @@ class XbotCallbackController extends Controller
                     ? $contact->update($groupContact) // 更新资料
                     : $contact = WechatContact::create($groupContact);
                 $attachs[$contact->id] = [
-                    'type' => 2, //群陌生人
+                    'type' => 2, //群
                     'wxid' => $contact->wxid,
                     'remark' => $member['nickname']??$contact->wxid,
                     'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
@@ -353,7 +352,7 @@ class XbotCallbackController extends Controller
                     // $content = "{$member['nickname']}被出群了";
                     // 2.群消息不变，他发的都删！
                     if(!$gBotContact){
-                        Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, '！bot被出群了！消息删除了']);
+                        Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $member['wxid'], '！bot被出群了！消息删除了']);
                         continue;
                     }
                     WechatMessage::query()
@@ -612,7 +611,9 @@ class XbotCallbackController extends Controller
                 if(isset($data['wx_sub_type'])){
                     switch ($data['wx_sub_type']) {
                         case  3:
-                            $content = "音乐消息｜{$xml['appmsg']['title']} : {$xml['appmsg']['url']}";
+                            $title = $xml['appmsg']['title']??'';
+                            $content = "音乐消息｜{$title}: {$xml['appmsg']['url']}";
+                            Log::error(__LINE__, [$xml['appmsg']]);
                             break;
                         case  19: //聊天记录
                             $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['des']}";
@@ -627,7 +628,7 @@ class XbotCallbackController extends Controller
                             $content = "引用回复｜{$xml['appmsg']['title']}";
                             break;
                         default:
-                    Log::error(__CLASS__, [__LINE__, $clientId, $request->all(), '其他消息，请到手机查看！']);
+                    Log::error(__CLASS__, [__LINE__, $clientId, $xml['appmsg'], '其他消息，请到手机查看！']);
                             $content = $xml['appmsg']['title']??'';
                             $content .= $xml['appmsg']['des']??'';
                             $content .= $xml['appmsg']['desc']??'';
@@ -664,7 +665,12 @@ class XbotCallbackController extends Controller
                     ->where('wxid', $fromWxid)
                     ->first();
                 if(!$from) {
-                    Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!']);
+                    Log::error(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
+                    if($isRoom){
+                        $room_wxid = $data['room_wxid'];
+                        // 接口初始化一下本群的所有成员
+                        $xbot->getRoomMemembers($room_wxid);
+                    }
                 }else{
                     $fromId = $from->id;
                 }
