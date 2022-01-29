@@ -14,8 +14,5 @@ class WechatBotSeeder extends Seeder
      */
     public function run()
     {
-        $sql = file_get_contents(database_path() . '/seeds/users.sql');
-
-        DB::statement($sql);
     }
 }
