@@ -392,17 +392,10 @@ class XbotCallbackController extends Controller
         // ✅ 收到好友请求
         $switchOn = $config['isAutoAgree'];
         if($switchOn && $type == 'MT_RECV_FRIEND_MSG'){
-            //TODO  get $scene, $v1, $v2 from xml!
             $attributes = $xml['@attributes'];
-
-            $v3 = $attributes['encryptusername'];
-            $v4 = $attributes['ticket'];
-            $scene = $attributes['scene'];//3: 14: 6:拉黑用户再次请求;
-            $xbot->agreenFriend($scene, $v3, $v4);
-
-            $fromnickname = $attributes['fromnickname'];
-            $content = $attributes['content'];
-            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, "收到{$fromnickname}的好友请求:{$content}"]);
+            // $scene = 3: 14: 从群里添加 6:拉黑用户再次请求;
+            $xbot->agreenFriend($attributes['scene'], $attributes['encryptusername'], $attributes['ticket']);
+            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, "收到{$attributes['fromnickname']}的好友请求:{$attributes['content']}"]);
             return response()->json(null);
         }
 

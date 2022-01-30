@@ -10,14 +10,13 @@ class WechatContent extends Model
     use HasFactory;
     protected $guarded = ['id', 'created_at', 'updated_at'];
     // 可以主动发送的消息类型 @see App\Services\WechatBot->sendApp()
-    const TYPES_CN = ['文本','@群','图片','文件','链接','音频'];
+    const TYPES_CN = ['文本','@群','图片','文件','链接'];
     const TYPES = [
         "text",
         "at",
         "image",
         "file",
         "link",
-        "music",
     ];
 
     protected $casts = [ 'content' => 'array'];
@@ -25,7 +24,8 @@ class WechatContent extends Model
     const TYPE_TEMPLATE = 0;
     const TYPE_TEXT = 1;
     const TYPE_IMAGE = 2;
-    const TYPE_VIDEO = 3; 
+    const TYPE_FILE = 3;
+    const TYPE_LINK = 4;
 
     public function getCnTypeAttribute()
     {
@@ -41,15 +41,13 @@ class WechatContent extends Model
             case 'text':
                 $content =  $this->content['content'];
                 break;
-            case 'video':
-                $content =  $this->content['path'];
-                break;
 
             case 'image':
                 $content =  $this->content['image'];
                 break;
-            case 'file':
-                // $content =  $this->content['content'];
+
+            case 'file': //mp3 mp4
+                $content =  $this->content['file'];
                 break;
 
             case 'card':
@@ -57,13 +55,9 @@ class WechatContent extends Model
                 break;
 
             case 'link':
-            case 'music':
                 $content =  $this->content['url'];
                 break;
 
-            case 'app':
-                // $content =  $this->content['content'];
-                break;
             default:
                 # code...
                 break;
