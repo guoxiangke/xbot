@@ -83,14 +83,14 @@ final class Xbot {
         $this->request('MT_DECRYPT_IMG_MSG', get_defined_vars());
     }
 
-    // 要发送的文件，必须存放在 C:\Users\Public\Documents\ 里
-    public function sendFile($to_wxid,$file){
-        $file = "C:\\Users\\Public\\Documents\\$file";
+    // 要发送的文件，必须存放在 C:\Users\Public\Pictures\ 里
+    public function sendFile($to_wxid, $file){
+        $file = "C:\\Users\\Public\\Pictures\\$file";
         $this->request('MT_SEND_FILEMSG', get_defined_vars());
     }
 
     // 要发送的图片，必须存放在 C:\Users\Public\Pictures\ 里
-    public function sendImage($to_wxid,$file){
+    public function sendImage($to_wxid, $file){
         $file = "C:\\Users\\Public\\Pictures\\$file";
         $this->request('MT_SEND_IMGMSG', get_defined_vars());
     }

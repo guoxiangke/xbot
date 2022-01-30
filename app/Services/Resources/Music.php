@@ -13,11 +13,11 @@ use App\Services\Resource;
 final class Music  extends Resource {
 	public function __invoke($keyword)
 	{
-        $triggerKeywords = ["我想听", "想听", "来一首", "来首"];
+        $triggerKeywords = ["点歌", "我想听", "想听", "来一首", "来首"];
         if(Str::startsWith($keyword, $triggerKeywords)){
             $name = str_replace(
                 $triggerKeywords,
-                ['', '', ''],
+                ['', '', '', '', ''],
                 $keyword
             );
             $name = trim($name);

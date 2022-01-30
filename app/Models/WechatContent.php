@@ -39,13 +39,15 @@ class WechatContent extends Model
         switch ($typeName) {
             case 'template':
             case 'text':
-            case 'image':
                 $content =  $this->content['content'];
                 break;
             case 'video':
                 $content =  $this->content['path'];
                 break;
 
+            case 'image':
+                $content =  $this->content['image'];
+                break;
             case 'file':
                 // $content =  $this->content['content'];
                 break;

@@ -37,31 +37,23 @@ class WechatContentRule implements Rule
             case 'template':
             case 'text':
                 if(!isset($data['content'])){
-                    $this->message .= '内容必需包含  {"content": "';
+                    $this->message .= '内容必需包含content';
                     return false;
                 }
                 break;
             case 'image':
-                if(!Str::endsWith($data['content'], ['.jpg','.png','.jpeg','.gif'])) {
+                if(!isset($data['image'])){
+                    $this->message .= '内容必需包含image';
+                    return false;
+                }
+                if(!Str::endsWith($data['image'], ['.jpg','.png','.jpeg','.gif'])) {
                     $this->message .= '图片格式不对，必需以 jpg,png,jpeg,gif 结尾！';
                     return false;
                 }
-                if(!Str::startsWith($data['content'], 'http')) {
-                    $this->message .= '图片链接不对';
-                    return false;
-                }
                 break;
-            case 'video':
-                if(!Arr::has($data, ['path', 'thumbPath'])) {
+            case 'file':
+                if(!Arr::has($data, ['file'])) {
                     $this->message .= '缺少必要字段';
-                    return false;
-                }
-                if(!Str::startsWith($data['path'], 'http') || !Str::endsWith($data['path'], '.mp4')) {
-                    $this->message .= '视频地址不对';
-                    return false;
-                }
-                if(!Str::startsWith($data['thumbPath'], 'http')) {
-                    $this->message .= '缩略图链接不对';
                     return false;
                 }
                 break;

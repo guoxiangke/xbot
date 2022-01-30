@@ -105,9 +105,9 @@ class WechatBot extends Model
             if($type == 'at')       $xbot->sendAtText($to, $content, $data['at']);
         }
 
-        // TODO file&image!
-        // if($type == 'file')     $xbot->sendFile($to, $data['url']);
-        // if($type == 'image')    $xbot->sendImage($to, $data['url']);
+        // "C:\\Users\\Public\\Pictures\\$file";
+        if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\\\",$data['file']));
+        if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\\\",$data['image']));
         if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
         if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], " 点击🎵收听 {$data['description']}");
         if($type == 'link')     $xbot->sendLink($to, $data['image'], $data['url'],  $data['title'], $data['description']);

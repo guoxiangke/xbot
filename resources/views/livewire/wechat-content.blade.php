@@ -141,8 +141,9 @@
                 <div class="mt-3 block text-sm font-medium leading-5 text-gray-700">
                     <ul>
                     <li>文本： {"content": "备注: :remark\n昵称: :nickname \n客服座席名字: :seat\n群发文本模版消息到好友/群"}</li>
-                    <li>链接： {"url": "https://weibo.com", "title": "测试链接到百度", "image": "https://www.upyun.com/static/logos/dangdang.png", "description": "其实我放的是微博的链接"}</li>
+                    <li>链接： {"url": "https://weibo.com", "title": "测试链接到百度", "image": "https://pp.myapp.com/ma_icon/0/icon_6259_1643092688/96", "description": "其实我放的是微博的链接"}</li>
                     <li>音频： {"url": "https://xx.com/x.mp3", "title": "音乐标题", "description": "描述文字"}</li>
+                    <li>图片： {"image": "/images/2201/f87fc3b4d0e9d7da037cb001013e1287.png"}</li>
                     </ul>
                 </div>  
             </x-slot>

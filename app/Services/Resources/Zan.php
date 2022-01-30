@@ -13,11 +13,11 @@ use App\Services\Resource;
 final class Zan  extends Resource {
 	public function __invoke($keyword)
 	{
-        $triggerKeywords = ["点歌"];
+        $triggerKeywords = ["赞", "赞美", "赞美诗", "赞美诗歌", "赞美诗网"];
         if(Str::startsWith($keyword, $triggerKeywords)){
             $name = str_replace(
                 $triggerKeywords,
-                ['', '', ''],
+                ['', '', '', '', ''],
                 $keyword
             );
             $name = trim($name);
@@ -26,7 +26,7 @@ final class Zan  extends Resource {
             if(!$data){
                 $url = "https://www.zanmeishige.com/search/song/{$name}";
                 $response = Http::get($url);
-                $html =$response->body();
+                $html = $response->body();
                 $htmlTmp = HtmlDomParser::str_get_html($html);
                 $notFound = $htmlTmp->findOneOrFalse('.empty');
                 if($notFound){
