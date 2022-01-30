@@ -615,11 +615,12 @@ class XbotCallbackController extends Controller
                         ->where('wxid', $fromWxid)
                         ->first();
                     if(!$from) {
-                        Log::error(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
                         if($isRoom){
                             // 接口初始化一下(本群的)所有群的所有群成员
                             // 收到执行，修复bug, 300行已解决
                             return $xbot->getRooms();
+                        }else{
+                            Log::error(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
                         }
                     }else{
                         $fromId = $from->id;

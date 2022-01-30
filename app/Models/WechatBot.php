@@ -109,7 +109,7 @@ class WechatBot extends Model
         // if($type == 'file')     $xbot->sendFile($to, $data['url']);
         // if($type == 'image')    $xbot->sendImage($to, $data['url']);
         if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
-        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], $data['description']." 点击🎵收听 ");
+        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], " 点击🎵收听 {$data['description']}");
         if($type == 'link')     $xbot->sendLink($to, $data['image'], $data['url'],  $data['title'], $data['description']);
     }
 
@@ -231,7 +231,8 @@ class WechatBot extends Model
                 ]);
             }
 
-            $wechatBotContact = WechatBotContact::firstWhere('wxid', $wxid);
+            $wechatBotContact = WechatBotContact::where('wxid', $wxid)
+                ->where('wechat_bot_id', $this->id)->first();
             if(!$wechatBotContact){ // if已经存在，说明是好友
                 $attachs[$wechatContact->id] = [
                     'type' => 3,// 群成员 特殊的type:3群陌生人
@@ -242,10 +243,11 @@ class WechatBot extends Model
             }
         }
 
-        // @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
-        $this->contacts()->syncWithoutDetaching($attachs);
-        Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '群成员已同步', $this->wxid, $data['wxid'], $data['nickname'], count($attachs)]);
-        return $attachs;
+        if($counts = count($attachs)){
+            // @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
+            $this->contacts()->syncWithoutDetaching($attachs);
+            Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '群成员已同步', $this->wxid, $data['wxid'], $data['nickname'], $counts]);
+        }
     }
 
 }
