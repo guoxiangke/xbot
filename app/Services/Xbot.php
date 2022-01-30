@@ -130,7 +130,7 @@ final class Xbot {
     public function sendContactCard($to_wxid, $card_wxid){
         $this->request('MT_SEND_CARDMSG', get_defined_vars());
     }
-    
+
     // 没有返回callback，直接就修改成功了
     public function remark($wxid, $remark){
         $this->request('MT_MOD_FRIEND_REMARK_MSG', get_defined_vars());
@@ -146,7 +146,7 @@ final class Xbot {
         }
     }
 
-    public function sendLink($to_wxid, $url, 
+    public function sendLink($to_wxid, $url,
         $image_url='https://res.wx.qq.com/t/wx_fed/wechat-main-page/wechat-main-page-oversea-new/res/static/img/3ou3PnG.png',
         $title='test',
         $desc='desc'
@@ -160,10 +160,13 @@ final class Xbot {
     }
 
     // $xbot->creatRoom('wxid1','wxid2','wxid3');
-    public function creatRoom(){
-        $this->request('MT_CREATE_ROOM_MSG', func_get_args());
+    public function creatRoom(...$wxids){
+        // func_get_args()
+        // 至少传3人
+        if(count($wxids) < 3) return ['error'=>'至少传3人wxid才可以建群'];
+        $this->request('MT_CREATE_ROOM_MSG', $wxids);
     }
-    
+
     //直接入群
     public function addMememberToRoom($room_wxid, $who){
         $data = [

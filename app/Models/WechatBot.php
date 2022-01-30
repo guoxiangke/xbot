@@ -81,9 +81,9 @@ class WechatBot extends Model
         if($type == 'text' || $type == 'at') {
             // template :nickname :sex @bluesky_still
             $content = $data['content'];
-            // :remark 备注或昵称 
-            // :nickname 好友自己设置的昵称 
-            // :seat 客服座席名字 
+            // :remark 备注或昵称
+            // :nickname 好友自己设置的昵称
+            // :seat 客服座席名字
             // 第:no号好友
             if(Str::contains($content, [':remark', ':nickname', ':seat'])){
                 $contact = WechatBotContact::with('contact', 'seat')
@@ -140,14 +140,14 @@ class WechatBot extends Model
         WechatBotLogin::dispatch($this->id);
     }
 
-    // 程序崩溃时，login_at 还在，咋办？ 
+    // 程序崩溃时，login_at 还在，咋办？
     public function isLive(){
         $this->xbot()->getSelfInfo();
         sleep(5); //给callback5秒时间 执行 MT_DATA_OWNER_MSG，更新 is_live_at，然后 refresh，获取最新的 检测时间。
         $lastCheck = $this->is_live_at;
         $this->refresh();
         Log::info(__CLASS__, [__LINE__, $this->wxid, $this->client_id, 'XbotIsLive 2次检测时间', $lastCheck, $this->is_live_at]);
-        
+
         // Try 3 time? TODO. 第1次没反应时，却在线，怎么办？
         if (optional($this->is_live_at)->diffInMinutes() > 1){ // 如果时间大于1分钟 则代表离线
             // $this->logout();//对此client_id调一次二维码，如果此clientId被别人使用了呢？岂不是把别人下线了？
@@ -158,80 +158,94 @@ class WechatBot extends Model
             $this->save();
         }
     }
-    
+
     public function init(){
         $xbot = $this->xbot();
         $xbot->getFriends();
-        //需要执行2次 getRooms()
-        $xbot->getRooms();//第一次初始化数据
-        $xbot->getRooms();//第二次attach group meta
+        $xbot->getRooms();
         $xbot->getPublics();
-        // @see  XbotCallbackController MT_DATA_OWNER_MSG 
+        // @see  XbotCallbackController MT_DATA_OWNER_MSG
         $xbot->getSelfInfo();
     }
 
     public function syncContacts($contacts, $type){
-        $botOwnerId = $this->user_id;
         $attachs = [];
         foreach ($contacts as $data) {
             $data['type'] = WechatContact::CALLBACKTYPES[$type]; //0公众号，1联系人，2群
             $data['nickname'] = $data['nickname']??$data['wxid'];
             $data['avatar'] = $data['avatar']??'';
             $data['remark'] = $data['remark']??$data['nickname']??$data['wxid'];
-            ($contact = WechatContact::firstWhere('wxid', $data['wxid']))
-                ? $contact->update($data) // 更新资料
-                : $contact = WechatContact::create($data);
+            // 联系人 入库
+            ($wechatContact = WechatContact::firstWhere('wxid', $data['wxid']))
+                ? $wechatContact->update($data) // 更新资料
+                : $wechatContact = WechatContact::create($data);
 
+            // Bot联系人 关联
             $wechatBotContact = WechatBotContact::where('wechat_bot_id', $this->id)
-                ->where('wechat_contact_id', $contact->id)->first();
+                ->where('wechat_contact_id', $wechatContact->id)->first();
 
-            // 已经存在的不用更新，防止CRM备注被覆盖
-            if($wechatBotContact){
-                // 如果是群，更新群meta
-                if($contact->type == 2){//2=群
-                    $groupData =  Arr::only($data, ['is_manager', 'member_list', 'manager_wxid', 'total_member']);
-                    $wechatBotContact->setMeta('group', $groupData);
-                    
-                    // 把群成员 也 写入 wechat_contact 数据库，以供webchat 群回话调用
-                    // 但要给一个特殊的type:3群陌生人
-                    foreach ($data['member_list'] as $wxid) {
-                        $gContact = WechatContact::firstWhere('wxid', $wxid);
-                        if(!$gContact){
-                            $gContact = WechatContact::create([
-                                // 'type' => 1, //默认为1 联系人 
-                                'wxid' => $wxid,
-                                'remark' => $wxid,
-                                'nickname9' => $wxid,
-                            ]);
-                        }
 
-                        
-                        $gBotContact = WechatBotContact::firstWhere('wxid', $wxid);
-                        if(!$gBotContact){ // if已经存在，说明是好友
-                            $attachs[$gContact->id] = [
-                                'type' => 3,// 群成员 特殊的type:3群陌生人
-                                'wxid' => $gContact->wxid,
-                                'remark' => $gContact->remark??$gContact->wxid,
-                                'seat_user_id' => $botOwnerId, //默认坐席为bot管理员
-                            ];
-                        }
-                    }
+            // 如果是群
+            if($wechatContact->type == 2){
+                $this->syncRoomMemembers($data);
+                // 更新群meta, 确保群已经入库
+                if(!$wechatBotContact) {
+                    $wechatBotContact = WechatBotContact::create([
+                        'wechat_bot_id' => $this->id,
+                        'wechat_contact_id' => $wechatContact->id,
+                        'type' => $data['type'],
+                        'wxid' => $wechatContact->wxid,
+                        'remark' => $data['remark']??$data['nickname']??$wechatContact->wxid,
+                        'seat_user_id' => $this->user_id, //默认坐席为bot管理员
+                    ]);
                 }
-                // 已经存在的不用更新，防止CRM备注被覆盖
-                continue; 
+                $wechatBotContact->setMeta('group', Arr::only($data, ['is_manager', 'manager_wxid', 'total_member']));
+            }elseif(!$wechatBotContact){
+                $attachs[$wechatContact->id] = [
+                    'type' => $data['type'],
+                    'wxid' => $wechatContact->wxid,
+                    'remark' => $data['remark']??$data['nickname']??$wechatContact->wxid,
+                    'seat_user_id' => $this->user_id, //默认坐席为bot管理员
+                ];
             }
-
-            ;// @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
-            $attachs[$contact->id] = [
-                'type' => $data['type'],
-                'wxid' => $contact->wxid,
-                'remark' => $data['remark']??$data['nickname']??$contact->wxid,
-                'seat_user_id' => $botOwnerId, //默认坐席为bot管理员
-            ];
         }
 
+        // @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
         $this->contacts()->syncWithoutDetaching($attachs);
-        Log::debug(__METHOD__,['已同步', $this->wxid,  $type, count($contacts), count($attachs)]);
+        Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '已同步好友', $this->wxid, $data['wxid'], $type, count($attachs)]);
+    }
+
+    protected function syncRoomMemembers($data)
+    {
+        // 把群成员 也 写入 wechat_contact 数据库，以供webchat 群回话调用
+        // 但要给一个特殊的type:3群陌生人
+        $attachs = [];
+        foreach ($data['member_list'] as $wxid) {
+            $wechatContact = WechatContact::firstWhere('wxid', $wxid);
+            if(!$wechatContact){
+                $wechatContact = WechatContact::create([
+                    'type' => 1, //默认为1 联系人
+                    'wxid' => $wxid,
+                    'remark' => $wxid,
+                    'nickname' => $wxid,
+                ]);
+            }
+
+            $wechatBotContact = WechatBotContact::firstWhere('wxid', $wxid);
+            if(!$wechatBotContact){ // if已经存在，说明是好友
+                $attachs[$wechatContact->id] = [
+                    'type' => 3,// 群成员 特殊的type:3群陌生人
+                    'wxid' => $wechatContact->wxid,
+                    'remark' => $wechatContact->remark??$wechatContact->wxid,
+                    'seat_user_id' => $this->user_id, //默认坐席为bot管理员
+                ];
+            }
+        }
+
+        // @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
+        $this->contacts()->syncWithoutDetaching($attachs);
+        Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '群成员已同步', $this->wxid, $data['wxid'], $data['nickname'], count($attachs)]);
+        return $attachs;
     }
 
 }

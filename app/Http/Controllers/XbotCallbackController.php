@@ -200,7 +200,7 @@ class XbotCallbackController extends Controller
             ->where('client_id', $clientId)
             ->first();
         if(!$wechatBot) {
-            Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatClientId, ' 不存在wechatBot？设备已下线！']);
+            Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatClientId, $clientId, ' 不存在wechatBot？设备已下线！']);
             return response()->json(null);
         }
         //*********************************************************
@@ -222,6 +222,18 @@ class XbotCallbackController extends Controller
         $isAutoReply = $config['isAutoReply']??false;
 
 
+
+        $isSelf = false;
+        $from_wxid = $data['from_wxid']??'';
+        $to_wxid = $data['to_wxid']??'';
+        if($from_wxid == $to_wxid || $from_wxid == $wechatBot->wxid){
+            $isSelf = true;
+            //自己发给自己消息，即不发送给develope
+            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, "isSelf={$isSelf}"]);
+            //因bot发的信息（通过关键词响应的信息）也要记录，所以继续走下去吧！不return了！
+            // return response()->json(null);
+        }
+
         $isRoom = $data['room_wxid']??false; //群
         if($isRoom){
             $isListenRooms = $wechatBot->getMeta('isListenRooms', []);
@@ -232,8 +244,8 @@ class XbotCallbackController extends Controller
             if(!$config['isListenRoomAll']) //如果不是监听所有群消息，则从配置中取
                 $islistenMsg = $isListenRooms[$replyTo]??false; // 选择某些群来记录消息
 
-            if(isset($data['from_wxid']) && $data['from_wxid'] == $wechatBot->wxid) {
-                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '自己响应的群消息，只记录，不响应autoprely']);
+            if($isSelf) {
+                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid,  $isSelf, '自己响应的群消息，只记录，不响应autoprely']);
                 // return response()->json(null);
             }else{
                 // 接收到群消息！群消息里，没有wxid, from_wxid = 发送者，to_wxid=wx@room room_wxid=wx@room
@@ -255,13 +267,6 @@ class XbotCallbackController extends Controller
                 // }
             }
         }
-        // else{
-        //     if(isset($data['from_wxid']) && $data['from_wxid'] == $data['to_wxid']){
-        //         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '自己发给自己消息，即不发送给develope' , $request->all()]);
-        //         //因bot发的信息（通过关键词响应的信息）也要记录，所以继续走下去吧！不return了！
-        //         // return response()->json(null);
-        //     }
-        // }
 
         // 初始化 联系人数据
         $syncContactTypes = ['MT_DATA_FRIENDS_MSG', 'MT_DATA_CHATROOMS_MSG', 'MT_DATA_PUBLICS_MSG' ];
@@ -272,68 +277,10 @@ class XbotCallbackController extends Controller
         }
         // MT_ROOM_ADD_MEMBER_NOTIFY_MSG 新人入群
         // MT_ROOM_CREATE_NOTIFY_MSG 被拉入群
-        // MT_DATA_CHATROOM_MEMBERS_MSG 主动获取 群成员信息，入库
-        if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG' || $type == 'MT_DATA_CHATROOM_MEMBERS_MSG'){
-            $groupWxid = $data['room_wxid'];
-            $gBotContact = WechatBotContact::withTrashed()
-                ->where('wechat_bot_id', $wechatBot->id)
-                ->firstWhere('wxid', $groupWxid);
-
-            if(!$gBotContact){
-                // 群 不存在的话，创建该群
-                $groupContact = [
-                    'type' => 2,//群
-                    'wxid' => $groupWxid,
-                ];
-                ($contact = WechatContact::firstWhere('wxid', $gBotContact))
-                    ? $contact->update($groupContact) // 更新资料
-                    : $contact = WechatContact::create($groupContact);
-                $attachs[$contact->id] = [
-                    'type' => 2, //群
-                    'wxid' => $contact->wxid,
-                    'remark' => $member['nickname']??$contact->wxid,
-                    'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
-                ];
-                $wechatBot->contacts()->syncWithoutDetaching($attachs);
-                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $groupWxid, $type, 'new group']);
-            }else{
-                if($gBotContact->trashed()){
-                    $gBotContact->restore();
-                    Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, 'restored']);
-                }
-            }
-
-            // 如果联系人不存在，则创建在wechatContact 和 wechatBotContact
-            // 1.假设群已经存在，只需要处理新加入的群成员
-            $attachs = [];
-            foreach ($data['member_list'] as $member) {
-                ($contact = WechatContact::firstWhere('wxid', $member['wxid']))
-                    ? $contact->update($member) // 更新资料
-                    : $contact = WechatContact::create($member);
-                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $contact->nickname, '添加好友到群，好友入库']);
-                $memberBotContact = WechatBotContact::withTrashed()
-                    ->where('wechat_bot_id', $wechatBot->id)
-                    ->firstWhere('wxid', $member['wxid']);
-
-                if(!$memberBotContact){
-                    $type = 3; //群陌生人
-                    $attachs[$contact->id] = [
-                        'type' => $type, //群陌生人
-                        'wxid' => $contact->wxid,
-                        'remark' => $member['nickname']??$contact->wxid,
-                        'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
-                    ];
-                    Log::info(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $contact->nickname, '添加好友到群，群陌生人']);
-                }else{
-                    // softDelete->restore()
-                    if($memberBotContact->trashed()){
-                        $memberBotContact->restore();
-                    }
-                    //如果已经存在了，说明可能之前是好友，然后被加到这个群了
-                    Log::info(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $contact->nickname, '添加好友到群，群好友']);
-                }
-            }
-            $wechatBot->contacts()->syncWithoutDetaching($attachs);
+        // MT_DATA_CHATROOM_MEMBERS_MSG 主动获取 群成员信息，入库 不需要了，只有wxid，没有其他信息，使用再次getRooms()再次入库
+        if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
+            // 创建群后，再次手动掉getRooms()以执行273行 来初始化群数据
+            $wechatBot->xbot()->getRooms();
             return response()->json(null);
         }
         // # bot/群成员 被踢出群
@@ -433,13 +380,13 @@ class XbotCallbackController extends Controller
 
         // ✅ 搜索用户信息后的callback，主动+好友
         if ($type == 'MT_SEARCH_CONTACT_MSG') {
-            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '主动+好友', $data['search']]);
-            $remark = "朋友介绍"; //todo remark settings in FE
             if(isset($data['v1']) && isset($data['v2'])){
+                $remark = "朋友介绍"; //todo remark settings in FE
                 $xbot->addFriendBySearchCallback($data['v1'], $data['v2'], $remark);
+                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '主动+好友', $data['search']]);
             }else{
                 $xbot->getRooms(); //更新群
-                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '主动+好友', $data]);
+                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '更新群成员入库', $data]);
             }
             return response()->json(null);
         }
@@ -660,19 +607,23 @@ class XbotCallbackController extends Controller
                 // $fromId = null;
                 $conversationWxid = $data['to_wxid'];
             }else{
-                $from = WechatBotContact::query()
-                    ->where('wechat_bot_id', $wechatBot->id)
-                    ->where('wxid', $fromWxid)
-                    ->first();
-                if(!$from) {
-                    Log::error(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
-                    if($isRoom){
-                        $room_wxid = $data['room_wxid'];
-                        // 接口初始化一下本群的所有成员
-                        $xbot->getRoomMemembers($room_wxid);
-                    }
+                if($isSelf) {
+                    $fromId = null;
                 }else{
-                    $fromId = $from->id;
+                    $from = WechatBotContact::query()
+                        ->where('wechat_bot_id', $wechatBot->id)
+                        ->where('wxid', $fromWxid)
+                        ->first();
+                    if(!$from) {
+                        Log::error(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
+                        if($isRoom){
+                            // 接口初始化一下(本群的)所有群的所有群成员
+                            // 收到执行，修复bug, 300行已解决
+                            return $xbot->getRooms();
+                        }
+                    }else{
+                        $fromId = $from->id;
+                    }
                 }
             }
             //如果是群，别人发的信息
