@@ -244,10 +244,8 @@ class XbotCallbackController extends Controller
             if(!$config['isListenRoomAll']) //如果不是监听所有群消息，则从配置中取
                 $islistenMsg = $isListenRooms[$replyTo]??false; // 选择某些群来记录消息
 
-            if($isSelf) {
-                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid,  $isSelf, '自己响应的群消息，只记录，不响应autoprely']);
-                // return response()->json(null);
-            }else{
+            // Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid,  $isSelf, '自己响应的群消息，只记录，不响应autoprely']);
+            if(!$isSelf){
                 // 接收到群消息！群消息里，没有wxid, from_wxid = 发送者，to_wxid=wx@room room_wxid=wx@room
                 Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '接收到群消息']);
                 // 是否记录群消息: isListenRoom
@@ -299,14 +297,14 @@ class XbotCallbackController extends Controller
                     // $content = "{$member['nickname']}被出群了";
                     // 2.群消息不变，他发的都删！
                     if(!$gBotContact){
-                        Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $member['wxid'], '！bot被出群了！消息删除了']);
+                        Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $member['wxid'], '！bot被出群了！消息删除了？']);
                         continue;
                     }
                     WechatMessage::query()
                         ->where('from', $gBotContact->id)
                         ->delete();
+                    Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, '群成员变动，删除消息']);
                     $gBotContact->delete();
-                    Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, '！bot被出群了！消息删除了']);
                 }
             }
             //2. 删除 wechat_bot_contacts
@@ -560,7 +558,6 @@ class XbotCallbackController extends Controller
                         case  3:
                             $title = $xml['appmsg']['title']??'';
                             $content = "音乐消息｜{$title}: {$xml['appmsg']['url']}";
-                            Log::error(__LINE__, [$xml['appmsg']]);
                             break;
                         case  19: //聊天记录
                             $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['des']}";
