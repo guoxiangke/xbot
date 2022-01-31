@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\WechatBot;
+use App\Models\WechatContent;
 
 class triggerXbot extends Command
 {
