@@ -4,6 +4,8 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Models\WechatBot;
+use App\Models\WechatContact;
 
 class Kernel extends ConsoleKernel
 {
@@ -16,8 +18,13 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('xbot:islive')->hourly();
-        $schedule->command('islive')->cron("0 9-12,18-22 * * *");
+        $xbotSubscriptions = \App\Models\XbotSubscription::with(['wechatContact','user'])->get();
+        foreach ($xbotSubscriptions as $xbotSubscription) {
+            $botId = WechatBot::firstWhere('user_id', $xbotSubscription->user_id)->id;
+            $to = WechatContact::find($xbotSubscription->wechat_contact_id)->wxid;
+            $keyword = $xbotSubscription->keyword;
+            $schedule->command("trigger:xbot $botId $to $keyword")->cron($xbotSubscription->cron);
+        }
     }
 
     /**

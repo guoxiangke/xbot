@@ -8,9 +8,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Metowolf\Meting;
-use App\Services\Resource;
 
-final class Music  extends Resource {
+final class Music{
 	public function __invoke($keyword)
 	{
         $triggerKeywords = ["点歌", "我想听", "想听", "来一首", "来首"];

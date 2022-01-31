@@ -27,6 +27,7 @@ class WechatContent extends Model
     const TYPE_IMAGE = 2;
     const TYPE_FILE = 3;
     const TYPE_LINK = 4;
+    const TYPE_MUSIC= 5;
 
     public function getCnTypeAttribute()
     {

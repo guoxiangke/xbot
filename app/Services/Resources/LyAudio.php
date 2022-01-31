@@ -8,9 +8,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use voku\helper\HtmlDomParser;
-use App\Services\Resource;
 
-final class LyAudio  extends Resource {
+final class LyAudio{
 	public function __invoke($keyword) {
     //3位数关键字xxx
     // $offset = substr($oriKeyword, 3) ?: 0;
@@ -44,9 +43,9 @@ final class LyAudio  extends Resource {
         }else{
 		      return [
 	        	'type' => 'text',
-            "data"=> [
-              "content"=> '此节目已停播/暂无此编号资源',
-            ]
+                "data"=> [
+                  "content"=> '此节目已停播/暂无此编号资源',
+                ]
           ];
         }
     }

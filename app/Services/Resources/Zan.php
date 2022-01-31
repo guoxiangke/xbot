@@ -8,9 +8,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use voku\helper\HtmlDomParser;
-use App\Services\Resource;
 
-final class Zan  extends Resource {
+final class Zan{
 	public function __invoke($keyword)
 	{
         $triggerKeywords = ["赞", "赞美", "赞美诗", "赞美诗歌", "赞美诗网"];
@@ -48,6 +47,7 @@ final class Zan  extends Resource {
                         switch ($key) {
                             case 0:
                                 $link = $value->getAttribute('href');
+                                $title = $value->text();
                                 break;
                             case 1:
                                 $album = $value->text();
@@ -66,6 +66,7 @@ final class Zan  extends Resource {
                     if($counts>$max){
                         $max = $counts;
                         $description = $album . ' ' . $singer;
+                        $name = $title;
                     }
                 }
                 preg_match('/\d+/',$songs[$max],$matchs);

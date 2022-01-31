@@ -42,9 +42,17 @@ class triggerXbot extends Command
         $to = $this->argument('to');
         $keyword = $this->argument('keyword');
 
-        $wechatBot = WechatBot::find($botId );
+        $wechatBot = WechatBot::find($botId);
         $xbot = $wechatBot->xbot();
-        $xbot->sendText($to, $keyword);
+        $resource = app("App\Services\Resource");
+        $res = $resource->__invoke($keyword);
+        $wechatContent =  WechatContent::make([
+            'name' => 'tmpSendStructure',
+            'type' => array_search($res['type'], WechatContent::TYPES), //text=>0 这里使用0～9方便数据库存储数字
+            'content' => $res['data'],
+        ]);
+        $wechatBot->send([$to], $wechatContent);
+
         return 0;
     }
 }

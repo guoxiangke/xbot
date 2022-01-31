@@ -8,9 +8,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use voku\helper\HtmlDomParser;
-use App\Services\Resource;
 
-final class ChineseToday extends Resource {
+final class ChineseToday{
 	public function __invoke($keyword)
 	{
         if($keyword == "每日箴言"){

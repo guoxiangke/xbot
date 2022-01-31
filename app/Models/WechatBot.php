@@ -117,6 +117,7 @@ class WechatBot extends Model
     public function send($tos, WechatContent $wchatContent){
         foreach ($tos as $to) {
             $this->_send($to, $wchatContent);
+            sleep(3); // 发送消息过于频繁，可稍后再试。
         }
     }
 

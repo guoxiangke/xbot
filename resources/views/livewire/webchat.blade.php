@@ -222,14 +222,10 @@
                     //分2种情况
                     // 1.从手机发送 显示bot头像
                     // 2.从webchat发送，显示座席头像
-                    $name = $message['seat_user_id']
-                        ? $seatUsers[$message['seat_user_id']]['name']
-                        : $wechatBot->remark;
+                    $name = $wechatBot->name;
                     
                     $meta = $wechatBot->getMeta('xbot');
-                    $avatar = $message['seat_user_id']
-                        ? $seatUsers[$message['seat_user_id']]['profile_photo_url']
-                        : $meta['avatar'];
+                    $avatar = $meta['avatar'];
                   }else{
                     $name = $contactsArray[$message['from']]['remark']??($message['from']%100);
                     $avatar = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
