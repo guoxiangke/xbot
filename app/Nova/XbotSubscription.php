@@ -11,6 +11,7 @@ use Laravel\Nova\Fields\Boolean;
 use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Fields\BelongsTo;
+use Lorisleiva\CronTranslator\CronTranslator;
 
 class XbotSubscription extends Resource
 {
@@ -59,21 +60,29 @@ class XbotSubscription extends Resource
             
             ID::make(__('ID'), 'id')->sortable(),
 
-            BelongsTo::make('User'),
-            BelongsTo::make('nickname','wechatContact','App\Nova\WechatContact'),
+            BelongsTo::make('who','User', 'App\Nova\User'), //谁的机器人
+            BelongsTo::make('To','wechatBotContact', 'App\Nova\WechatBotContact')->showOnIndex(),
             // BelongsTo::make('Author', 'author', 'App\Nova\User'),
             Text::make('keyword')
                 ->sortable()
                 ->rules('required', 'max:255'),
             Text::make('price')
                 ->sortable()
-                ->rules('required', 'max:255'),
+                ->rules('required', 'max:255')
+                ->hideFromIndex()
+                ->default(0),
             Text::make('wechat_pay_order_id')
                 ->sortable()
-                ->rules('required', 'max:255'),
+                ->rules('required', 'max:255')
+                ->hideFromIndex()
+                ->default(NULL),
+            Text::make('cron', function () {
+                return CronTranslator::translate($this->cron);
+            })->showOnIndex(),
             Text::make('cron')
                 ->sortable()
-                ->rules('required', 'max:255'),
+                ->rules('required', 'max:255')
+                ->hideFromIndex(),
         ];
     }
 

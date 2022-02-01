@@ -6,23 +6,25 @@ use Illuminate\Http\Request;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Fields\Text;
+use Laravel\Nova\Fields\BelongsTo;
+use Laravel\Nova\Fields\HasOne;
 use Laravel\Nova\Fields\Avatar;
 
-class WechatContact extends Resource
+class WechatBotContact extends Resource
 {
     /**
      * The model the resource corresponds to.
      *
      * @var string
      */
-    public static $model = \App\Models\WechatContact::class;
+    public static $model = \App\Models\WechatBotContact::class;
 
     /**
      * The single value that should be used to represent the resource when being displayed.
      *
      * @var string
      */
-    public static $title = 'nickname';
+    public static $title = 'remark';
 
     /**
      * The columns that should be searched.
@@ -43,17 +45,13 @@ class WechatContact extends Resource
     {
         return [
             ID::make(__('ID'), 'id')->sortable(),
-            Avatar::make('Avatar')->thumbnail(fn()=>$this->avatar)->showOnIndex(),
-            Text::make(__('Nickname'), 'nickname')->sortable(),
-            Text::make(__('Remark'), 'remark')->sortable(),
-            Text::make(__('Sex'), 'sex')->sortable(),
-            Text::make(__('Type'), 'type')->sortable(),
+
+            Avatar::make('Avatar')->thumbnail(fn()=>$this->contact->avatar)->showOnIndex(),
+            BelongsTo::make('Contact', 'contact', 'App\Nova\WechatContact')->showOnIndex(),
+            BelongsTo::make('WechatBot', 'bot', 'App\Nova\WechatBot')->showOnIndex(),
 
             Text::make(__('Wxid'), 'wxid')->sortable(),
-            Text::make(__('account'), 'account')->sortable(),
-            Text::make(__('country'), 'country')->sortable(),
-            Text::make(__('city'), 'city')->sortable(),
-            Text::make(__('province'), 'province')->sortable(),
+            Text::make(__('Remark'), 'remark')->sortable(),
         ];
     }
 

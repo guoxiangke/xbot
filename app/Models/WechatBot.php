@@ -40,7 +40,8 @@ class WechatBot extends Model
     }
 
     public function wechatClient(){
-        return $this->hasOne(WechatClient::class, 'id', 'wechat_client_id');
+        return $this->BelongsTo(WechatClient::class);
+        // return $this->hasOne(WechatClient::class, 'id', 'wechat_client_id');
     }
 
     // bot和contact关系 N:N

@@ -19,6 +19,12 @@ class XbotSubscription extends Model
 
     public function wechatContact()
     {
+        // hasOne: no such column: wechat_contacts.xbot_subscription_id
         return $this->belongsTo(WechatContact::class);
+    }
+
+    public function wechatBotContact()
+    {
+        return $this->belongsTo(WechatBotContact::class);
     }
 }
