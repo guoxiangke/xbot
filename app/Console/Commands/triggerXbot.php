@@ -47,13 +47,9 @@ class triggerXbot extends Command
         $xbot = $wechatBot->xbot();
         $resource = app("App\Services\Resource");
         $res = $resource->__invoke($keyword);
-        $wechatContent =  WechatContent::make([
-            'name' => 'tmpSendStructure',
-            'type' => array_search($res['type'], WechatContent::TYPES), //text=>0 这里使用0～9方便数据库存储数字
-            'content' => $res['data'],
-        ]);
-        $wechatBot->send([$to], $wechatContent);
-
+        if($res) {
+            $wechatBot->send([$to], $res);
+        }
         return 0;
     }
 }

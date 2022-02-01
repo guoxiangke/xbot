@@ -16,6 +16,7 @@ use App\Services\Xbot;
 use App\Models\User;
 use App\Models\WechatBotContact;
 use App\Events\WechatBotLogin;
+use App\Jobs\XbotSendQueue;
 
 class WechatBot extends Model
 {
@@ -74,7 +75,7 @@ class WechatBot extends Model
         return new Xbot($winClientUri, $this->wxid, $clientId);
     }
 
-    private function _send($to, WechatContent $wechatContent){
+    public function _send($to, WechatContent $wechatContent){
         $type = WechatContent::TYPES[$wechatContent->type];
         $xbot = $this->xbot();
         $data = $wechatContent->content;
@@ -109,16 +110,42 @@ class WechatBot extends Model
         if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\\\",$data['file']));
         if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\\\",$data['image']));
         if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
-        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], " 点击🎵收听 {$data['description']}");
+        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], "点击🎵收听 {$data['description']}");
         if($type == 'link')     $xbot->sendLink($to, $data['image'], $data['url'],  $data['title'], $data['description']);
     }
 
-    // 批量发送 batch 第一个参数为数组[]
-    public function send($tos, WechatContent $wchatContent){
-        foreach ($tos as $to) {
-            $this->_send($to, $wchatContent);
-            sleep(3); // 发送消息过于频繁，可稍后再试。
+    // 批量发送 batch 第一个参数为数组[] wechatContentOrRes
+    public function send($tos, array | wechatContent $wechatContent){
+        if(is_array($wechatContent)) {
+            $wechatContent = WechatContent::make([
+                'name' => 'tmpSendStructure',
+                'type' => array_search($wechatContent['type'], WechatContent::TYPES), //text=>0 这里使用0～9方便数据库存储数字
+                'content' => $wechatContent['data'],
+            ]);
         }
+
+        // queue sleep(1); // 发送消息过于频繁，可稍后再试。
+        $counts = count($tos);
+        $count = 0;
+        $now = now();
+        foreach ($tos as $to) {
+            if($counts > 50){
+                $delaySeconds = $count++%3600;//1小时内发完5000人
+                $delay = $now->addSeconds($delaySeconds);
+                XbotSendQueue::dispatch($this, $to, $wechatContent)->delay($delay);
+            }else{
+                $this->_send($to, $wechatContent);
+            }
+        }
+    }
+
+    public function replyResouceByKeyword($keyword){
+        $cacheKey = "resources.{$keyword}";
+        if(!($res = Cache::get($cacheKey,false))){
+            $res = Http::get(config('xbot.resource_endpoint')."{$keyword}"); //慢
+            if($res) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
+        }
+        if($res) $wechatBot->send([$to], $res);
     }
 
     public function logout(){
@@ -169,10 +196,11 @@ class WechatBot extends Model
         $xbot->getSelfInfo();
     }
 
-    public function syncContacts($contacts, $type){
+    public function syncContacts($contacts, $xbotContactCallbackType){
         $attachs = [];
         foreach ($contacts as $data) {
-            $data['type'] = WechatContact::CALLBACKTYPES[$type]; //0公众号，1联系人，2群
+            $type = WechatContact::CALLBACKTYPES[$xbotContactCallbackType]; //0公众号，1联系人，2群 3群陌生人
+            $data['type'] = $type;
             $data['nickname'] = $data['nickname']??$data['wxid'];
             $data['avatar'] = $data['avatar']??'';
             $data['remark'] = $data['remark']??$data['nickname']??$data['wxid'];
@@ -194,7 +222,7 @@ class WechatBot extends Model
                     $wechatBotContact = WechatBotContact::create([
                         'wechat_bot_id' => $this->id,
                         'wechat_contact_id' => $wechatContact->id,
-                        'type' => $data['type'],
+                        'type' => $type,
                         'wxid' => $wechatContact->wxid,
                         'remark' => $data['remark']??$data['nickname']??$wechatContact->wxid,
                         'seat_user_id' => $this->user_id, //默认坐席为bot管理员
@@ -203,7 +231,7 @@ class WechatBot extends Model
                 $wechatBotContact->setMeta('group', Arr::only($data, ['is_manager', 'manager_wxid', 'total_member']));
             }elseif(!$wechatBotContact){
                 $attachs[$wechatContact->id] = [
-                    'type' => $data['type'],
+                    'type' => $type,
                     'wxid' => $wechatContact->wxid,
                     'remark' => $data['remark']??$data['nickname']??$wechatContact->wxid,
                     'seat_user_id' => $this->user_id, //默认坐席为bot管理员

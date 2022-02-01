@@ -267,8 +267,8 @@ class XbotCallbackController extends Controller
         }
 
         // 初始化 联系人数据
-        $syncContactTypes = ['MT_DATA_FRIENDS_MSG', 'MT_DATA_CHATROOMS_MSG', 'MT_DATA_PUBLICS_MSG' ];
-        if(in_array($type, $syncContactTypes)){
+        $xbotContactCallbackTypes = ['MT_DATA_FRIENDS_MSG', 'MT_DATA_CHATROOMS_MSG', 'MT_DATA_PUBLICS_MSG' ];
+        if(in_array($type, $xbotContactCallbackTypes)){
             $wechatBot->syncContacts($data, $type);
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '获取联系人', $type]);
             return response()->json(null);
@@ -565,8 +565,8 @@ class XbotCallbackController extends Controller
                             $content = "引用回复｜{$xml['appmsg']['title']}";
                             break;
                         default:
-                    Log::error(__CLASS__, [__LINE__, $clientId, $xml['appmsg'], '其他消息，请到手机查看！']);
-                            $content = $xml['appmsg']['title']??'';
+                            $content = "其他未处理消息，请到手机查看！";
+                            $content .= $xml['appmsg']['title']??'';
                             $content .= $xml['appmsg']['des']??'';
                             $content .= $xml['appmsg']['desc']??'';
                             $content .= $xml['appmsg']['url']??'';
@@ -641,8 +641,8 @@ class XbotCallbackController extends Controller
                 'content' => $content,
                 'msgid' => $data['msgid'],
             ]);
+            $wechatBot->replyResouceByKeyword($content);
         }
-        // 开发者选项 =》 WechatMessageObserver
         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, '******************']);//已执行到最后一行
         return response()->json(null);
     }

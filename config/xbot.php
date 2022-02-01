@@ -15,4 +15,5 @@ return [
     'license' => env('XBOT_LICENSE', '=='),
     'xGroup' => env('XBOT_GROUP', 'xxx@chatroom'),
     'endpoint' => env('XBOT_ENDPOINT', 'http://localhost/api'),
+    'resource_endpoint' => env('XBOT_RESOURCE_ENDPOINT', 'http://localhost/api/resources/'),
 ];
