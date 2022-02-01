@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\XbotCallbackController;
 use App\Http\Controllers\WechatBotController;
-use App\Http\Controllers\XbotWebhookController;
 use Illuminate\Support\Facades\Log;
 
 /*
@@ -33,7 +32,3 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 // TODO：
     // https://github.com/spatie/laravel-webhook-client
     // webhook client need verified with aravel-webhook-client
-Route::post('/webhook/xbot', function (Request $request) {
-    Log::debug('WebhookCalled', ['Demo WebhookCalled', $request->all()]);
-    return response()->json(null);
-});

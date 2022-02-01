@@ -534,6 +534,7 @@ class XbotCallbackController extends Controller
                     if(Str::is($keyword, $content)){
                         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '关键词回复', $keyword]);
                         $wechatBot->send([$replyTo], WechatContent::find($wechatContentId));
+                        Cache::put('xbot.replied-'.$data['msgid'], true, 10);
                     }
                 }
             }
@@ -641,7 +642,13 @@ class XbotCallbackController extends Controller
                 'content' => $content,
                 'msgid' => $data['msgid'],
             ]);
-            $wechatBot->replyResouceByKeyword($content);
+            // TODO
+            $isResourceOn = true;
+            $isReplied = Cache::get('xbot.replied-'.$data['msgid'], false);
+            if(!$isReplied && $isResourceOn) {
+                $res = $wechatBot->getResouce($content);
+                if($res) $wechatBot->send([$conversation->wxid], $res);
+            }
         }
         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, '******************']);//已执行到最后一行
         return response()->json(null);

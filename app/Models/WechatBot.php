@@ -17,6 +17,8 @@ use App\Models\User;
 use App\Models\WechatBotContact;
 use App\Events\WechatBotLogin;
 use App\Jobs\XbotSendQueue;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class WechatBot extends Model
 {
@@ -115,7 +117,7 @@ class WechatBot extends Model
     }
 
     // 批量发送 batch 第一个参数为数组[] wechatContentOrRes
-    public function send($tos, array | wechatContent $wechatContent){
+    public function send(array $tos, array | wechatContent $wechatContent){
         if(is_array($wechatContent)) {
             $wechatContent = WechatContent::make([
                 'name' => 'tmpSendStructure',
@@ -139,13 +141,13 @@ class WechatBot extends Model
         }
     }
 
-    public function replyResouceByKeyword($keyword){
+    public function getResouce($keyword){
         $cacheKey = "resources.{$keyword}";
-        if(!($res = Cache::get($cacheKey,false))){
-            $res = Http::get(config('xbot.resource_endpoint')."{$keyword}"); //慢
-            if($res) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
+        if(!($res = Cache::get($cacheKey, false))){
+            $response = Http::get(config('xbot.resource_endpoint')."{$keyword}"); //慢
+            if($response->ok() && $res = $response->json()) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
         }
-        if($res) $wechatBot->send([$to], $res);
+        return $res;
     }
 
     public function logout(){

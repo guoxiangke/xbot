@@ -45,11 +45,8 @@ class triggerXbot extends Command
 
         $wechatBot = WechatBot::find($botId);
         $xbot = $wechatBot->xbot();
-        $resource = app("App\Services\Resource");
-        $res = $resource->__invoke($keyword);
-        if($res) {
-            $wechatBot->send([$to], $res);
-        }
+        $res = $wechatBot->getResouce($keyword);
+        if($res) $wechatBot->send([$to], $res);
         return 0;
     }
 }
