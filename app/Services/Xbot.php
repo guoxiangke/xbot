@@ -137,7 +137,9 @@ final class Xbot {
     }
 
     //@人在群中
-    public function sendAtText($to_wxid, $content, $at_list){
+    // $content = "test,你好{$@},你好{$@}.早上好"
+    // "at_list": ["wxid_xxxxxx","wxid_xxxxxxx"]
+    public function sendAtText($to_wxid, $content, Array $at_list){
         // 判断如果不是群？
         if(Str::endsWith($to_wxid, '@chatroom')){
             $this->request('MT_SEND_CHATROOM_ATMSG', get_defined_vars());

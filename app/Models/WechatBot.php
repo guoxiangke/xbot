@@ -44,6 +44,11 @@ class WechatBot extends Model
         // return $this->hasOne(WechatClient::class, 'id', 'wechat_client_id');
     }
 
+    public function wechatBotContacts($type=null)
+    {
+        return $this->hasMany(WechatBotContact::class);
+    }
+
     // bot和contact关系 N:N
     protected $touches = ['contacts']; //https://github.com/laravel/framework/issues/31597
     // null = ALL

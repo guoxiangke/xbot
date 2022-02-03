@@ -186,6 +186,11 @@
                         wire:model="editTag"
                         wire:keydown.enter.prevent.stop="attachTag({{$editing->id}}, $event.target.value)" />
                 </x-input.group>
+                
+                <x-input.group for="tag" label="入群欢迎语">
+                    <x-input.textarea name="tag" type="textarea" placeholder="默认为群公告,无需点击保存按钮" class="mt-1 block w-full" 
+                        wire:model="RoomWelcome" />
+                </x-input.group>
 
                 <div id="need-to-be-changed">
                     @isset($tags[$editing->id])
@@ -213,11 +218,15 @@
                         @endif
 
                         @if($type=='group')
-                        <label for="log_me" class="flex items-center">
+                        <label for="" class="flex items-center">
+                            <x-jet-checkbox wire:model.defer="isListenRoomMemberChange" :value="$isListenRoomMemberChange"/>
+                            <span class="ml-2 text-sm text-gray-600">群成员变动提醒</span>
+                        </label>
+                        <label for="" class="flex items-center">
                             <x-jet-checkbox wire:model.defer="isListenRoom" :value="$isListenRoom"/>
                             <span class="ml-2 text-sm text-gray-600">监听本群消息</span>
                         </label>
-                        <label for="log_me" class="flex items-center">
+                        <label for="" class="flex items-center">
                             <x-jet-checkbox wire:model.defer="isReplyRoom" :value="$isReplyRoom"/>
                             <span class="ml-2 text-sm text-gray-600">响应本群关键词</span>
                         </label>

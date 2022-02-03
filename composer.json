@@ -17,6 +17,7 @@
         "livewire/livewire": "^2.5",
         "lorisleiva/cron-translator": "^0.3.0",
         "mvdnbrk/laravel-model-expires": "^1.8",
+        "orlyapps/nova-belongsto-depend": "^3.0",
         "plank/laravel-metable": "^5.1",
         "predis/predis": "^1.1",
         "pusher/pusher-php-server": "^7.0",

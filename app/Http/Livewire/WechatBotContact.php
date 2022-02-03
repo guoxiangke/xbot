@@ -81,12 +81,10 @@ class WechatBotContact extends Component
         $this->wechatBotId = $this->wechatBot->id;
         $this->editing = $this->makeBlankModel();
         $this->tagWith =  'wechat-contact-team-'.$currentTeamOwnerId;
-        // $tagA = Tag::findOrCreate('tagA', $this->tagWith);
-        // $tagB = Tag::findOrCreate('tagB', $this->tagWith);
-        // $this->tags = Tag::getWithType($this->tagWith)->pluck('name','id')->toArray();
-        // dd($this->tags);
         $this->isListenRooms = $this->wechatBot->getMeta('isListenRooms', []);
         $this->isReplyRooms = $this->wechatBot->getMeta('isReplyRooms', []);
+        $this->isListenMemberChangeRooms = $this->wechatBot->getMeta('isListenMemberChangeRooms', []);
+        $this->RoomWelcomeMessages = $this->wechatBot->getMeta('roomWelcomeMessages', []);
 
     }
 
@@ -139,9 +137,16 @@ class WechatBotContact extends Component
 
     public $isListenRoom = false;
     public $isReplyRoom = false;
+    public $isListenRoomMemberChange = false;
+    public $RoomWelcome = '';
     public $roomWxid;
     public $isListenRooms;
     public $isReplyRooms;
+    public $isListenMemberChangeRooms;
+    public $RoomWelcomeMessages;
+    public $RoomWelcomeMessage;
+
+    
     public function edit(Model $model)
     {
         $this->useCachedRows();
@@ -149,6 +154,8 @@ class WechatBotContact extends Component
         $this->roomWxid = $model->contact->wxid; // "26401104290@chatroom"
         $this->isListenRoom = $this->isListenRooms[$this->roomWxid]??false;
         $this->isReplyRoom = $this->isReplyRooms[$this->roomWxid]??false;
+        $this->isListenRoomMemberChange = $this->isListenMemberChangeRooms[$this->roomWxid]??false;
+        $this->RoomWelcomeMessage = $this->RoomWelcomeMessages[$this->roomWxid]??'';
         $this->showEditModal = true;
     }
 
@@ -180,6 +187,16 @@ class WechatBotContact extends Component
             $this->isReplyRooms[$this->roomWxid] = $value;
             $this->wechatBot->setMeta('isReplyRooms', $this->isReplyRooms);
         }
+        if($name == 'isListenRoomMemberChange'){
+            $this->isListenMemberChangeRooms[$this->roomWxid] = $value;
+            $this->wechatBot->setMeta('isListenMemberChangeRooms', $this->isListenMemberChangeRooms);
+        }
+
+        if($name == 'RoomWelcome'){
+            $this->RoomWelcomeMessages[$this->roomWxid] = $value;
+            $this->wechatBot->setMeta('roomWelcomeMessages', $this->RoomWelcomeMessages);
+        }
+        
     }
 
     public function resetFilters()

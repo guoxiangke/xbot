@@ -32,7 +32,7 @@ class WechatBotContact extends Resource
      * @var array
      */
     public static $search = [
-        'id',
+        'remark',
     ];
 
     /**
@@ -47,8 +47,8 @@ class WechatBotContact extends Resource
             ID::make(__('ID'), 'id')->sortable(),
 
             Avatar::make('Avatar')->thumbnail(fn()=>$this->contact->avatar)->showOnIndex(),
-            BelongsTo::make('Contact', 'contact', 'App\Nova\WechatContact')->showOnIndex(),
-            BelongsTo::make('WechatBot', 'bot', 'App\Nova\WechatBot')->showOnIndex(),
+            BelongsTo::make('Contact', 'Contact', 'App\Nova\WechatContact')->showOnIndex(),
+            // BelongsTo::make('WechatBot', 'WechatBot', 'App\Nova\WechatBot')->showOnIndex(),
 
             Text::make(__('Wxid'), 'wxid')->sortable(),
             Text::make(__('Remark'), 'remark')->sortable(),
@@ -74,7 +74,10 @@ class WechatBotContact extends Resource
      */
     public function filters(Request $request)
     {
-        return [];
+        return [
+            new Filters\WechatBotFilter,
+            new Filters\WechatBotContactType,
+        ];
     }
 
     /**

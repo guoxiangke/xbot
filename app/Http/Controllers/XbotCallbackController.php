@@ -153,13 +153,13 @@ class XbotCallbackController extends Controller
         }
         $ignoreRAW = [
             'MT_ROOM_ADD_MEMBER_NOTIFY_MSG',
-            'MT_ROOM_DEL_MEMBER_NOTIFY_MSG',
+            'MT_ROOM_DEL_MEMBER_NOTIFY_MSG', //退群
             'MT_CONTACT_ADD_NOITFY_MSG', // 同意好友请求 发送 欢迎信息
             'MT_ADD_FRIEND_MSG', // 主动+好友
             'MT_SEARCH_CONTACT_MSG', //添加好友
             'MT_RECV_VOICE_MSG',
             // 'MT_RECV_FRIEND_MSG',
-            'MT_RECV_SYSTEM_MSG', //
+            'MT_RECV_SYSTEM_MSG', // 群名修改
             'MT_RECV_TEXT_MSG',
             'MT_RECV_OTHER_APP_MSG', //音乐消息🎵  "wx_sub_type":3, "wx_type":49
             'MT_DATA_FRIENDS_MSG',
@@ -238,6 +238,8 @@ class XbotCallbackController extends Controller
         if($isRoom){
             $isListenRooms = $wechatBot->getMeta('isListenRooms', []);
             $isReplyRooms = $wechatBot->getMeta('isReplyRooms', []);
+            $isListenMemberChangeRooms = $wechatBot->getMeta('isListenMemberChangeRooms', []);
+            $roomWelcomeMessages = $wechatBot->getMeta('roomWelcomeMessages', []);
 
             $replyTo = $data['room_wxid'];
             $isAutoReply = $isReplyRooms[$replyTo]??false; // 选择某些群来响应关键词
@@ -276,13 +278,47 @@ class XbotCallbackController extends Controller
         // MT_ROOM_ADD_MEMBER_NOTIFY_MSG 新人入群
         // MT_ROOM_CREATE_NOTIFY_MSG 被拉入群
         // MT_DATA_CHATROOM_MEMBERS_MSG 主动获取 群成员信息，入库 不需要了，只有wxid，没有其他信息，使用再次getRooms()再次入库
+        if($type == 'MT_RECV_SYSTEM_MSG'){
+            // 'MT_RECV_SYSTEM_MSG', // 群名修改
+            // "raw_msg":"\"天空蔚蓝\"修改群名为“#xbot001”"
+            // "room_name":"#xbot"
+            if(Str::contains($data['raw_msg'], '修改群名为')){
+                //“#xbot001” => #xbot001
+                $re = '/[“][\s\S]*[”]/';
+                preg_match($re, $data['raw_msg'], $matches);
+                $string = $matches[0];
+                $string = Str::replace('“', '', $string);
+                $newRoomName = Str::replace('”', '', $string);
+
+                //->更新数据库中名字
+                WechatContact::update(['wxid'=>$data['room_wxid']],[
+                    'nickname' => $newRoomName
+                ]);
+                //TODO 只有群主可以改，其他改，要改回去 xbot的接口
+            }
+        }
         if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
+            //提醒
+            $roomConfigIn = false; //todo
+            $roomWxid = $data['room_wxid'];
+            $isListenMemberChange = $isListenMemberChangeRooms[$roomWxid]??false;
+            if($isListenMemberChange || $data['is_manager']??false){
+                $members = $data['member_list'];
+                $memberString = '';
+                $atList = [];
+                foreach ($members as $member) {
+                    $memberString .= "@{$member['nickname']} ";
+                    $atList[] = $member['nickname'];
+                }
+                $msg = $roomWelcomeMessages[$roomWxid]??"欢迎{$memberString}加入本群👏";
+                $wechatBot->xbot()->send($roomWxid, $msg);
+            }
             // 创建群后，再次手动掉getRooms()以执行273行 来初始化群数据
             $wechatBot->xbot()->getRooms();
             return response()->json(null);
         }
         // # bot/群成员 被踢出群
-        // 群成员 被踢出群 不做任何操作
+        // 群成员 被踢出群/退群
         if($type == 'MT_ROOM_DEL_MEMBER_NOTIFY_MSG'){
             // 如果是bot
             $isBotRemovedFromGroup = false;
@@ -305,6 +341,19 @@ class XbotCallbackController extends Controller
                         ->delete();
                     Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, '群成员变动，删除消息']);
                     $gBotContact->delete();
+                    //提醒
+                    $replyTo = $data['room_wxid'];
+                    $isListenMemberChange = $isListenMemberChangeRooms[$replyTo]??false;
+                    if($isListenMemberChange || $data['is_manager']??false){
+                        $members = $data['member_list'];
+                        $memberString = '';
+                        foreach ($members as $member) {
+                            $memberString .= $member['nickname']. ' ';
+                        }
+                        $msg = "{$memberString}退出了本群";
+                        // TODO 后台设置 是否提醒@群主？
+                        $wechatBot->xbot()->sendText($data['room_wxid'], $msg);
+                    }
                 }
             }
             //2. 删除 wechat_bot_contacts

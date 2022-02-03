@@ -12,6 +12,7 @@ use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Fields\BelongsTo;
 use Lorisleiva\CronTranslator\CronTranslator;
+use Orlyapps\NovaBelongsToDepend\NovaBelongsToDepend;
 
 class XbotSubscription extends Resource
 {
@@ -60,8 +61,18 @@ class XbotSubscription extends Resource
             
             ID::make(__('ID'), 'id')->sortable(),
 
-            BelongsTo::make('who','WechatBot', 'App\Nova\WechatBot'), //谁的机器人
-            BelongsTo::make('To','WechatBotContact', 'App\Nova\WechatBotContact')->searchable(),
+            // BelongsTo::make('who','WechatBot', 'App\Nova\WechatBot'), //谁的机器人
+            // BelongsTo::make('To','WechatBotContact', 'App\Nova\WechatBotContact')->searchable(),
+
+            NovaBelongsToDepend::make('WechatBot', 'WechatBot', 'App\Nova\WechatBot')//谁的机器人
+                ->options(\App\Models\WechatBot::all()),
+            NovaBelongsToDepend::make('To', 'wechatBotContact', 'App\Nova\WechatBotContact')
+                ->optionsResolve(function ($wechatBot) {
+                    // Reduce the amount of unnecessary data sent
+                    return $wechatBot->wechatBotContacts()->whereIn('type',[1,2])->get(['id','remark']);
+                })
+                ->dependsOn('WechatBot'),
+
             // BelongsTo::make('Author', 'author', 'App\Nova\User'),
             Text::make('keyword')
                 ->sortable()
