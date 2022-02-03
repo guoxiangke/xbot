@@ -12,19 +12,15 @@ class XbotSubscription extends Model
     use SoftDeletes;
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at']; // If you choose to unguard your model, you should take special care to always hand-craft the arrays passed to Eloquent's fill, create, and update methods: https://laravel.com/docs/8.x/eloquent#mass-assignment-json-columns
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function wechatContact()
-    {
-        // hasOne: no such column: wechat_contacts.xbot_subscription_id
-        return $this->belongsTo(WechatContact::class);
-    }
-
     public function wechatBotContact()
     {
+        // hasOne: no such column: wechat_contacts.xbot_subscription_id
         return $this->belongsTo(WechatBotContact::class);
+    }
+
+    public function wechatBot()
+    {
+        // hasOne: no such column: wechat_contacts.xbot_subscription_id
+        return $this->belongsTo(WechatBot::class);
     }
 }

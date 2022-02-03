@@ -3,8 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\WechatBot;
-use App\Models\WechatContent;
+use App\Models\XbotSubscription;
 
 class triggerXbot extends Command
 {
@@ -13,7 +12,7 @@ class triggerXbot extends Command
      *
      * @var string
      */
-    protected $signature = 'trigger:xbot {botId} {to} {keyword}';
+    protected $signature = 'trigger:xbot {subscription}';
 
     /**
      * The console command description.
@@ -39,14 +38,22 @@ class triggerXbot extends Command
      */
     public function handle()
     {
-        $botId = $this->argument('botId');
-        $to = $this->argument('to');
-        $keyword = $this->argument('keyword');
+        $subscriptionId = $this->argument('subscription');
+        $xbotSubscription = XbotSubscription::find($subscriptionId);
 
-        $wechatBot = WechatBot::find($botId);
+        $to = $xbotSubscription->wechatBotContact->wxid;
+        $keyword = $xbotSubscription->keyword;
+
+        $wechatBot = $xbotSubscription->wechatBotContact->wechatBot;
         $xbot = $wechatBot->xbot();
         $res = $wechatBot->getResouce($keyword);
-        if($res) $wechatBot->send([$to], $res);
+        if(!$res) {
+           $res=[
+                'type'=>'text', 
+                'data'=>['content'=>$keyword]
+            ]; 
+        }
+        $wechatBot->send([$to], $res);
         return 0;
     }
 }

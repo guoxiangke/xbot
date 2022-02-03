@@ -60,8 +60,8 @@ class XbotSubscription extends Resource
             
             ID::make(__('ID'), 'id')->sortable(),
 
-            BelongsTo::make('who','User', 'App\Nova\User'), //谁的机器人
-            BelongsTo::make('To','wechatBotContact', 'App\Nova\WechatBotContact')->showOnIndex(),
+            BelongsTo::make('who','WechatBot', 'App\Nova\WechatBot'), //谁的机器人
+            BelongsTo::make('To','WechatBotContact', 'App\Nova\WechatBotContact')->searchable(),
             // BelongsTo::make('Author', 'author', 'App\Nova\User'),
             Text::make('keyword')
                 ->sortable()

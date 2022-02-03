@@ -15,7 +15,7 @@ class CreateXbotSubscriptionsTable extends Migration
     {
         Schema::create('xbot_subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->comment('谁来发');//发送的Bot即为本用户的bot：Bot拥有者或者叫bot
+            $table->foreignId('wechat_bot_id')->index()->default(0)->comment('谁发的');//含在下面
             $table->foreignId('wechat_bot_contact_id')->index()->comment('发给谁');//订阅联系人/群
             $table->string('keyword')->comment('订阅的资源关键字');
             $table->unsignedInteger('price')->default(0)->comment('实际订阅价格，单位分');
