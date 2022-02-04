@@ -295,9 +295,7 @@ class XbotCallbackController extends Controller
                 $newRoomName = Str::replace('”', '', $string);
 
                 //->更新数据库中名字
-                WechatContact::update(['wxid'=>$data['room_wxid']],[
-                    'nickname' => $newRoomName
-                ]);
+                WechatContact::where('wxid',$data['room_wxid'])->update(['nickname' => $newRoomName]);
                 //TODO 只有群主可以改，其他改，要改回去 xbot的接口
             }
         }
