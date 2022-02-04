@@ -119,17 +119,20 @@ class WechatBot extends Model
         if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\\\",$data['image']));
         if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
         if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], "点击🎵收听 {$data['description']}");
-        if($type == 'link')     $xbot->sendLink($to, $data['image'], $data['url'],  $data['title'], $data['description']);
+        // MUSIC 必须备案域名
+        if($type == 'link')     $xbot->sendLink($to, $data['url'], $data['image'], $data['title'], $data['description']);
     }
 
     // 批量发送 batch 第一个参数为数组[] wechatContentOrRes
-    public function send(array $tos, array | wechatContent $wechatContent){
-        if(is_array($wechatContent)) {
+    public function send(array $tos, array | wechatContent $res){
+        if(is_array($res)) {
             $wechatContent = WechatContent::make([
                 'name' => 'tmpSendStructure',
-                'type' => array_search($wechatContent['type'], WechatContent::TYPES), //text=>0 这里使用0～9方便数据库存储数字
-                'content' => $wechatContent['data'],
+                'type' => array_search($res['type'], WechatContent::TYPES),
+                'content' => $res['data'],
             ]);
+        }else{
+            $wechatContent = $res;
         }
 
         // queue sleep(1); // 发送消息过于频繁，可稍后再试。
@@ -144,6 +147,11 @@ class WechatBot extends Model
             }else{
                 $this->_send($to, $wechatContent);
             }
+        }
+
+        // 发送第2条信息
+        if(is_array($res) && isset($res['addition'])){
+            $this->send($tos, $res['addition']);
         }
     }
 

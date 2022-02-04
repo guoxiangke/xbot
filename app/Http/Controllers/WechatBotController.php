@@ -32,12 +32,11 @@ class WechatBotController extends Controller
                 'message' => '设备不在线,或改用户未绑定设备'
             ];
         }
-       $wechatContent =  WechatContent::make([
-            'name' => 'tmpSendStructure',
-            'type' => array_search($request['type'], WechatContent::TYPES), //text=>0 这里使用0～9方便数据库存储数字
-            'content' => $request['data'],
-        ]);
-        $wechatBot->send([$request['to']], $wechatContent);
+        $wechatBot->send([$request['to']], $request->toArray());
+        // 多条消息：第2条消息
+        if(isset($request['addition'])){
+            $wechatBot->send([$request['to']], $request['addition']);
+        }
         return [
             'success' => true,
             'message' => '已提交设备发送',
