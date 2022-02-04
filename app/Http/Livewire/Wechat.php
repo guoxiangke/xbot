@@ -41,11 +41,10 @@ class Wechat extends Component
             $this->msg = '当前账户暂未绑定wxid, 请与管理员联系！';
             return;
         }
-        $wechatBot->isLive(); //检测是否在线？
-        $wechatBot->refresh();
+        // $wechatBot->isLive(); //检测是否在线？
+        // $wechatBot->refresh();
         $this->wechatBot = $wechatBot;
 
-        // $wechatBot->removeMeta('xbot');
         $this->xbotInfo = $wechatBot->getMeta('xbot', [
             'account' => 'account',
             'avatar' => 'avatar',
@@ -67,7 +66,6 @@ class Wechat extends Component
         }
         $this->loginAt = optional($wechatBot->login_at)->diffForHumans();
 
-        // $wechatBot->removeMeta('xbot.config');
         $this->config = $wechatBot->getMeta('xbot.config', [
             'isAutoWcpay' => false, // MT_RECV_WCPAY_MSG
             'isAutoAgree' => false, //自动同意好友请求
@@ -79,7 +77,11 @@ class Wechat extends Component
             'webhookUrl' => 'http://192.168.168.117/api/webhook/xbot',
             'webhookSecret' => '123456',
             'isAutoReply' => false, // 关键词自动回复
+            'isResourceOn' => false, // x-resources资源自动回复
         ]);
+        if(!isset($this->config['isResourceOn'])){
+            $this->config['isResourceOn'] = false;
+        }
 
     }
     public function updated($name, $value)
@@ -95,6 +97,7 @@ class Wechat extends Component
             'config.webhookUrl',
             'config.webhookSecret',
             'config.isAutoReply',
+            'config.isResourceOn',
             ])
         ){
             $key = str_replace('config.', '', $name);

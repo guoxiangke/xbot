@@ -74,7 +74,14 @@
                 wire:model="config.isAutoReply"
                 id="config.isAutoReply" 
                 :checked="$config['isAutoReply']"
-                label="关键词自动回复(仅好友，群需要另外配置)"
+                label="配置关键词自动回复(仅好友，群需要另外配置)"
+                />
+
+            <x-input.toggle
+                wire:model="config.isResourceOn"
+                id="config.isResourceOn" 
+                :checked="$config['isResourceOn']"
+                label="X-resources资源关键词自动回复"
                 />
 
             <x-input.toggle 

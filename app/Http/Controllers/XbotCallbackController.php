@@ -215,6 +215,7 @@ class XbotCallbackController extends Controller
             'isListenRoom' => false,
             'isListenRoomAll' => false,
             'isAutoReply' => false, // 关键词自动回复
+            'isResourceOn' => false,
         ]);
 
         // AutoReply  响应 预留 关键词 + 群配置
@@ -692,9 +693,9 @@ class XbotCallbackController extends Controller
                 'msgid' => $data['msgid'],
             ]);
             // TODO
-            $isResourceOn = true;
+            $switchOn = $config['isResourceOn'];
             $isReplied = Cache::get('xbot.replied-'.$data['msgid'], false);
-            if(!$isReplied && $isResourceOn) {
+            if(!$isReplied && $switchOn) {
                 $res = $wechatBot->getResouce($content);
                 if($res) $wechatBot->send([$conversation->wxid], $res);
             }
