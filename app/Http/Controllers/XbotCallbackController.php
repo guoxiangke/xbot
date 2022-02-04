@@ -11,6 +11,7 @@ use App\Models\WechatBotContact;
 use App\Models\WechatMessage;
 use App\Models\WechatMessageFile;
 use App\Models\WechatMessageVoice;
+use App\Models\XbotSubscription;
 use Illuminate\Http\Request;
 use App\Services\Xbot;
 use Illuminate\Support\Facades\Cache;
@@ -693,6 +694,48 @@ class XbotCallbackController extends Controller
                 'content' => $content,
                 'msgid' => $data['msgid'],
             ]);
+            // 订阅+关键词 //TODO  是否开启个人订阅/群订阅
+            // $isRoom
+            if(Str::startsWith($content, '订阅')){
+                $keyword = Str::replace('订阅', '', $content);
+                $keyword = trim($keyword);
+                $res = $wechatBot->getResouce($keyword);
+                if($res){ // 订阅成功！
+                    $xbotSubscription = XbotSubscription::withTrashed()->firstOrCreate(
+                        [
+                            'wechat_bot_id' => $wechatBot->id,
+                            'wechat_bot_contact_id' => $conversation->id,
+                            'keyword' => $keyword,
+                        ],
+                        [
+                            'cron' => '0 7 * * *'
+                        ]
+                    );
+                    if($xbotSubscription->wasRecentlyCreated){
+                        $xbot->sendText($conversation->wxid, '成功订阅，每早7点，不见不散！');
+                    }else{
+                        $xbotSubscription->restore();
+                        $xbot->sendText($conversation->wxid, '已订阅成功！时间和之前一样');
+                    }
+                }else{
+                    $xbot->sendText($conversation->wxid, '关键词不存在任何资源，无法订阅');
+                }
+            }
+            if(Str::startsWith($content, '取消订阅')){
+                $keyword = Str::replace('取消订阅', '', $content);
+                $keyword = trim($keyword);
+                $xbotSubscription = XbotSubscription::query()
+                    ->where('wechat_bot_id', $wechatBot->id)
+                    ->where('wechat_bot_contact_id', $conversation->id)
+                    ->where('keyword', $keyword)
+                    ->first();
+                if($xbotSubscription){
+                    $xbot->sendText($conversation->wxid, '已取消订阅！');
+                    $xbotSubscription->delete();
+                }else{
+                    $xbot->sendText($conversation->wxid, '查无此订阅！');
+                }
+            }
             // TODO
             $switchOn = $config['isResourceOn'];
             $isReplied = Cache::get('xbot.replied-'.$data['msgid'], false);
