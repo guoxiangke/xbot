@@ -217,6 +217,9 @@ class XbotCallbackController extends Controller
             'isAutoReply' => false, // 关键词自动回复
             'isResourceOn' => false,
         ]);
+        if(!isset($config['isResourceOn'])){
+            $config['isResourceOn'] = false;
+        }
 
         // AutoReply  响应 预留 关键词 + 群配置
         $islistenMsg = true; //默认是记录消息，但是在群里，需要判断
