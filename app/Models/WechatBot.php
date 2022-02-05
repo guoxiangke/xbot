@@ -118,8 +118,10 @@ class WechatBot extends Model
         if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\\\",$data['file']));
         if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\\\",$data['image']));
         if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
-        if($type == 'music')    $xbot->sendMusic($to, $data['url'], $data['title'], "点击🎵收听 {$data['description']}");
-        // MUSIC 必须备案域名
+        if($type == 'music')    {
+            $url = config('xbot.redirect').$data['url'];
+            $xbot->sendMusic($to, $url, $data['title'], "点击🎵收听 {$data['description']}");
+        }
         if($type == 'link')     $xbot->sendLink($to, $data['url'], $data['image'], $data['title'], $data['description']);
     }
 
