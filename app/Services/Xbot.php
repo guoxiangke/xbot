@@ -27,6 +27,7 @@ final class Xbot {
     private function request($type, $data = null){
     	$data = array_merge(['client_id'=> $this->clientId], get_defined_vars());
         // Log::debug("POST_RAW-" . $type, [$this->botWxid, $data]);
+        // if(Str::contains($type, ['SEND'])) sleep(1);
         return rescue(fn() =>  $this->http->post($this->endPoint, $data), null, []);
     }
 
@@ -55,8 +56,8 @@ final class Xbot {
             $this->request('MT_QUIT_WECHAT_MSG');
         }
     }
-
-    public function agreenFriend($scene, $v1, $v2){
+    //$scene： 15:搜索手机号 14:通过群
+    public function agreenFriend(int $scene, $v1, $v2){
     	$this->request('MT_ACCEPT_FRIEND_MSG', get_defined_vars());
     }
 

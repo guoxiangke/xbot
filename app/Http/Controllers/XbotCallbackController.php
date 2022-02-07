@@ -137,10 +137,26 @@ class XbotCallbackController extends Controller
             return response()->json(null);
         }
 
+        $isSelf = false;
+        $fromWxid = $data['from_wxid']??'';
+        $toWxid = $data['to_wxid']??null;
+        $isRoom = $data['room_wxid']??false; //群
+        
+        $isGh = false; // 公众号
+        // MT_RECV_LINK_MSG 公众号消息  "from_wxid":"gh_3abcfc192f55",
+        if($fromWxid && Str::startsWith($fromWxid, 'gh_')){
+            $isGh = true;
+            Log::debug(__CLASS__, [__LINE__, "忽略 公众号 消息"]);
+            return response()->json(null);
+        }
+        // 其他特殊卡片消息
+        if($type == 'MT_RECV_LINK_MSG' && !$isGh) { // 收到卡片消息，转发公众号消息/LINK消息
+            Log::debug(__CLASS__, [__LINE__, "转发公众号消息/LINK消息"]);
+            return response()->json(null);
+        }
         //**********************DEBUG IGNORE BEGIN***********************************
         $ignoreHooks = [
             'MT_RECV_MINIAPP_MSG' => '小程序信息',
-            'MT_RECV_LINK_MSG' => '公众号link消息',
             "MT_WX_WND_CHANGE_MSG"=>'',
             "MT_DEBUG_LOG" =>'调试信息',
             "MT_UNREAD_MSG_COUNT_CHANGE_MSG" => '未读消息',
@@ -149,7 +165,7 @@ class XbotCallbackController extends Controller
             "MT_RECV_REVOKE_MSG" => 'xx 撤回了一条消息',
             "MT_DECRYPT_IMG_MSG_TIMEOUT" => '图片解密超时',
         ];
-        if(in_array($type, array_keys($ignoreHooks))){
+        if(in_array($type, array_keys($ignoreHooks)) || $isGh){
             return response()->json(null);
         }
         $ignoreRAW = [
@@ -187,7 +203,7 @@ class XbotCallbackController extends Controller
         // 新增加一个客户端，主动调用获取QR，压入缓存，以供web登陆
         // {"type":"MT_CLIENT_CONTECTED","client_id":8}
         if($type == 'MT_CLIENT_CONTECTED'){
-            $xbot = new Xbot($wechatClient->xbot, $botWxid='null', $clientId);
+            $xbot = new Xbot($wechatClient->xbot, 'null', $clientId);
             $respose = $xbot->loadQR();
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, '新增加一个客户端，主动调用获取QR']);
             return response()->json(null);
@@ -204,8 +220,16 @@ class XbotCallbackController extends Controller
             Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatClientId, $clientId, ' 不存在wechatBot？设备已下线！']);
             return response()->json(null);
         }
+
+        if($fromWxid == $toWxid || $fromWxid == $wechatBot->wxid){
+            $isSelf = true;
+            //自己发给自己消息，即不发送给develope
+            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, "isSelf={$isSelf}"]);
+            //因bot发的信息（通过关键词响应的信息）也要记录，所以继续走下去吧！不return了！
+            // return response()->json(null);
+        }
+
         //*********************************************************
-        $botWxid = $data['to_wxid']??null;
 
         $content = ''; //写入 WechatMessage 的 content
         $config = $wechatBot->getMeta('xbot.config', [
@@ -226,20 +250,6 @@ class XbotCallbackController extends Controller
         $islistenMsg = true; //默认是记录消息，但是在群里，需要判断
         $isAutoReply = $config['isAutoReply']??false;
 
-
-
-        $isSelf = false;
-        $from_wxid = $data['from_wxid']??'';
-        $to_wxid = $data['to_wxid']??'';
-        if($from_wxid == $to_wxid || $from_wxid == $wechatBot->wxid){
-            $isSelf = true;
-            //自己发给自己消息，即不发送给develope
-            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, "isSelf={$isSelf}"]);
-            //因bot发的信息（通过关键词响应的信息）也要记录，所以继续走下去吧！不return了！
-            // return response()->json(null);
-        }
-
-        $isRoom = $data['room_wxid']??false; //群
         if($isRoom){
             $isListenRooms = $wechatBot->getMeta('isListenRooms', []);
             $isReplyRooms = $wechatBot->getMeta('isReplyRooms', []);
@@ -382,7 +392,7 @@ class XbotCallbackController extends Controller
         //     Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '被动响应的信息', '已丢弃']);
         //     return response()->json(null);
         // }
-        if(!($wechatBot || $botWxid)){
+        if(!($wechatBot || $toWxid)){
             Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $request->all()]);
         }
 
@@ -400,13 +410,11 @@ class XbotCallbackController extends Controller
                 $content = $data['msg'];
             }
         }
-        if(isset($data['to_wxid']) && $data['to_wxid'] == "filehelper") {
+        if($toWxid == "filehelper") {
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '自己发给自己的filehelper消息，暂不处理！']);
             return response()->json(null);
         }
 
-        // TODO
-            // MT_RECV_LINK_MSG 公众号消息
 
         //自动////自动////自动////自动////自动//
         //自动退款，如果数字不对
@@ -566,9 +574,9 @@ class XbotCallbackController extends Controller
 
         if($type == 'MT_RECV_TEXT_MSG'){ //接收到 个人/群 文本消息
             $content = $data['msg'];
-            $replyTo = $data['from_wxid']; //消息发送者
+            $replyTo = $fromWxid;//消息发送者
             if($isRoom) $replyTo = $data['room_wxid'];
-            if($data['from_wxid'] == $wechatBot->wxid) $replyTo = $data['to_wxid']; //自己给别人聊天时，发关键词 响应信息
+            if($fromWxid == $wechatBot->wxid) $replyTo = $toWxid; //自己给别人聊天时，发关键词 响应信息
             // 彩蛋:谁在线，在线时长！
             if($content=='whoami'){
                 $time = optional($wechatBot->login_at)->diffForHumans();
@@ -641,14 +649,13 @@ class XbotCallbackController extends Controller
             'MT_RECV_SYSTEM_MSG',
         ];
         if($islistenMsg && in_array($type,$recordWechatMessageTypes)) {
-            $fromWxid = $data['from_wxid'];
-            $conversationWxid = $data['from_wxid'];
+            $conversationWxid = $fromWxid;
             // 被动响应的信息+主动回复给filehelper的信息
 
             $fromId = null;
-            if($data['from_wxid'] == $wechatBot->wxid){
+            if($fromWxid == $wechatBot->wxid){
                 // $fromId = null;
-                $conversationWxid = $data['to_wxid'];
+                $conversationWxid = $toWxid;
             }else{
                 if($isSelf) {
                     $fromId = null;
