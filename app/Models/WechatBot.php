@@ -19,6 +19,7 @@ use App\Events\WechatBotLogin;
 use App\Jobs\XbotSendQueue;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Collection;
 
 class WechatBot extends Model
 {
@@ -126,7 +127,7 @@ class WechatBot extends Model
     }
 
     // 批量发送 batch 第一个参数为数组[] wechatContentOrRes
-    public function send(array $tos, array | wechatContent $res){
+    public function send(array | Collection $tos, array | wechatContent $res){
         if(is_array($res)) {
             $wechatContent = WechatContent::make([
                 'name' => 'tmpSendStructure',
