@@ -127,6 +127,7 @@ class WechatContent extends Component
         $wechatContent = Model::findOrFail($this->contentId);//TODO validate 必需是自己的内容
 
         $contacts = WechatBotContact::with('contact')
+            ->where('wechat_bot_id', $this->wechatBot->id)
             ->withAnyTags($this->selectedTags, $this->tagWith)
             ->get()
             ->pluck('contact.wxid');
