@@ -151,7 +151,12 @@ class XbotCallbackController extends Controller
         }
         // 其他特殊卡片消息
         if($type == 'MT_RECV_LINK_MSG' && !$isGh) { // 收到卡片消息，转发公众号消息/LINK消息
-            Log::debug(__CLASS__, [__LINE__, "转发公众号消息/LINK消息"]);
+            // For test.
+            $key = "xbot-test-link";
+            $xml = xStringToArray($data['raw_msg']);
+            $value = $xml['appmsg']['url'];//['msgid' => $data['msgid'], 'url'=>];
+            Cache::put($key, $value, 20);
+            Log::debug(__CLASS__, [__LINE__, "转发公众号消息/LINK消息", $value]);
             return response()->json(null);
         }
         //**********************DEBUG IGNORE BEGIN***********************************
@@ -324,7 +329,7 @@ class XbotCallbackController extends Controller
                     $atList[] = $member['nickname'];
                 }
                 $msg = $roomWelcomeMessages[$roomWxid]??"欢迎{$memberString}加入本群👏";
-                $wechatBot->xbot()->send($roomWxid, $msg);
+                $wechatBot->xbot()->sendText($roomWxid, $msg);
             }
             // 创建群后，再次手动掉getRooms()以执行273行 来初始化群数据
             $wechatBot->xbot()->getRooms();
