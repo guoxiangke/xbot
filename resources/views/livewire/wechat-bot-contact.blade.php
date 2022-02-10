@@ -186,11 +186,12 @@
                         wire:model="editTag"
                         wire:keydown.enter.prevent.stop="attachTag({{$editing->id}}, $event.target.value)" />
                 </x-input.group>
-                
+                @if($type=='group')
                 <x-input.group for="tag" label="入群欢迎语">
                     <x-input.textarea name="tag" type="textarea" placeholder="默认为群公告,无需点击保存按钮" class="mt-1 block w-full" 
                         wire:model="RoomWelcome" />
                 </x-input.group>
+                @endif
 
                 <div id="need-to-be-changed">
                     @isset($tags[$editing->id])
