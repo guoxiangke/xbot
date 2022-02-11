@@ -46,7 +46,6 @@ class XbotIsLive extends Command
         // if ($wechatBot->is_live_at->diffInMinutes() > 5) 则代表离线，清空login_at
         WechatBot::query()
             ->whereNotNull('client_id')
-            ->whereNotNull('login_at')
             ->whereNotNull('is_live_at')
             ->each(function(WechatBot $wechatBot){
                 $wechatBot->isLive();

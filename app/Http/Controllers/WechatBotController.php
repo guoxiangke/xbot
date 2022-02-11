@@ -24,7 +24,7 @@ class WechatBotController extends Controller
         }
         $wechatBot = WechatBot::where('user_id', $bindUserId)
             ->whereNotNull('client_id')
-            ->whereNotNull('login_at')
+            ->whereNotNull('is_live_at')
             ->first();
         if(!$wechatBot) {
             return [

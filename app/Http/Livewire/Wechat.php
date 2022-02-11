@@ -41,6 +41,9 @@ class Wechat extends Component
             $this->msg = '当前账户暂未绑定wxid, 请与管理员联系！';
             return;
         }
+        if ($wechatBot->expired()) {
+            $this->msg = '当前账户已过期, 随时可能会强制下线，请及时管理员联系！';
+        }
         // $wechatBot->isLive(); //检测是否在线？
         // $wechatBot->refresh();
         $this->wechatBot = $wechatBot;

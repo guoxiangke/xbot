@@ -8,6 +8,8 @@ use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Fields\Text;
 
 use Laravel\Nova\Fields\BelongsTo;
+use Laravel\Nova\Fields\DateTime;
+use Laravel\Nova\Fields\Number;
 
 class WechatBot extends Resource
 {
@@ -48,6 +50,10 @@ class WechatBot extends Resource
             BelongsTo::make('User'),
             Text::make(__('Wxid'), 'wxid')->sortable(),
             Text::make(__('Name'), 'name')->sortable(),
+            Text::make('client_id'),
+            DateTime::make(__('login_at'), 'login_at')->sortable(),
+            DateTime::make(__('is_live_at'), 'is_live_at')->sortable(),
+            DateTime::make(__('expires_at'), 'expires_at')->onlyOnIndex(),
         ];
     }
 
