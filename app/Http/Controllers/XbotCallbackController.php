@@ -23,23 +23,23 @@ class XbotCallbackController extends Controller
 {
 
     public function __invoke(Request $request, $token){
-        $type = $request['type']??false; // {"data":{"error":"参数错误"},"type":null,"client_id":1}
+        $type = $request['type']??false;
         $clientId = $request['client_id']??false;
         if(!($clientId && $type)){
             Log::error(__CLASS__, [__LINE__, $clientId, $request->all(), '参数错误']);
             return response()->json(null);
         }
-        $data = $request['data'];
 
         $wechatClient = WechatClient::where('token', $token)->first();
         if(!$wechatClient) {
-            Log::error(__CLASS__, [__LINE__, $clientId, $request->all(), '参数Token错误']);
+            Log::error(__CLASS__, [__LINE__, $clientId, $request->all(), '找不到windows机器']);
             return response()->json(null);
         }
         $wechatClientId = $wechatClient->id;
-        $wechatClientName = $wechatClient->token; //qq1windows109
+        $wechatClientName = $wechatClient->token;
+        $data = $request['data'];
 
-        $cacheKey = $wechatClientId;
+        $QrPoolCacheKey = $wechatClientId;
         // 1.获取到登陆二维码
         // 缓存以供前端调用扫码（2个client同一个id，如果已登陆的，不显示二维码！）
         if($type == 'MT_RECV_QRCODE_MSG') {
@@ -47,10 +47,10 @@ class XbotCallbackController extends Controller
                 'qr' => $data['code'],
                 'client_id' => $clientId,
             ];
-            $qrPool = Cache::get("xbots.{$cacheKey}.qrPool", []);
+            $qrPool = Cache::get("xbots.{$QrPoolCacheKey}.qrPool", []);
             // 一台机器，多个客户端，使用二维码池, 池子大小==client数量，接收到1个新的，就把旧的1个弹出去
             array_unshift($qrPool, $qr);
-            Cache::put("xbots.{$cacheKey}.qrPool", $qrPool);
+            Cache::put("xbots.{$QrPoolCacheKey}.qrPool", $qrPool);
             // 前端刷新获取二维码总是使用第一个QR，登陆成功，则弹出对于clientId的QR
             // '获取到登陆二维码，已压入qrPool',
             // TODO 发送到管理群里
@@ -67,14 +67,14 @@ class XbotCallbackController extends Controller
         $cliendWxid = $data['wxid']??null; //从raw-data中post过来的wxid, 部分消息没有，设为null
         if($type == 'MT_USER_LOGIN'){
             // 登陆成功，则弹出对于clientId的所有 QR
-            $qrPool = Cache::get("xbots.{$cacheKey}.qrPool", []);
+            $qrPool = Cache::get("xbots.{$QrPoolCacheKey}.qrPool", []);
             // $key = array_search($clientId, array_column($qrPool, 'clientId'));
             foreach ($qrPool as $key => $value) {
                 if($value['client_id'] == $clientId){
                     unset($qrPool[$key]);
                 }
             }
-            Cache::set("xbots.{$cacheKey}.qrPool", $qrPool);
+            Cache::set("xbots.{$QrPoolCacheKey}.qrPool", $qrPool);
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $data['nickname'], '登陆成功','，已弹出qrPool']);
 
             // Or没有提前绑定
@@ -125,12 +125,6 @@ class XbotCallbackController extends Controller
             $wechatBot->setMeta('xbot', $data); //account avatar nickname wxid
         }
 
-        //TODO 用户登陆出，$bot->login_at=null
-            // 用户在手机上登出
-            // 用户在Windows上登出
-            // 在网页上点登出
-            // 开发者调用登出
-
         // 忽略1小时以上的信息 60*60
         if(isset($data['timestamp']) && $data['timestamp']>0 &&  now()->timestamp - $data['timestamp'] > 1*60*60 ) {
             Log::debug(__CLASS__, [__LINE__, $wechatClientName,now()->timestamp, $data['timestamp'], '忽略1小时以上的信息']);
@@ -138,10 +132,11 @@ class XbotCallbackController extends Controller
         }
 
         $isSelf = false;
-        $fromWxid = $data['from_wxid']??'';
+        $msgid = $data['msgid']??-1;
         $toWxid = $data['to_wxid']??null;
         $isRoom = $data['room_wxid']??false; //群
-        
+
+        $fromWxid = $data['from_wxid']??'';
         $isGh = false; // 公众号
         // MT_RECV_LINK_MSG 公众号消息  "from_wxid":"gh_3abcfc192f55",
         if($fromWxid && Str::startsWith($fromWxid, 'gh_')){
@@ -154,11 +149,12 @@ class XbotCallbackController extends Controller
             // For test.
             $key = "xbot-test-link";
             $xml = xStringToArray($data['raw_msg']);
-            $value = $xml['appmsg']['url'];//['msgid' => $data['msgid'], 'url'=>];
+            $value = $xml['appmsg']['url'];
             Cache::put($key, $value, 20);
             Log::debug(__CLASS__, [__LINE__, "转发公众号消息/LINK消息", $value]);
             return response()->json(null);
         }
+
         //**********************DEBUG IGNORE BEGIN***********************************
         $ignoreHooks = [
             'MT_RECV_MINIAPP_MSG' => '小程序信息',
@@ -225,6 +221,7 @@ class XbotCallbackController extends Controller
             Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatClientId, $clientId, ' 不存在wechatBot？设备已下线！']);
             return response()->json(null);
         }
+        $cacheKeyIsRelpied = 'xbot.replied-'.$wechatBot->id.'-'.$msgid;
 
         if($fromWxid == $toWxid || $fromWxid == $wechatBot->wxid){
             $isSelf = true;
@@ -273,18 +270,9 @@ class XbotCallbackController extends Controller
                 // 是否记录群消息: isListenRoom
                 // 是否记录所有的群消息: isListenRoomAll
                 if(!$config['isListenRoom']){
-                    Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '!终止执行,没有监听群消息']);
+                    Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '没有监听群消息: $islistenMsg = false']);
                     $islistenMsg = false;
-                    // 有没有可能不记录，但是响应 关键词 回复？？
-                    // return response()->json(null);
                 }
-                // //  && $islistenMsg
-                // if(!($config['isListenRoomAll'] || $islistenMsg)){
-                //     Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '!终止执行，没有开启监听所有/本群消息']);
-                //     $islistenMsg = false;
-                //     // 有没有可能不记录，但是响应 关键词 回复？？
-                //     // return response()->json(null);
-                // }
             }
         }
 
@@ -351,14 +339,14 @@ class XbotCallbackController extends Controller
                     // $content = "{$member['nickname']}被出群了";
                     // 2.群消息不变，他发的都删！
                     if(!$gBotContact){
-                        Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $member['wxid'], '！bot被出群了！消息删除了？']);
+                        Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $member['wxid'], '找不到的联系人被移除/退出了群']);
                         continue;
                     }
-                    WechatMessage::query()
-                        ->where('from', $gBotContact->id)
-                        ->delete();
-                    Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, '群成员变动，删除消息']);
-                    $gBotContact->delete();
+                    // WechatMessage::query()
+                    //     ->where('from', $gBotContact->id)
+                    //     ->delete();
+                    Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->remark, $gBotContact->id, '群成员变动，不再删除消息，下面开始提醒']);
+                    // $gBotContact->delete();
                     //提醒
                     $replyTo = $data['room_wxid'];
                     $isListenMemberChange = $isListenMemberChangeRooms[$replyTo]??false;
@@ -387,7 +375,7 @@ class XbotCallbackController extends Controller
                     ->where('conversation', $gBotContact->id)
                     ->delete();
                 $gBotContact->delete();
-                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, 'bot被出群了！消息删除了']);
+                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, 'bot被出群，已删除群记录']);
             }
         }
 
@@ -510,7 +498,6 @@ class XbotCallbackController extends Controller
         // ✅ 收到语音消息，即刻调用转文字
         // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》/xbot/silk/ => /xbot/voice/
         if($type == 'MT_RECV_VOICE_MSG'){
-            $msgid = $data['msgid'];
             $silk_file = $data['silk_file'];
             // "silk_file":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\wxs40F9.tmp"
             // wxs40F9.tmp
@@ -528,7 +515,7 @@ class XbotCallbackController extends Controller
         // TODO 下面的post要带上 转换后的文字
         if($type == 'MT_TRANS_VOICE_MSG'){
             WechatMessageVoice::create([
-                'msgid' => $data['msgid'],
+                'msgid' => $msgid,
                 'content' => $data['text'],
             ]);
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '语音消息转文本', $data]);
@@ -546,7 +533,6 @@ class XbotCallbackController extends Controller
         if($type == 'MT_RECV_PICTURE_MSG'){
             $date = date("ym");
             $src_file = $data['image'];
-            $msgid = $data['msgid'];
             $size = $xml['img']['@attributes']['hdlength']??$xml['img']['@attributes']['length'];
             $md5 = $xml['img']['@attributes']['md5']??$msgid;
             $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$date}\\{$md5}.png";
@@ -557,7 +543,7 @@ class XbotCallbackController extends Controller
 
             WechatMessageFile::create([
                 'wechat_bot_id' => $wechatBot->id,
-                'msgid' => $data['msgid'],
+                'msgid' => $msgid,
                 'path' => $dest_file, //Windows路径
                 'url' => $content, //文件链接
             ]);
@@ -570,7 +556,7 @@ class XbotCallbackController extends Controller
             $content =  str_replace('\\','/', $file);
             WechatMessageFile::create([
                 'wechat_bot_id' => $wechatBot->id,
-                'msgid' => $data['msgid'],
+                'msgid' => $msgid,
                 'path' => $originPath, //Windows路径
                 'url' => $content, //文件链接
             ]);
@@ -590,7 +576,7 @@ class XbotCallbackController extends Controller
                 // 针对文本 命令的 响应，标记 已响应，后续 关键词不再触发（return in observe）。
                 // 10s内响应，后续hook如果没有处理，就丢弃，不处理了！
                 // 如果其他资源 已经响应 关键词命令了，不再推送给第三方webhook了
-                Cache::put('xbot.replied-'.$data['msgid'], true, 10);
+                Cache::put($cacheKeyIsRelpied, true, 10);
             }
             if($isAutoReply) {
                 $keywords = $wechatBot->autoReplies()->pluck('keyword','wechat_content_id');
@@ -599,7 +585,7 @@ class XbotCallbackController extends Controller
                     if(Str::is($keyword, $content)){
                         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '关键词回复', $keyword]);
                         $wechatBot->send([$replyTo], WechatContent::find($wechatContentId));
-                        Cache::put('xbot.replied-'.$data['msgid'], true, 10);
+                        Cache::put($cacheKeyIsRelpied, true, 10);
                     }
                 }
             }
@@ -610,6 +596,8 @@ class XbotCallbackController extends Controller
         }
         if($type == 'MT_RECV_OTHER_APP_MSG') {
             if($data['wx_type'] == 49){
+                //更改TYPE 以便执行消息写入
+                $type = 'MT_RECV_TEXT_MSG';
                 $content = '其他消息，请到手机查看！';
                 // 收到音频消息
                 if(isset($data['wx_sub_type'])){
@@ -639,8 +627,6 @@ class XbotCallbackController extends Controller
                             break;
                     }
                 }
-                //更改TYPE 执行下面的内容
-                $type = 'MT_RECV_TEXT_MSG';
             }
         }
         // 把接收的消息写入 WechatMessage
@@ -704,7 +690,7 @@ class XbotCallbackController extends Controller
                 'from' => $fromId, // 消息发送者:Null为bot发送的
                 'conversation' => $conversation->id, //群/个人
                 'content' => $content,
-                'msgid' => $data['msgid'],
+                'msgid' => $msgid,
             ]);
             // 订阅+关键词 //TODO  是否开启个人订阅/群订阅
             // $isRoom
@@ -750,7 +736,7 @@ class XbotCallbackController extends Controller
             }
             // TODO
             $switchOn = $config['isResourceOn'];
-            $isReplied = Cache::get('xbot.replied-'.$data['msgid'], false);
+            $isReplied = Cache::get($cacheKeyIsRelpied, false);
             if(!$isReplied && $switchOn) {
                 $res = $wechatBot->getResouce($content);
                 if($res) $wechatBot->send([$conversation->wxid], $res);
