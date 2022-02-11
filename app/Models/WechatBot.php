@@ -260,7 +260,7 @@ class WechatBot extends Model
 
         // @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
         $this->contacts()->syncWithoutDetaching($attachs);
-        Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '已同步好友', $this->wxid, $type, count($attachs)]);
+        Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '已同步好友', $this->wxid, count($attachs)]);
     }
 
     protected function syncRoomMemembers($data)
