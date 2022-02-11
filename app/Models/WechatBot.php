@@ -20,11 +20,19 @@ use App\Jobs\XbotSendQueue;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
 class WechatBot extends Model
 {
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
-    protected $dates = ['created_at', 'updated_at', 'deleted_at', 'login_at', 'is_live_at'];
+    protected $dates = ['created_at', 'updated_at', 'deleted_at', 'login_at', 'is_live_at', 'expires_at'];
+
+    // https://github.com/mvdnbrk/laravel-model-expires
+    public function setExpiresAtAttribute($value){
+        if(is_string($value)) $value = Carbon::parse($value);
+        Log::info(__CLASS__,[__FUNCTION__, $this->name, $value]);
+        $this->expires_at = $value;
+    }
 
     use HasFactory;
     use SoftDeletes;

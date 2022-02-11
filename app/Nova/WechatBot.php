@@ -53,7 +53,7 @@ class WechatBot extends Resource
             Text::make('client_id'),
             DateTime::make(__('login_at'), 'login_at')->sortable(),
             DateTime::make(__('is_live_at'), 'is_live_at')->sortable(),
-            DateTime::make(__('expires_at'), 'expires_at')->onlyOnIndex(),
+            DateTime::make(__('expires_at'), 'expires_at')->sortable(), //TODO 时间不精确！
         ];
     }
 
