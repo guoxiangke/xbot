@@ -190,6 +190,8 @@ class WechatBotContactTag extends Component
         $this->tag = $tag;
         $query = WechatBotContact::query()
             ->withAnyTags($tag)
+            ->with('contact')
+            ->with('tags')
             ->when($this->filters['search'], fn($query, $search) => $query->where('remark', 'like', '%' . $search . '%'))
             ->orderBy('created_at', 'desc');
         return $this->applySorting($query);
