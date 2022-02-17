@@ -47,6 +47,8 @@ class WechatClient extends Resource
             Text::make(__('windows'), 'xbot')->sortable(),
             Text::make(__('file'), 'file')->hideFromIndex(),
             Text::make(__('silk'), 'silk')->hideFromIndex(),
+            Text::make(__('file_path'), 'file_path')->hideFromIndex(),
+            Text::make(__('silk_path'), 'silk_path')->hideFromIndex(),
         ];
     }
 

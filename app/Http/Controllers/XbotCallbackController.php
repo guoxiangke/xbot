@@ -499,11 +499,9 @@ class XbotCallbackController extends Controller
         // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》/xbot/silk/ => /xbot/voice/
         if($type == 'MT_RECV_VOICE_MSG'){
             $silk_file = $data['silk_file'];
-            // "silk_file":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\wxs40F9.tmp"
-            // wxs40F9.tmp
-            $file = str_replace('C:\\Users\\Administrator\\AppData\\Local\\Temp\\','', $silk_file);
+            // "silk_file":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\2\\wxs40F9.tmp" =>  \1\wxs40F9.tmp
+            $file = str_replace($wechatClient->silk_path, '', $silk_file);
             $xbot->toVoiceText($msgid);
-            // dispach
             $date = date("ym");
             $content = "/storage/voices/{$date}/{$wechatBot->wxid}/{$msgid}.mp3";
             $silkDomain = $wechatClient->silk;
@@ -526,19 +524,17 @@ class XbotCallbackController extends Controller
             $content = $xml['emoji']['@attributes']['cdnurl'];
         }
         // ✅ 收到图片
-            // 监控上传文件夹1 C:\Users\Public\Pictures\images =》 /xbot/images/
-            // 需要手动在windows上创建 image 文件夹
-            // 需要手动在windows上创建 files 文件夹 并 wx上设置 file 存储 文件夹 为  C:\Users\Public\Pictures\files
-        //需要手动在云存储上 创建： /xbot/files  /xbot/images  /audios/silk =》 /audios/mp3
+        // caddy file-server --listen :8003 --root "C:\Users\Public\Pictures\WeChat Files"   --browse
         if($type == 'MT_RECV_PICTURE_MSG'){
-            $date = date("ym");
+            $date = date("Y-m");
             $src_file = $data['image'];
             $size = $xml['img']['@attributes']['hdlength']??$xml['img']['@attributes']['length'];
             $md5 = $xml['img']['@attributes']['md5']??$msgid;
-            $dest_file = "C:\\Users\\Public\\Pictures\\images\\{$date}\\{$md5}.png";
+            $path = "\\{$wechatBot->wxid}\\FileStorage\\Image\\{$date}";
+            $dest_file = $wechatClient->file_path . $path . "\\{$md5}.png";
             // if file_exist($md5), 则不再下载！
             $xbot->decryptImage($src_file, $dest_file, $size);
-            $content = "/images/{$date}/{$md5}.png";
+            $content = str_replace('\\', '/', $path) . "/{$md5}.png";
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '收到|发送图片', $src_file, $dest_file, $size, $content]);
 
             WechatMessageFile::create([
@@ -549,11 +545,11 @@ class XbotCallbackController extends Controller
             ]);
         }
         // ✅  文件消息
-        // 监控上传文件夹3 C:\Users\Administrator\Documents\WeChat Files\  =》 /xbot/file/
+        // caddy file-server --listen :8003 --root "C:\Users\Public\Pictures\WeChat Files"   --browse
         if($type == 'MT_RECV_FILE_MSG' || $type == 'MT_RECV_VIDEO_MSG'){
             $originPath = $data['file']??$data['video'];
-            $file = str_replace('C:\\Users\\Public\\Pictures\\','/', $originPath);
-            $content =  str_replace('\\','/', $file);
+            $file = str_replace($wechatClient->file_path, '', $originPath);
+            $content =  str_replace('\\', '/', $file);
             WechatMessageFile::create([
                 'wechat_bot_id' => $wechatBot->id,
                 'msgid' => $msgid,
@@ -620,10 +616,10 @@ class XbotCallbackController extends Controller
                             break;
                         default:
                             $content = "其他未处理消息，请到手机查看！";
-                            $content .= $xml['appmsg']['title']??'';
-                            $content .= $xml['appmsg']['des']??'';
-                            $content .= $xml['appmsg']['desc']??'';
-                            $content .= $xml['appmsg']['url']??'';
+                            // $content .= $xml['appmsg']['title']??'';
+                            // $content .= $xml['appmsg']['des']??'';
+                            // $content .= $xml['appmsg']['desc']??'';
+                            // $content .= $xml['appmsg']['url']??'';
                             break;
                     }
                 }

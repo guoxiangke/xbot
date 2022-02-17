@@ -18,7 +18,9 @@ class CreateWechatClientsTable extends Migration
             $table->string('token')->comment('Windows机器标识');
             $table->string('xbot')->comment('Windows机器暴露的xbot');
             $table->string('file')->comment('Windows机器暴露的Wechat Files文件夹');
+            $table->string('file_path')->nullable()->default("C:\\Users\\Public\\Pictures\\WeChat Files");
             $table->string('silk')->comment('Windows机器暴露的语音临时文件');
+            $table->string('silk_path')->nullable()->default("C:\\Users\\Administrator\\AppData\\Local\\Temp");
             $table->timestamps();
         });
     }

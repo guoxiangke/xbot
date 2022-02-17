@@ -13,15 +13,17 @@ final class Xbot {
     private string $endPoint = '/';
     public int $clientId;
     public $botWxid;
+    public $filePath; //发送文件所在windows位置
 
     //多台机器运行，每个机器多个bot登陆
-    public function __construct($cliendUrl, $botWxid='null', $clientId=0){
+    public function __construct($cliendUrl, $botWxid='null', $clientId=0, $filePath=""){
         $this->http = Http::withOptions([])
             ->acceptJson()
             ->baseUrl($cliendUrl)
             ->withoutVerifying();
         $this->clientId = $clientId;
         $this->botWxid = $botWxid;
+        $this->filePath = $filePath;
     }
 
     private function request($type, $data = null){
@@ -84,15 +86,19 @@ final class Xbot {
         $this->request('MT_DECRYPT_IMG_MSG', get_defined_vars());
     }
 
-    // 要发送的文件，必须存放在 C:\Users\Public\Pictures\ 里
+    // 要发送的图片/文件，必须存放在 C:\Users\Public\Pictures\WeChat Files\wxid_???\FileStorage\File 里
+    // test.txt => C:\Users\Public\Pictures\WeChat Files\wxid_???\FileStorage\File\\test.txt
+    private function _getWinFile($file){
+        return $this->filePath .'\\'. $this->botWxid."\FileStorage\File\\".$file;
+    }
+    
     public function sendFile($to_wxid, $file){
-        $file = "C:\\Users\\Public\\Pictures\\$file";
+        $file = $this->_getWinFile($file);
         $this->request('MT_SEND_FILEMSG', get_defined_vars());
     }
 
-    // 要发送的图片，必须存放在 C:\Users\Public\Pictures\ 里
     public function sendImage($to_wxid, $file){
-        $file = "C:\\Users\\Public\\Pictures\\$file";
+        $file = $this->_getWinFile($file);
         $this->request('MT_SEND_IMGMSG', get_defined_vars());
     }
 

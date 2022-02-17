@@ -89,7 +89,7 @@ class WechatBot extends Model
         $clientId = $this->client_id??$clientId??-1;
         $wechatClient = WechatClient::where('id', $this->wechat_client_id)->firstOrFail();
         $winClientUri = $wechatClient->xbot;
-        return new Xbot($winClientUri, $this->wxid, $clientId);
+        return new Xbot($winClientUri, $this->wxid, $clientId, $wechatClient->file_path);
     }
 
     public function _send($to, WechatContent $wechatContent){
@@ -123,7 +123,7 @@ class WechatBot extends Model
             if($type == 'at')       $xbot->sendAtText($to, $content, $data['at']);
         }
 
-        // "C:\\Users\\Public\\Pictures\\$file";
+        // 发送的图片/文件必须放在 WeChat Files\wxid_???\FileStorage\File\ 下，可以创建子目录
         if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\\\",$data['file']));
         if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\\\",$data['image']));
         if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
