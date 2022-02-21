@@ -30,7 +30,7 @@ class CreateWechatBotsTable extends Migration
             // 每小时发送 is_live 命令给命令助手，如果在线，更新 live_at 为当前时间。
             // 每小时+1分钟 check，如果 live_at diff now > 3分钟，则代表已崩溃离线，需要手动重启，发信息给管理员
             $table->timestamp('is_live_at')->nullable()->default(now())->comment('last_check_live_at');
-            $table->expires()->default(now()->addMonth(1))->comment('默认1个月内有效，超过需要付费');
+            $table->timestamp('expires_at')->nullable()->default(now()->addMonth(1))->comment('默认1个月内有效，超过需要付费');
 
             $table->softDeletes();
             $table->timestamps();

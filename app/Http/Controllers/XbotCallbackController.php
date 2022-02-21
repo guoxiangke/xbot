@@ -302,6 +302,10 @@ class XbotCallbackController extends Controller
                 WechatContact::where('wxid',$data['room_wxid'])->update(['nickname' => $newRoomName]);
                 //TODO 只有群主可以改，其他改，要改回去 xbot的接口
             }
+            if(Str::contains($data['raw_msg'], '收到红包')){
+                // 提醒 收到🧧红包！TODO 设置一个红包提醒群
+                $wechatBot->xbot()->sendText('filehelper', $data['raw_msg']);
+            }
         }
         if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
             //提醒
@@ -525,6 +529,7 @@ class XbotCallbackController extends Controller
         }
         // ✅ 收到图片
         // caddy file-server --listen :8003 --root "C:\Users\Public\Pictures\WeChat Files"   --browse
+        // caddy file-server --listen :8004 --root "D:\Users\dguo\AppData\Local\Temp"   --browse
         if($type == 'MT_RECV_PICTURE_MSG'){
             $date = date("Y-m");
             $src_file = $data['image'];

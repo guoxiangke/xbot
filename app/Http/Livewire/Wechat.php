@@ -22,6 +22,7 @@ class Wechat extends Component
     public $loginAt;
 
     public function getListeners(){
+        if(!$this->wechatBot) return [];
         return [
             "echo-private:xbot.login.{$this->wechatBot->id},WechatBotLogin" => 'redirectPage',
         ];
