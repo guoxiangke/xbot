@@ -19,7 +19,6 @@ class CreateWechatContactsTable extends Migration
             $table->string('wxid')->index()->unique(); //可以搜索
             // 如果是群，陌生人，只有一个wxid，其他都为空
             $table->string('nickname')->index()->default('')->nullable(); //可以搜索
-            $table->string('remark')->index()->default('')->nullable(); //可以搜索
             $table->string('avatar')->default('')->nullable(); // 可以为null
 
             $table->unsignedTinyInteger('sex')->default(0)->comment('0未知，1男，2女');

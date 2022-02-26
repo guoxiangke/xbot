@@ -234,7 +234,6 @@ class WechatBot extends Model
             $data['type'] = $type;
             $data['nickname'] = $data['nickname']??$data['wxid'];
             $data['avatar'] = $data['avatar']??'';
-            $data['remark'] = $data['remark']??$data['nickname']??$data['wxid'];
             // 联系人 入库
             ($wechatContact = WechatContact::firstWhere('wxid', $data['wxid']))
                 ? $wechatContact->update($data) // 更新资料
@@ -245,6 +244,7 @@ class WechatBot extends Model
                 ->where('wechat_contact_id', $wechatContact->id)->first();
 
 
+            $remark = $data['remark']??$data['nickname']??$wechatContact->wxid;
             // 如果是群
             if($wechatContact->type == 2){
                 $this->syncRoomMemembers($data);
@@ -255,7 +255,7 @@ class WechatBot extends Model
                         'wechat_contact_id' => $wechatContact->id,
                         'type' => $type,
                         'wxid' => $wechatContact->wxid,
-                        'remark' => $data['remark']??$data['nickname']??$wechatContact->wxid,
+                        'remark' => $remark,
                         'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                     ]);
                 }
@@ -264,7 +264,7 @@ class WechatBot extends Model
                 $attachs[$wechatContact->id] = [
                     'type' => $type,
                     'wxid' => $wechatContact->wxid,
-                    'remark' => $data['remark']??$data['nickname']??$wechatContact->wxid,
+                    'remark' => $remark,
                     'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                 ];
             }

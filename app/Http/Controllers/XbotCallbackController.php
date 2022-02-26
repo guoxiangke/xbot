@@ -474,7 +474,7 @@ class XbotCallbackController extends Controller
                 $data['type'] = WechatContact::TYPES['friend']; //1=friend
                 $data['nickname'] = $data['nickname']??$cliendWxid; //默认值为null的情况
                 $data['avatar'] = $data['avatar']??WechatBotContact::DEFAULT_AVATAR; //默认值为null的情况
-                $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
+                // $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
                 ($contact = WechatContact::firstWhere('wxid', $cliendWxid))
                     ? $contact->update($data) // 更新资料
                     : $contact = WechatContact::create($data);

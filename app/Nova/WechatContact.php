@@ -45,7 +45,6 @@ class WechatContact extends Resource
             ID::make(__('ID'), 'id')->sortable(),
             Avatar::make('Avatar')->thumbnail(fn()=>$this->avatar)->showOnIndex(),
             Text::make(__('Nickname'), 'nickname')->sortable(),
-            Text::make(__('Remark'), 'remark')->sortable(),
             Text::make(__('Sex'), 'sex')->sortable(),
             Text::make(__('Type'), 'type')->sortable(),
 
