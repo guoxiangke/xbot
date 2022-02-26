@@ -583,7 +583,7 @@ class XbotCallbackController extends Controller
                 $keywords = $wechatBot->autoReplies()->pluck('keyword','wechat_content_id');
                 foreach ($keywords as $wechatContentId => $keyword) {
                     // TODO preg; @see https://laravel.com/docs/8.x/helpers#method-str-is
-                    if(Str::is($keyword, $content)){
+                    if(Str::is(trim($keyword), $content)){
                         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '关键词回复', $keyword]);
                         $wechatBot->send([$replyTo], WechatContent::find($wechatContentId));
                         Cache::put($cacheKeyIsRelpied, true, 10);

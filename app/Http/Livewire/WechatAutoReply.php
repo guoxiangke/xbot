@@ -50,7 +50,7 @@ class WechatAutoReply extends Component
     public function rules()
     {
         return [
-            'editing.keyword' => 'required|min:3',
+            'editing.keyword' => 'required|min:2',
             'editing.wechat_content_id' => 'required|integer',
             'editing.wechat_bot_id' => 'required|integer', //default value.
         ];
