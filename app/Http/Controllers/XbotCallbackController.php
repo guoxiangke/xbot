@@ -719,6 +719,7 @@ class XbotCallbackController extends Controller
                 }else{
                     $xbot->sendText($conversation->wxid, '关键词不存在任何资源，无法订阅');
                 }
+                return response()->json(null);
             }
             if(Str::startsWith($content, '取消订阅')){
                 $keyword = Str::replace('取消订阅', '', $content);
@@ -733,6 +734,24 @@ class XbotCallbackController extends Controller
                     $xbotSubscription->delete();
                 }else{
                     $xbot->sendText($conversation->wxid, '查无此订阅！');
+                }
+                return response()->json(null);
+            }
+            
+            $roomJoinKeys = $wechatBot->getMeta('roomJoinKeys', []);
+            if(Str::startsWith($content, '入群') && $roomJoinKeys){
+                $joinMenu = '回复对应加群暗号即可入群';
+                foreach ($roomJoinKeys as $value) {
+                    $joinMenu .= PHP_EOL .'- '. $value;
+                }
+                $xbot->sendText($conversation->wxid, $joinMenu);
+                return response()->json(null);
+            }
+            foreach ($roomJoinKeys as $room_wxid => $value) {
+                if($value === $content) {
+                    $xbot->addMememberToRoom($room_wxid, $conversation->wxid);
+                    $xbot->addMememberToRoomBig($room_wxid, $conversation->wxid);
+                    return response()->json(null);
                 }
             }
             // TODO

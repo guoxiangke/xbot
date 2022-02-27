@@ -191,6 +191,11 @@
                     <x-input.textarea name="tag" type="textarea" placeholder="默认为群公告,无需点击保存按钮" class="mt-1 block w-full" 
                         wire:model="RoomWelcome" />
                 </x-input.group>
+
+                <x-input.group for="tag" label="自动入群暗号">
+                    <x-input.textarea name="tag" type="textarea" placeholder="自动入群暗号" class="mt-1 block w-full" 
+                        wire:model="RoomJoinKey" />
+                </x-input.group>
                 @endif
 
                 <div id="need-to-be-changed">

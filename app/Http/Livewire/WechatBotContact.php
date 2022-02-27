@@ -85,6 +85,7 @@ class WechatBotContact extends Component
         $this->isReplyRooms = $this->wechatBot->getMeta('isReplyRooms', []);
         $this->isListenMemberChangeRooms = $this->wechatBot->getMeta('isListenMemberChangeRooms', []);
         $this->RoomWelcomeMessages = $this->wechatBot->getMeta('roomWelcomeMessages', []);
+        $this->RoomJoinKeys = $this->wechatBot->getMeta('roomJoinKeys', []);
 
     }
 
@@ -145,6 +146,7 @@ class WechatBotContact extends Component
     public $isListenMemberChangeRooms;
     public $RoomWelcomeMessages;
     public $RoomWelcomeMessage;
+    public $RoomJoinKeys;
 
     
     public function edit(Model $model)
@@ -156,6 +158,7 @@ class WechatBotContact extends Component
         $this->isReplyRoom = $this->isReplyRooms[$this->roomWxid]??false;
         $this->isListenRoomMemberChange = $this->isListenMemberChangeRooms[$this->roomWxid]??false;
         $this->RoomWelcomeMessage = $this->RoomWelcomeMessages[$this->roomWxid]??'';
+        $this->RoomJoinKey = $this->RoomJoinKeys[$this->roomWxid]??'';
         $this->showEditModal = true;
     }
 
@@ -195,6 +198,11 @@ class WechatBotContact extends Component
         if($name == 'RoomWelcome'){
             $this->RoomWelcomeMessages[$this->roomWxid] = $value;
             $this->wechatBot->setMeta('roomWelcomeMessages', $this->RoomWelcomeMessages);
+        }
+
+        if($name == 'RoomJoinKey'){
+            $this->RoomJoinKeys[$this->roomWxid] = $value;
+            $this->wechatBot->setMeta('roomJoinKeys', $this->RoomJoinKeys);
         }
         
     }
