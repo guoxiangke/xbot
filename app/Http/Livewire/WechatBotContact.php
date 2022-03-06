@@ -71,13 +71,13 @@ class WechatBotContact extends Component
     }
 
     public $tagWith;
-    public $wechatBot;
+    public WechatBot|null $wechatBot;
     public function mount()
     {
         
         $currentTeamOwnerId = auth()->user()->currentTeam->owner->id;
-        $this->wechatBot = WechatBot::where('user_id', $currentTeamOwnerId)->firstOrFail();
-
+        $this->wechatBot = WechatBot::where('user_id', $currentTeamOwnerId)->first();
+        if(!$this->wechatBot) abort(403, '当前账户暂未绑定wxid, 请与管理员联系！');
         $this->wechatBotId = $this->wechatBot->id;
         $this->editing = $this->makeBlankModel();
         $this->tagWith =  'wechat-contact-team-'.$currentTeamOwnerId;

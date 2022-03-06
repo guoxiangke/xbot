@@ -51,7 +51,7 @@ class Webchat extends Component
     public User $user;
     public WechatContent $editing;
     public string $content = '';
-    public WechatBot $wechatBot;
+    public WechatBot|null $wechatBot;
 
     public function rules() { 
         return [
@@ -84,8 +84,8 @@ class Webchat extends Component
         // 多客服助手！bot属于某个team的
         $botOwnerId = $this->user->currentTeam->owner->id;
         // if($botOwnerId == $this->user->id) //说明是管理员！
-        $this->wechatBot = WechatBot::where('user_id', $botOwnerId)->firstOrFail();//todo
-
+        $this->wechatBot = WechatBot::where('user_id', $botOwnerId)->first();
+        if(!$this->wechatBot) abort(403, '当前账户暂未绑定wxid, 请与管理员联系！');
         $this->editing = new WechatContent([
             'name'=>'请输入发送内容...', 
             'type' => array_search('text', WechatContent::TYPES),
