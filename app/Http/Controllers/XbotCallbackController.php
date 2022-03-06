@@ -287,13 +287,14 @@ class XbotCallbackController extends Controller
         // MT_ROOM_CREATE_NOTIFY_MSG 被拉入群
         // MT_DATA_CHATROOM_MEMBERS_MSG 主动获取 群成员信息，入库 不需要了，只有wxid，没有其他信息，使用再次getRooms()再次入库
         if($type == 'MT_RECV_SYSTEM_MSG'){
+            $rawMsg = $data['raw_msg'];
             // 'MT_RECV_SYSTEM_MSG', // 群名修改
             // "raw_msg":"\"天空蔚蓝\"修改群名为“#xbot001”"
             // "room_name":"#xbot"
-            if(Str::contains($data['raw_msg'], '修改群名为')){
+            if(Str::contains($rawMsg, '修改群名为')){
                 //“#xbot001” => #xbot001
                 $re = '/[“][\s\S]*[”]/';
-                preg_match($re, $data['raw_msg'], $matches);
+                preg_match($re, $rawMsg, $matches);
                 $string = $matches[0];
                 $string = Str::replace('“', '', $string);
                 $newRoomName = Str::replace('”', '', $string);
@@ -302,9 +303,16 @@ class XbotCallbackController extends Controller
                 WechatContact::where('wxid',$data['room_wxid'])->update(['nickname' => $newRoomName]);
                 //TODO 只有群主可以改，其他改，要改回去 xbot的接口
             }
-            if(Str::contains($data['raw_msg'], '收到红包')){
+            if(Str::contains($rawMsg, '收到红包')){
                 // 提醒 收到🧧红包！TODO 设置一个红包提醒群
-                $wechatBot->xbot()->sendText('filehelper', $data['raw_msg']);
+                $wechatBot->xbot()->sendText('filehelper', $rawMsg);
+            }
+            // xxx 开启了朋友验证，你还不是他（她）朋友。请先发送朋友验证请求，对方验证通过后，才能聊天。<a href=\"weixin://findfriend/verifycontact\">发送朋友验证</a>
+            // xxx 把你无情的删了！
+            if(Str::contains($rawMsg, '请先发送朋友验证请求')){
+                $remark = 'A00-僵死友' . substr($msgid,12,4);
+                $wechatBot->xbot()->sendText('filehelper', strip_tags($rawMsg)."\n备注已改为：\n".$remark);
+                $wechatBot->xbot()->remark($fromWxid, $remark);
             }
         }
         if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
@@ -401,10 +409,9 @@ class XbotCallbackController extends Controller
             if(Str::startsWith($tmpData, '<?xml ') || Str::startsWith($tmpData, '<msg')) {
                  $xml = xStringToArray($tmpData);
             }else{
-                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, 'raw data not xml']);
+                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $data, 'raw data not xml']);
                 // MT_RECV_SYSTEM_MSG "raw_msg":"你已添加了天空蔚蓝，现在可以开始聊天了。"
-                $data['msg'] = $data['raw_msg'];
-                $content = $data['msg'];
+                $content = $data['raw_msg'];
             }
         }
         if($toWxid == "filehelper") {
