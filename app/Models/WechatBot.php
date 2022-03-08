@@ -59,7 +59,11 @@ class WechatBot extends Model
 
     public function wechatBotContacts($type=null)
     {
-        return $this->hasMany(WechatBotContact::class);
+        $relations = $this->hasMany(WechatBotContact::class);
+        if(!is_null($type)){
+            $relations =  $relations->where('type', $type);
+        }
+        return $relations;
     }
 
     // bot和contact关系 N:N
@@ -73,7 +77,7 @@ class WechatBot extends Model
         // $contact->pivot->config
         $relations = $this->belongsToMany(WechatContact::class, 'wechat_bot_contacts')
             ->withTimestamps()
-            ->withPivot(['remark','seat_user_id']);
+            ->withPivot(['remark','seat_user_id', 'type', 'id']);
         if(!is_null($type)){
                 $relations =  $relations->wherePivot('type', $type);
         }
@@ -243,7 +247,6 @@ class WechatBot extends Model
             $wechatBotContact = WechatBotContact::where('wechat_bot_id', $this->id)
                 ->where('wechat_contact_id', $wechatContact->id)->first();
 
-
             $remark = $data['remark']??$data['nickname']??$wechatContact->wxid;
             // 如果是群
             if($wechatContact->type == 2){
@@ -258,15 +261,20 @@ class WechatBot extends Model
                         'remark' => $remark,
                         'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                     ]);
+                }else{
+                    $wechatBotContact->update(['type'=>2]); // 2群
                 }
-                $wechatBotContact->setMeta('group', Arr::only($data, ['is_manager', 'manager_wxid', 'total_member']));
-            }elseif(!$wechatBotContact){
+                $wechatBotContact->setMeta('group', Arr::only($data, ['is_manager', 'manager_wxid', 'total_member','member_list']));
+            }
+            if(!$wechatBotContact){
                 $attachs[$wechatContact->id] = [
                     'type' => $type,
                     'wxid' => $wechatContact->wxid,
                     'remark' => $remark,
                     'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                 ];
+            }elseif($wechatContact->type != 2){ //不是群时，默认的3，修改为1
+                $wechatBotContact->update(['type'=>1]); // 3群陌生人 => 1联系人
             }
         }
 

@@ -195,7 +195,7 @@ final class Xbot {
     }
 
 
-    public function deleteRoomMemember($who,$room_wxid){
+    public function deleteRoomMemember($room_wxid, $who){
         $data = [
             "room_wxid"=>$room_wxid,
             'member_list'=>[$who]

@@ -314,6 +314,16 @@ class XbotCallbackController extends Controller
                 $wechatBot->xbot()->sendText('filehelper', strip_tags($rawMsg)."\n备注已改为：\n".$remark);
                 $wechatBot->xbot()->remark($fromWxid, $remark);
             }
+            if(Str::contains($rawMsg, '你邀请"')){
+                // "raw_msg":"你邀请\"AI机器人\"加入了群聊"
+                $cacheKey = 'check-friend-'.$fromWxid;
+                Cache::put($cacheKey, $rawMsg, 10);
+            }
+            // 更新群名，不更改备注群名
+            // 修改群名为“好友检测”
+            if(Str::contains($rawMsg, '修改群名为“')){
+                $wechatBot->xbot()->getRooms();
+            }
         }
         if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
             //提醒
