@@ -3,12 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\WechatClient;
-use App\Models\WechatBotContact;
-use App\Models\WechatContact;
 use App\Models\WechatBot;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class checkFriend extends Command
 {
@@ -43,7 +38,7 @@ class checkFriend extends Command
      */
     public function handle()
     {
-        $wechatBot = \App\Models\WechatBot::find($this->argument('wechatBotId'));
+        $wechatBot = WechatBot::find($this->argument('wechatBotId'));
         foreach ($wechatBot->wechatBotContacts(WechatContact::TYPE_FRIEND)->get() as $contact) {
             $wechatBot->xbot()->checkFriendShip($contact->wxid);
         }
