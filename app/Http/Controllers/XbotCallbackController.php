@@ -196,6 +196,7 @@ class XbotCallbackController extends Controller
             // {"type":"MT_CLIENT_DISCONTECTED","client_id":4}
             'MT_RECV_REVOKE_MSG', //默认开启 消息防撤回！不再处理这个
             'MT_DATA_CHATROOM_MEMBERS_MSG',
+            'MT_ZOMBIE_CHECK_MSG', //僵尸检测
         ];
         if(!in_array($type, $ignoreRAW)){
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $request->all()]);
@@ -283,6 +284,31 @@ class XbotCallbackController extends Controller
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '获取联系人', $type]);
             return response()->json(null);
         }
+        
+        // 0 正常状态(不是僵尸粉) 
+        // 1 检测为僵尸粉(对方把我拉黑了) 
+        // 2 检测为僵尸粉(对方把我从他的好友列表中删除了) 
+        // 3 检测为僵尸粉(原因未知,如遇到3请反馈给我) 
+        if($type == 'MT_ZOMBIE_CHECK_MSG'){
+            switch ($data['status']) {
+                case 0:
+                    // 0 正常状态(不是僵尸粉) 勿打扰提醒
+                    break;
+                case 1:
+                    $wechatBot->xbot()->sendText($data['wxid'], "1 检测为僵尸粉(对方把我拉黑了) ");
+                    break;
+                case 2:
+                    $wechatBot->xbot()->sendText($data['wxid'], "2 检测为僵尸粉(对方把我从他的好友列表中删除了) ");
+                    break;
+                case 3:
+                    $wechatBot->xbot()->sendText($data['wxid'], "3 检测为僵尸粉(原因未知,如遇到3请反馈给我) ");
+                    break;
+                default:
+                    // code...
+                    break;
+            }
+            return response()->json(null);
+        }
         // MT_ROOM_ADD_MEMBER_NOTIFY_MSG 新人入群
         // MT_ROOM_CREATE_NOTIFY_MSG 被拉入群
         // MT_DATA_CHATROOM_MEMBERS_MSG 主动获取 群成员信息，入库 不需要了，只有wxid，没有其他信息，使用再次getRooms()再次入库
@@ -313,11 +339,6 @@ class XbotCallbackController extends Controller
                 $remark = 'A00-僵死友' . substr($msgid,12,4);
                 $wechatBot->xbot()->sendText('filehelper', strip_tags($rawMsg)."\n备注已改为：\n".$remark);
                 $wechatBot->xbot()->remark($fromWxid, $remark);
-            }
-            if(Str::contains($rawMsg, '你邀请"')){
-                // "raw_msg":"你邀请\"AI机器人\"加入了群聊"
-                $cacheKey = 'check-friend-'.$fromWxid;
-                Cache::put($cacheKey, $rawMsg, 10);
             }
             // 更新群名，不更改备注群名
             // 修改群名为“好友检测”
@@ -419,7 +440,7 @@ class XbotCallbackController extends Controller
             if(Str::startsWith($tmpData, '<?xml ') || Str::startsWith($tmpData, '<msg')) {
                  $xml = xStringToArray($tmpData);
             }else{
-                Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $data, 'raw data not xml']);
+                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $data, 'raw data not xml']);
                 // MT_RECV_SYSTEM_MSG "raw_msg":"你已添加了天空蔚蓝，现在可以开始聊天了。"
                 $content = $data['raw_msg'];
             }

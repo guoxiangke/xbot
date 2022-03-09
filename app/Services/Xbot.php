@@ -76,6 +76,15 @@ final class Xbot {
         $this->request('MT_ADD_SEARCH_CONTACT_MSG', get_defined_vars());
     }
 
+    // >值描述
+        // 0 正常状态(不是僵尸粉) 
+        // 1 检测为僵尸粉(对方把我拉黑了) 
+        // 2 检测为僵尸粉(对方把我从他的好友列表中删除了) 
+        // 3 检测为僵尸粉(原因未知,如遇到3请反馈给我) 
+    public function checkFriendShip($wxid){
+        $this->request('MT_ZOMBIE_CHECK_MSG', get_defined_vars());
+    }
+    
 
     public function toVoiceText($msgid){
         $this->request('MT_TRANS_VOICE_MSG', get_defined_vars());
