@@ -261,10 +261,9 @@ class WechatBot extends Model
                         'remark' => $remark,
                         'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                     ]);
-                }else{
-                    $wechatBotContact->update(['type'=>2]); // 2群
                 }
                 $wechatBotContact->setMeta('group', Arr::only($data, ['is_manager', 'manager_wxid', 'total_member','member_list']));
+                return;
             }
             if(!$wechatBotContact){
                 $attachs[$wechatContact->id] = [
@@ -273,8 +272,6 @@ class WechatBot extends Model
                     'remark' => $remark,
                     'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                 ];
-            }elseif($wechatContact->type != 2){ //不是群时，默认的3，修改为1
-                $wechatBotContact->update(['type'=>1]); // 3群陌生人 => 1联系人
             }
         }
 
