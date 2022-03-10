@@ -295,13 +295,10 @@ class XbotCallbackController extends Controller
                     // 0 正常状态(不是僵尸粉) 勿打扰提醒
                     break;
                 case 1:
-                    $wechatBot->xbot()->sendText($data['wxid'], "1 检测为僵尸粉(对方把我拉黑了) ");
-                    break;
+                    // $wechatBot->xbot()->sendText($data['wxid'], "1 检测为僵尸粉(对方把你拉黑了) ");
                 case 2:
-                    $wechatBot->xbot()->sendText($data['wxid'], "2 检测为僵尸粉(对方把我从他的好友列表中删除了) ");
-                    break;
                 case 3:
-                    $wechatBot->xbot()->sendText($data['wxid'], "3 检测为僵尸粉(原因未知,如遇到3请反馈给我) ");
+                    $wechatBot->xbot()->sendContactCard('filehelper',$data['wxid']);
                     break;
                 default:
                     // code...
@@ -417,8 +414,8 @@ class XbotCallbackController extends Controller
                 WechatMessage::query()
                     ->where('conversation', $gBotContact->id)
                     ->delete();
-                $gBotContact->delete();
                 Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $gBotContact->nickname, $gBotContact->id, 'bot被出群，已删除群记录']);
+                $gBotContact->delete();
             }
         }
 
