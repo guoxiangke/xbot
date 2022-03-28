@@ -14,6 +14,7 @@ use App\Models\WechatMessageVoice;
 use App\Models\XbotSubscription;
 use Illuminate\Http\Request;
 use App\Services\Xbot;
+use App\Services\Icr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -618,7 +619,7 @@ class XbotCallbackController extends Controller
                 // 如果其他资源 已经响应 关键词命令了，不再推送给第三方webhook了
                 Cache::put($cacheKeyIsRelpied, true, 10);
             }
-            if($isAutoReply) {
+            if($isAutoReply && !$isSelf) {
                 $keywords = $wechatBot->autoReplies()->pluck('keyword','wechat_content_id');
                 foreach ($keywords as $wechatContentId => $keyword) {
                     // TODO preg; @see https://laravel.com/docs/8.x/helpers#method-str-is
@@ -732,87 +733,90 @@ class XbotCallbackController extends Controller
                 'content' => $content,
                 'msgid' => $msgid,
             ]);
-            // 订阅+关键词 //TODO  是否开启个人订阅/群订阅
-            // $isRoom
-            if(Str::startsWith($content, '订阅')){
-                $keyword = Str::replace('订阅', '', $content);
-                $keyword = trim($keyword);
-                $res = $wechatBot->getResouce($keyword);
-                if($res){ // 订阅成功！
-                    $xbotSubscription = XbotSubscription::withTrashed()->firstOrCreate(
-                        [
-                            'wechat_bot_id' => $wechatBot->id,
-                            'wechat_bot_contact_id' => $conversation->id,
-                            'keyword' => $keyword,
-                        ],
-                        [
-                            'cron' => '0 7 * * *'
-                        ]
-                    );
-                    if($xbotSubscription->wasRecentlyCreated){
-                        $xbot->sendText($conversation->wxid, '成功订阅，每早7点，不见不散！');
+            if(!$isSelf) { //不自动响应自己的信息，死循环
+                // 订阅+关键词 //TODO  是否开启个人订阅/群订阅
+                // $isRoom
+                if(Str::startsWith($content, '订阅')){
+                    $keyword = Str::replace('订阅', '', $content);
+                    $keyword = trim($keyword);
+                    $res = $wechatBot->getResouce($keyword);
+                    if($res){ // 订阅成功！
+                        $xbotSubscription = XbotSubscription::withTrashed()->firstOrCreate(
+                            [
+                                'wechat_bot_id' => $wechatBot->id,
+                                'wechat_bot_contact_id' => $conversation->id,
+                                'keyword' => $keyword,
+                            ],
+                            [
+                                'cron' => '0 7 * * *'
+                            ]
+                        );
+                        if($xbotSubscription->wasRecentlyCreated){
+                            $xbot->sendText($conversation->wxid, '成功订阅，每早7点，不见不散！');
+                        }else{
+                            $xbotSubscription->restore();
+                            $xbot->sendText($conversation->wxid, '已订阅成功！时间和之前一样');
+                        }
                     }else{
-                        $xbotSubscription->restore();
-                        $xbot->sendText($conversation->wxid, '已订阅成功！时间和之前一样');
+                        $xbot->sendText($conversation->wxid, '关键词不存在任何资源，无法订阅');
                     }
-                }else{
-                    $xbot->sendText($conversation->wxid, '关键词不存在任何资源，无法订阅');
-                }
-                return response()->json(null);
-            }
-            if(Str::startsWith($content, '取消订阅')){
-                $keyword = Str::replace('取消订阅', '', $content);
-                $keyword = trim($keyword);
-                $xbotSubscription = XbotSubscription::query()
-                    ->where('wechat_bot_id', $wechatBot->id)
-                    ->where('wechat_bot_contact_id', $conversation->id)
-                    ->where('keyword', $keyword)
-                    ->first();
-                if($xbotSubscription){
-                    $xbot->sendText($conversation->wxid, '已取消订阅！');
-                    $xbotSubscription->delete();
-                }else{
-                    $xbot->sendText($conversation->wxid, '查无此订阅！');
-                }
-                return response()->json(null);
-            }
-            
-            $roomJoinKeys = $wechatBot->getMeta('roomJoinKeys', []);
-            if(Str::startsWith($content, '入群') && $roomJoinKeys){
-                $joinMenu = '回复对应加群暗号即可入群';
-                foreach ($roomJoinKeys as $value) {
-                    $joinMenu .= PHP_EOL .'- '. $value;
-                }
-                $xbot->sendText($conversation->wxid, $joinMenu);
-                return response()->json(null);
-            }
-            foreach ($roomJoinKeys as $room_wxid => $value) {
-                if($value === $content) {
-                    $xbot->addMememberToRoom($room_wxid, $conversation->wxid);
-                    $xbot->addMememberToRoomBig($room_wxid, $conversation->wxid);
                     return response()->json(null);
                 }
-            }
-            // TODO
-            $switchOn = $config['isResourceOn'];
-            $isReplied = Cache::get($cacheKeyIsRelpied, false);
-            if(!$isReplied && $switchOn) {
-                $res = $wechatBot->getResouce($content);
-                if($res) {
-                    Cache::put($cacheKeyIsRelpied, true, 10);
-                    $wechatBot->send([$conversation->wxid], $res);
+                if(Str::startsWith($content, '取消订阅')){
+                    $keyword = Str::replace('取消订阅', '', $content);
+                    $keyword = trim($keyword);
+                    $xbotSubscription = XbotSubscription::query()
+                        ->where('wechat_bot_id', $wechatBot->id)
+                        ->where('wechat_bot_contact_id', $conversation->id)
+                        ->where('keyword', $keyword)
+                        ->first();
+                    if($xbotSubscription){
+                        $xbot->sendText($conversation->wxid, '已取消订阅！');
+                        $xbotSubscription->delete();
+                    }else{
+                        $xbot->sendText($conversation->wxid, '查无此订阅！');
+                    }
+                    return response()->json(null);
                 }
-            }
+                
+                $roomJoinKeys = $wechatBot->getMeta('roomJoinKeys', []);
+                if(Str::startsWith($content, '入群') && $roomJoinKeys){
+                    $joinMenu = '回复对应加群暗号即可入群';
+                    foreach ($roomJoinKeys as $value) {
+                        $joinMenu .= PHP_EOL .'- '. $value;
+                    }
+                    $xbot->sendText($conversation->wxid, $joinMenu);
+                    return response()->json(null);
+                }
+                foreach ($roomJoinKeys as $room_wxid => $value) {
+                    if($value === $content) {
+                        $xbot->addMememberToRoom($room_wxid, $conversation->wxid);
+                        $xbot->addMememberToRoomBig($room_wxid, $conversation->wxid);
+                        return response()->json(null);
+                    }
+                }
 
-            // TODO 付费开启
-            $switchOn = $config['isIrcOn'];
-            $isReplied = Cache::get($cacheKeyIsRelpied, false);
-            if(!$isReplied && $switchOn) {
-                $irc = new App\Services\Icr;
-                $res = $irc->run($content);
-                if($res) {
-                    Cache::put($cacheKeyIsRelpied, true, 10);
-                    $wechatBot->send([$conversation->wxid], $res->Reply);
+                
+                $switchOn = $config['isResourceOn'];
+                $isReplied = Cache::get($cacheKeyIsRelpied, false);
+                if(!$isReplied && $switchOn) {
+                    $res = $wechatBot->getResouce($content);
+                    if($res) {
+                        Cache::put($cacheKeyIsRelpied, true, 10);
+                        $wechatBot->send([$conversation->wxid], $res);
+                    }
+                }
+
+                // TODO 付费开启
+                $switchOn = $config['isIrcOn'];
+                $isReplied = Cache::get($cacheKeyIsRelpied, false);
+                if(!$isReplied && $switchOn) {
+                    $irc = new Icr;
+                    $res = $irc->run($content);
+                    if($res) {
+                        Cache::put($cacheKeyIsRelpied, true, 10);
+                        $wechatBot->xbot()->sendText($conversation->wxid, $res->Reply);
+                    }
                 }
             }
         }
