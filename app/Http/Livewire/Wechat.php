@@ -82,9 +82,13 @@ class Wechat extends Component
             'webhookSecret' => '123456',
             'isAutoReply' => false, // 关键词自动回复
             'isResourceOn' => false, // x-resources资源自动回复
+            'isIrcOn' => false, // AI自动回复
         ]);
         if(!isset($this->config['isResourceOn'])){
             $this->config['isResourceOn'] = false;
+        }
+        if(!isset($this->config['isIrcOn'])){
+            $this->config['isIrcOn'] = false;
         }
 
     }
@@ -102,6 +106,7 @@ class Wechat extends Component
             'config.webhookSecret',
             'config.isAutoReply',
             'config.isResourceOn',
+            'config.isIrcOn',
             ])
         ){
             $key = str_replace('config.', '', $name);

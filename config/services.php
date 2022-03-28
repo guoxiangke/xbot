@@ -29,5 +29,9 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
-
+    
+    'tencentcloud' => [
+        'secretId' => env('TENCENT_SECRET_ID'),
+        'secretKey' => env('TENCENT_SECRET_KEY'),
+    ],
 ];

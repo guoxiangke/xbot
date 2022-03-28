@@ -83,6 +83,12 @@
                 :checked="$config['isResourceOn']"
                 label="X-resources资源关键词自动回复"
                 />
+            <x-input.toggle
+                wire:model="config.isIrcOn"
+                id="config.isIrcOn" 
+                :checked="$config['isIrcOn']"
+                label="AI自动回复聊天机器人"
+                />
 
             <x-input.toggle 
                 wire:model="config.isAutoWcpay"

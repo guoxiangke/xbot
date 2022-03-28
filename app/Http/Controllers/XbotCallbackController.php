@@ -244,9 +244,13 @@ class XbotCallbackController extends Controller
             'isListenRoomAll' => false,
             'isAutoReply' => false, // 关键词自动回复
             'isResourceOn' => false,
+            'isIrcOn' => false,
         ]);
         if(!isset($config['isResourceOn'])){
             $config['isResourceOn'] = false;
+        }
+        if(!isset($config['isIrcOn'])){
+            $config['isIrcOn'] = false;
         }
 
         // AutoReply  响应 预留 关键词 + 群配置
@@ -794,7 +798,22 @@ class XbotCallbackController extends Controller
             $isReplied = Cache::get($cacheKeyIsRelpied, false);
             if(!$isReplied && $switchOn) {
                 $res = $wechatBot->getResouce($content);
-                if($res) $wechatBot->send([$conversation->wxid], $res);
+                if($res) {
+                    Cache::put($cacheKeyIsRelpied, true, 10);
+                    $wechatBot->send([$conversation->wxid], $res);
+                }
+            }
+
+            // TODO 付费开启
+            $switchOn = $config['isIrcOn'];
+            $isReplied = Cache::get($cacheKeyIsRelpied, false);
+            if(!$isReplied && $switchOn) {
+                $irc = new App\Services\Icr;
+                $res = $irc->run($content);
+                if($res) {
+                    Cache::put($cacheKeyIsRelpied, true, 10);
+                    $wechatBot->send([$conversation->wxid], $res->Reply);
+                }
             }
         }
         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, '******************']);//已执行到最后一行
