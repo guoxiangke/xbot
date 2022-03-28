@@ -42,9 +42,7 @@ final class Icr {
 	    );
 	    $req->fromJsonString(json_encode($params));
 
-	    $resp = $client->ChatBot($req);
-
-	    return $resp;
+	    return $client->ChatBot($req);
 		}
 		catch(TencentCloudSDKException $e) {
 		  echo $e;
