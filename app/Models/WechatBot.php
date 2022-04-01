@@ -263,7 +263,7 @@ class WechatBot extends Model
                     ]);
                 }
                 $wechatBotContact->setMeta('group', Arr::only($data, ['is_manager', 'manager_wxid', 'total_member','member_list']));
-                return;
+                continue; // 这里不可以return啊
             }
             if(!$wechatBotContact){
                 $attachs[$wechatContact->id] = [
