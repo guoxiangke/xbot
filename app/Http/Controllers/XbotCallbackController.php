@@ -43,7 +43,19 @@ class XbotCallbackController extends Controller
         $QrPoolCacheKey = $wechatClientId;
         // 1.获取到登陆二维码
         // 缓存以供前端调用扫码（2个client同一个id，如果已登陆的，不显示二维码！）
+        $whoNeedQrKey = 'who_need_qr'; // 谁获取了二维码
         if($type == 'MT_RECV_QRCODE_MSG') {
+            // TODO 发送到管理群里
+            // 3号windows10发过来的二维码
+            if($wechatClientId == 3){
+                $whoNeedQr = Cache::get($whoNeedQrKey, []);
+                if($who = array_pop($whoNeedQr)){
+                    $wechatBotAdmin = WechatBot::find(8);// a个人微信AI应用定制解决方案
+                    $wechatBotAdmin->xbot()->sendText($who, '2.请点击链接打开，使用申请体验的微信来扫码登陆！二维码将1分钟内将失效，登陆成功请等待初始化完毕后体验智能AI回复，更多功能请付费体验！ https://api.qrserver.com/v1/create-qr-code/?data='.$data['code']);
+                    Cache::put($whoNeedQrKey, $whoNeedQr, 30); // 重新写入
+                }
+                // return response()->json(null);
+            }
             $qr = [
                 'qr' => $data['code'],
                 'client_id' => $clientId,
@@ -54,7 +66,6 @@ class XbotCallbackController extends Controller
             Cache::put("xbots.{$QrPoolCacheKey}.qrPool", $qrPool);
             // 前端刷新获取二维码总是使用第一个QR，登陆成功，则弹出对于clientId的QR
             // '获取到登陆二维码，已压入qrPool',
-            // TODO 发送到管理群里
             Log::debug(__CLASS__, [__LINE__, $type, $wechatClientId, $wechatClientName, $clientId, $qr]);
 
             //如果登陆中！
@@ -94,11 +105,13 @@ class XbotCallbackController extends Controller
             $wechatBot->xbot()->sendText($cliendWxid, "恭喜！登陆成功，正在初始化...");
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $data['nickname'], '下面执行初始化']);
             $wechatBot->init();
+            Cache::put('initing-'.$wechatBot->id, true, 120);
             return response()->json(null);
         }
 
         if($type == 'MT_USER_LOGOUT'){
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $cliendWxid, 'MT_USER_LOGOUT']);
+            $wechatClient->close($clientId); // 退出windows的client！
             $wechatBot = WechatBot::where('wxid', $cliendWxid)->first();
             $wechatBot->logout();
             return response()->json(null);
@@ -285,6 +298,10 @@ class XbotCallbackController extends Controller
         // 初始化 联系人数据
         $xbotContactCallbackTypes = ['MT_DATA_FRIENDS_MSG', 'MT_DATA_CHATROOMS_MSG', 'MT_DATA_PUBLICS_MSG' ];
         if(in_array($type, $xbotContactCallbackTypes)){
+            if(Cache::get('initing-'.$wechatBot->id, false)){
+                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '获取联系人ignore! 已经在init里了！等待2分钟', $type]);
+                return response()->json(null);
+            }
             $wechatBot->syncContacts($data, $type);
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '获取联系人', $type]);
             return response()->json(null);
@@ -718,10 +735,17 @@ class XbotCallbackController extends Controller
                 ->where('wechat_bot_id', $wechatBot->id)
                 ->first();
             if(!$conversation) {
-                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid,  $conversationWxid, '给不是好友的人发的信息，即把他删了，对方又请求好友了，我没答应，此时还可以发信息|新群！']);
                 // 下一步，搜索好友，加好友
-                $xbot->addFriendBySearch($conversationWxid);
-                return response()->json(null);
+                if(!$isRoom){
+                    Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid,  $conversationWxid, '给不是好友的人发的信息，即把他删了，对方又请求好友了，我没答应，此时还可以发信息|新群！']);
+                    $xbot->addFriendBySearch($conversationWxid);
+                    return response()->json(null);
+                }else{
+                    //新人入群！
+                    Log::error('没有入群！!!?', [$conversationWxid, $wechatBot->id]);
+                    $wechatBot->xbot()->getRooms();
+                    return response()->json(null);
+                }
             }else{
                 $conversation->restore();
             }
@@ -796,7 +820,18 @@ class XbotCallbackController extends Controller
                     }
                 }
 
-                
+                if(!$isRoom && $content == '试用体验微信机器人'){
+                    $client = WechatClient::find(3);
+                    $client->new();
+                    $wechatBot->xbot()->sendText($conversation->wxid, '1.已向腾讯请求获取二维码，请耐心等待, 2.请添加微信 wxid_k6uqk386r8gw22  获取二维码链接');
+                    
+                    $whoNeedQr = Cache::get($whoNeedQrKey, []);
+                    $whoNeedQr[] = $conversation->wxid;
+
+                    Cache::put($whoNeedQrKey, $whoNeedQr, 30);
+                    return response()->json(null);
+                }
+
                 $switchOn = $config['isResourceOn'];
                 $isReplied = Cache::get($cacheKeyIsRelpied, false);
                 if(!$isReplied && $switchOn) {
@@ -808,9 +843,11 @@ class XbotCallbackController extends Controller
                 }
 
                 // TODO 付费开启
-                $switchOn = $config['isIrcOn'];
+                // 3号体验windows10的默认开启
+                $switchOn = $config['isIrcOn'] || $wechatClient->id == 3;
                 $isReplied = Cache::get($cacheKeyIsRelpied, false);
-                if(!$isReplied && $switchOn) {
+                // $isBot = WechatBot::where('wxid', $conversation->wxid)
+                if(!$isReplied && $switchOn && !$isRoom) {
                     $irc = new Icr;
                     $res = $irc->run($content);
                     if($res) {
