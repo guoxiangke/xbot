@@ -58,6 +58,19 @@ class WechatBotController extends Controller
         return $wechatBot->bot()->addFriendBySearch($request['telephone'], $request['message']??"Hi");
     }
 
+    public function _getWechatBot() {
+        return WechatBot::where('user_id', auth()->id())
+            ->whereNotNull('client_id')
+            ->whereNotNull('login_at')
+            ->first();
+    }
+
+    public function getFriends()
+    {
+        $wechatBot = $this->_getWechatBot();
+        return $wechatBot->contacts()->paginate();
+    }
+
     /**
      * Display a listing of the resource.
      *
