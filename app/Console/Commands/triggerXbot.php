@@ -51,10 +51,15 @@ class triggerXbot extends Command
         foreach ($keywords as $keyword) {
             $res = $wechatBot->getResouce($keyword);
             if(!$res) {
-               $res=[
-                    'type'=>'text', 
-                    'data'=>['content'=>$keyword]
-                ]; 
+                $autoReply = $wechatBot->autoReplies()->where('keyword', $keyword)->first();
+                if($autoReply){
+                    $res = $autoReply->content;//$wechatContent
+                }else{
+                   $res=[
+                        'type'=>'text', 
+                        'data'=>['content'=>$keyword]
+                    ];
+                }
             }
             $wechatBot->send([$to], $res);
         }
