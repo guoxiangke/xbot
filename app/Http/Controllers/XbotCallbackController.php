@@ -13,6 +13,7 @@ use App\Models\WechatMessageFile;
 use App\Models\WechatMessageVoice;
 use App\Models\XbotSubscription;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use App\Services\Xbot;
 use App\Services\Icr;
 use Illuminate\Support\Facades\Cache;
@@ -470,23 +471,48 @@ class XbotCallbackController extends Controller
         }
 
 
-        //自动////自动////自动////自动////自动//
-        //自动退款，如果数字不对
-        // "des":"收到转账0.10元。如需收钱，请点此升级至最新版本",
+        // 微信支付
+        // 一次转账自动首款后，会产生2条消息：[收到转账]和[已收款]
+        // 不支持群收款！
         $switchOn = $config['isAutoWcpay'];
         if($switchOn && $type == 'MT_RECV_WCPAY_MSG'){
             // "feedesc":"￥0.10",
             // substr('￥0.10',3) + 1 = 1.1 x 100 = 110分
             $transferid = $xml['appmsg']['wcpayinfo']['transferid'];
-            $amount = $xml['appmsg']['wcpayinfo']['feedesc'];
-            $amount = substr($amount, 3) * 100;
-            Log::debug('MT_RECV_WCPAY_MSG', ['微信转账', $transferid, $amount]);
-            //TODO 只收 1 分钱，其他退回
-            if($amount == 1) {
-                $xbot->autoAcceptTranster($transferid);
-            }else{
+            $feedesc = $xml['appmsg']['wcpayinfo']['feedesc'];
+            $amount = substr($feedesc, 3) * 100;
+            //TODO 只退回1 分钱 ,退款测试
+            if($amount == 1) { 
+                //自动退款，如果数字不对
                 $xbot->refund($transferid);
+                return response()->json(null);
             }
+            // 保存到message里 begin
+                $xbot->autoAcceptTranster($transferid);
+                // pay_memo 付款描述
+                $pay_memo = $xml['appmsg']['wcpayinfo']['pay_memo']?:'';
+
+                $wxid = $isSelf?$toWxid:$fromWxid;
+                $conversation = WechatBotContact::query()
+                    ->where('wechat_bot_id', $wechatBot->id)
+                    ->where('wxid', $wxid)
+                    ->first();
+
+                $content = $isSelf?'[已收款]':'[收到转账]' . '-' . $feedesc . '-附言:' . $pay_memo;
+                // get amount from content.
+                    // $feedesc =  explode('-', content)[1];
+                    // $amount = substr($feedesc, 3) * 100;
+                $data = [
+                    'type' => array_search($type, WechatMessage::TYPES), // 6:wcpay
+                    'wechat_bot_id' => $wechatBot->id,
+                    'from' => $isSelf?NULL:$conversation->id, // 消息发送者:Null为bot发送的
+                    'conversation' => $conversation->id,
+                    'content' => $content, 
+                    'msgid' => $msgid,
+                ];
+                Log::debug('MT_RECV_WCPAY_MSG', ['微信转账', $transferid, $amount, $data]);
+                $message = WechatMessage::create($data); //发送webhook回调
+            // 保存到message里 end
             return response()->json(null);
         }
 
@@ -497,6 +523,8 @@ class XbotCallbackController extends Controller
                 $xbot->addFriendBySearchCallback($data['v1'], $data['v2'], $remark);
                 Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '主动+好友', $data['search']]);
             }else{
+                // 先更新好友吧！
+                $xbot->getFriends(); //修bug
                 $xbot->getRooms(); //更新群
                 Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '更新群成员入库', $data]);
             }
@@ -526,6 +554,8 @@ class XbotCallbackController extends Controller
                 ->first();
             if($wechatBotContact) {
                 $wechatBotContact->restore();
+                $wechatBotContact->type = 1;
+                $wechatBotContact->save();
             }else{
                 //是否存在contact用户
                 $data['type'] = WechatContact::TYPES['friend']; //1=friend
@@ -719,6 +749,8 @@ class XbotCallbackController extends Controller
                             // 收到执行，修复bug, 300行已解决
                             return $xbot->getRooms();
                         }else{
+                            // 陌生人还没有入库
+                            $xbot->getFriends();
                             Log::error(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
                         }
                     }else{
@@ -764,6 +796,12 @@ class XbotCallbackController extends Controller
                     $keyword = Str::replace('订阅', '', $content);
                     $keyword = trim($keyword);
                     $res = $wechatBot->getResouce($keyword);
+                    if(!$res) {
+                        $autoReply = $wechatBot->autoReplies()->where('keyword', $keyword)->first();
+                        if($autoReply){
+                            $res = $autoReply->content;//$wechatContent
+                        }
+                    }
                     if($res){ // 订阅成功！
                         $xbotSubscription = XbotSubscription::withTrashed()->firstOrCreate(
                             [
@@ -844,15 +882,33 @@ class XbotCallbackController extends Controller
 
                 // TODO 付费开启
                 // 3号体验windows10的默认开启
-                $switchOn = $config['isIrcOn'] || $wechatClient->id == 3;
+                $switchOn = $config['isIrcOn'];
                 $isReplied = Cache::get($cacheKeyIsRelpied, false);
                 // $isBot = WechatBot::where('wxid', $conversation->wxid)
                 if(!$isReplied && $switchOn && !$isRoom) {
-                    $irc = new Icr;
-                    $res = $irc->run($content);
-                    if($res) {
+                    // ICR 和小爱 随机回复
+                    if(rand(1,2) == 1){
+                        $url = "http://jiuli.xiaoapi.cn/i/xiaoai_tts.php?msg={$content}";
+                        $json = Http::get($url)->json();
                         Cache::put($cacheKeyIsRelpied, true, 10);
-                        $wechatBot->xbot()->sendText($conversation->wxid, $res->Reply);
+                        // $wechatBot->xbot()->sendText($conversation->wxid, $json['text']);
+                        $res = [
+                            'type' => 'music',
+                            "data"=> [
+                                "url" => $json['mp3'],
+                                'title' => $json['title'], //小爱同学
+                                'description' => $json['requestText'],
+                            ]
+                        ];
+                        $wechatBot->send([$conversation->wxid], $res);
+                    }else{
+                        $irc = new Icr;
+                        $res = $irc->run($content);
+                        if($res) {
+                            Cache::put($cacheKeyIsRelpied, true, 10);
+                            $wechatBot->xbot()->sendText($conversation->wxid, $res->Reply);
+                        }
+
                     }
                 }
             }
