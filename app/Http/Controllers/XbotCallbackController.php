@@ -498,7 +498,7 @@ class XbotCallbackController extends Controller
                     ->where('wxid', $wxid)
                     ->first();
 
-                $content = $isSelf?'[已收款]':'[收到转账]' . '-' . $feedesc . '-附言:' . $pay_memo;
+                $content = $isSelf?'[已收款]':'[收到转账]' . ':' . $feedesc . ':附言:' . $pay_memo;
                 // get amount from content.
                     // $feedesc =  explode('-', content)[1];
                     // $amount = substr($feedesc, 3) * 100;
