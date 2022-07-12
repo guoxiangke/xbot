@@ -104,6 +104,9 @@
             }
 
             $content = $conversation['content'];
+            if(is_array($content)){
+              $content = implode(' ',$content);
+            }
         @endphp
         <div wire:click="$set('currentConversationId', {{$contactId}})" data-id="{{$cid}}" class="channel-preview__container {{ $currentConversationId===$contactId?'selected':'' }}">
           <div class="channel-preview__avatars">
@@ -268,6 +271,7 @@
                       $time = $message['updated_at']??$now;
                       $updatedAt = Illuminate\Support\Carbon::parse($time);
                       $time = $updatedAt->setTimezone('Asia/Shanghai')->toDateTimeString();
+                      if(!isset($message['type'])) continue; // 怎么能没有呢？！！！
                     @endphp
                     <div data-testid="message-inner" class="str-chat__message-inner">
                       <div class="str-chat__message-text">
