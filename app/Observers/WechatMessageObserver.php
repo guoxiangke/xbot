@@ -72,7 +72,10 @@ class WechatMessageObserver
             $data = [
                 'msgid' => $wechatMessage->id,
                 'type' => WechatMessage::TYPES_TEXT[$wechatMessage->type],
-                'who' => $wechatMessage->to->wxid,
+                'wxid' => $wechatMessage->to->wxid,
+                'remark' => $wechatMessage->to->remark,
+                'avatar' => $wechatMessage->to->contact->avatar,
+                'seat_user_id' => $wechatMessage->to->seat_user_id,
                 'self' => $wechatMessage->isSentByBot,
                 'content' => $wechatMessage->content,
             ];
