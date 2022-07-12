@@ -18,6 +18,8 @@ class WechatMessage extends Model
         'MT_RECV_PICTURE_MSG',
         'MT_RECV_FILE_MSG',
         'MT_RECV_VIDEO_MSG',
+        'MT_RECV_WCPAY_MSG',
+        'MT_RECV_LOCATION_MSG',
     ];
     const TYPES_TEXT = [
         'text',             //0
@@ -26,6 +28,8 @@ class WechatMessage extends Model
         'image',            //3
         'file',             //4
         'video',             //5
+        'wcpay',             //6
+        'location',          //7
     ];
 
     protected $appends = ['isSentByBot'];

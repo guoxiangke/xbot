@@ -132,9 +132,9 @@ class WechatBot extends Model
         }
 
         // 发送的图片/文件必须放在 WeChat Files\wxid_???\FileStorage\File\ 下，可以创建子目录
-        if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\\\",$data['file']));
-        if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\\\",$data['image']));
-        if($type == 'contact')     $xbot->sendContactCard($to, $data['content']);
+        if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\",$data['file']));
+        if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\",$data['image']));
+        if($type == 'contact')     $xbot->sendContactCard($to, $data['wxid']);
         if($type == 'music')    {
             $url = config('xbot.redirect').$data['url'];
             $xbot->sendMusic($to, $url, $data['title'], "点击🎵收听 {$data['description']}");
@@ -248,6 +248,11 @@ class WechatBot extends Model
                 ->where('wechat_contact_id', $wechatContact->id)->first();
 
             $remark = $data['remark']??$data['nickname']??$wechatContact->wxid;
+            // 修正 Luke 群成员为好友的bug
+            // if($wechatBotContact && $wechatContact->type == 1){
+            //     $wechatBotContact->update(['type' =>1]);
+            //     Log::error(__METHOD__,[$wechatBotContact->toArray()]);
+            // }
             // 如果是群
             if($wechatContact->type == 2){
                 $this->syncRoomMemembers($data);
@@ -277,7 +282,7 @@ class WechatBot extends Model
 
         // @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
         $this->contacts()->syncWithoutDetaching($attachs);
-        Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '已同步好友', $this->wxid, count($attachs)]);
+        Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '已同步', $xbotContactCallbackType, $this->wxid, count($attachs)]);
     }
 
     protected function syncRoomMemembers($data)

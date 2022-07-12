@@ -26,9 +26,33 @@ Route::post('/xbot/callback/{token}', XbotCallbackController::class);
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/wechat/send', [WechatBotController::class, 'send']);
     Route::post('/wechat/add', [WechatBotController::class, 'add']);
+    Route::get('/wechat/friends', [WechatBotController::class, 'getFriends']);
 });
 
 // webhook client test!
 // TODO：
     // https://github.com/spatie/laravel-webhook-client
     // webhook client need verified with aravel-webhook-client
+
+// hack xbot
+Route::post('/xbot/login', function (Request $request) {
+    Log::debug('LOGIN',[$request->all()]);
+    return [
+        "err_code" => 0,
+        "license" => config('xbot.license'),
+        "version" => "1.0.7",
+        "expired_in"=> 2499184
+    ];
+});
+Route::post('/xbot/heartbeat', function (Request $request) {
+    return [
+        "err_code"=> 0,
+        "expired_in"=> 2499184
+    ];
+});
+Route::post('/xbot/license/info', function (Request $request) {
+    return [
+        "err_code"=> 0,
+        "license" => config('xbot.license'),
+    ];
+});
