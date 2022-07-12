@@ -515,6 +515,24 @@ class XbotCallbackController extends Controller
             // 保存到message里 end
             return response()->json(null);
         }
+        
+        // 收到位置消息
+        if($type == 'MT_RECV_LOCATION_MSG'){
+            $content = '[位置消息]:'. implode(':', $xml['location']['@attributes']);
+            $data = [
+                'type' => array_search($type, WechatMessage::TYPES), // 7:location
+                'wechat_bot_id' => $wechatBot->id,
+                'from' => $isSelf?NULL:$conversation->id, // 消息发送者:Null为bot发送的
+                'conversation' => $conversation->id,
+                'content' => $content, 
+                'msgid' => $msgid,
+            ];
+            Log::debug('MT_RECV_LOCATION_MSG', ['收到位置消息', $xml['location']['@attributes']]);
+            $message = WechatMessage::create($data); //发送webhook回调
+            // 保存到message里 end
+            return response()->json(null);
+        }
+        
 
         // ✅ 搜索用户信息后的callback，主动+好友
         if ($type == 'MT_SEARCH_CONTACT_MSG') {
