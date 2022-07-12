@@ -519,6 +519,13 @@ class XbotCallbackController extends Controller
         // 收到位置消息
         if($type == 'MT_RECV_LOCATION_MSG'){
             $content = '[位置消息]:'. implode(':', $xml['location']['@attributes']);
+
+            $wxid = $isSelf?$toWxid:$fromWxid;
+            $conversation = WechatBotContact::query()
+                ->where('wechat_bot_id', $wechatBot->id)
+                ->where('wxid', $wxid)
+                ->first();
+                
             $data = [
                 'type' => array_search($type, WechatMessage::TYPES), // 7:location
                 'wechat_bot_id' => $wechatBot->id,
