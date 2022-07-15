@@ -216,6 +216,27 @@ final class Xbot {
         return $this->request('MT_ACCEPT_WCPAY_MSG', get_defined_vars());
     }
 
+   //   "location" => [
+   //     "@attributes" => [
+   //       "x" => "34.189342",
+   //       "y" => "105.187981",
+   //       "scale" => "16",
+   //       "label" => "甘肃省陇南市礼县秦礼时代广场一楼周大福珠宝店",
+   //       "maptype" => "roadmap",
+   //       "poiname" => "周大福(礼秦礼时代广场店)",
+   //       "poiid" => "",
+   //     ],
+
+    public function sendLocation($to_wxid, $x, $y, $scale, $label, $maptype, $poiname, $poiid){
+        $xml = "<?xml version=\"1.0\"?>\n<msg>\n\t<location x=\"$x\" y=\"$y\" scale=\"$scale\" label=\"$label\" maptype=\"$maptype\" poiname=\"$poiname\" poiid=\"$poiid\" />\n</msg>\n";
+        return $this->_sendXMLLink($xml, $to_wxid);
+    }
+
+    public function forward($to_wxid, $msgid){
+        return $this->request('MT_FORWARD_ANY_MSG', get_defined_vars());
+    }
+    
+
     // MUSIC 必须备案域名
     public function sendMusic($to_wxid, $url, $title='', $desc=''){
         $botWxid = $this->botWxid;

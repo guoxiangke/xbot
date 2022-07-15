@@ -67,8 +67,14 @@ class WechatMessage extends Model
         return $content;
     }
 
+    // 可以发到群
     public function to(){
         return $this->hasOne(WechatBotContact::class, 'id', 'conversation');
+    }
+
+    // 如果是群，需要by
+    public function by(){
+        return $this->hasOne(WechatBotContact::class, 'id', 'from');
     }
 
     public function wechatBot(){

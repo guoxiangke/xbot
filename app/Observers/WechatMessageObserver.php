@@ -79,6 +79,11 @@ class WechatMessageObserver
                 'self' => $wechatMessage->isSentByBot,
                 'content' => $wechatMessage->content,
             ];
+            // 群消息
+            if($wechatMessage->from){
+                $data['from'] = $wechatMessage->by->wxid;
+                $data['from_remark'] = $wechatMessage->by->remark;
+            }
             WebhookCall::create()
                 ->url($webhookUrl)
                 // ->doNotSign()
