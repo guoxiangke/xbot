@@ -467,6 +467,11 @@ class XbotCallbackController extends Controller
         }
         if($toWxid == "filehelper") {
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '自己发给自己的filehelper消息，暂不处理！']);
+            if($type == 'MT_RECV_TEXT_MSG' && $content =='同步通讯录'){
+                $wechatBot->init();
+                $wechatBot->xbot()->sendText('filehelper', '已请求同步，请稍后确认！');
+            }
+
             return response()->json(null);
         }
 
