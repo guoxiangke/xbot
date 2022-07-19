@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Carbon\Carbon;
+use App\Models\WechatBotContact;
 use App\Models\WechatMessage;
+use App\Observers\WechatBotContactObserver;
 use App\Observers\WechatMessageObserver;
 use Illuminate\Support\Facades\URL;
 
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Carbon::setLocale('zh');
         WechatMessage::observe(WechatMessageObserver::class);
+        WechatBotContact::observe(WechatBotContactObserver::class);
         // if ($this->app->environment() !== 'local') {
         //     URL::forceScheme('https');
         // }
