@@ -270,7 +270,8 @@ class WechatBot extends Model
                 $wechatBotContact->setMeta('group', Arr::only($data, ['is_manager', 'manager_wxid', 'total_member','member_list']));
                 continue; // 这里不可以return啊
             }
-            if(!$wechatBotContact){
+            // 更新同步remark
+            if(!$wechatBotContact || $wechatBotContact->remark!=$remark){
                 $attachs[$wechatContact->id] = [
                     'type' => $type,
                     'wxid' => $wechatContact->wxid,

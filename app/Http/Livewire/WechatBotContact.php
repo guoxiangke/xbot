@@ -42,6 +42,7 @@ class WechatBotContact extends Component
         $wechatBotContact->remark = trim($value);
         if($wechatBotContact->isDirty('remark')){
             $wechatBotContact->save();
+            // 同步更新到 微信
         }
     }
 
