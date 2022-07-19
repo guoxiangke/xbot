@@ -15,7 +15,7 @@ class WechatBotContactObserver
     public function updated(WechatBotContact $wechatBotContact)
     {
         if($wechatBotContact->wasChanged('remark')) {
-            $wechatBotContact->wechatBot->xbot()->remark($wechatBotContact->wxid, $remark);
+            $wechatBotContact->wechatBot->xbot()->remark($wechatBotContact->wxid, $wechatBotContact->remark);
         }
     }
 }
