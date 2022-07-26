@@ -137,7 +137,7 @@ class WechatBot extends Model
         if($type == 'contact')     $xbot->sendContactCard($to, $data['wxid']);
         if($type == 'music')    {
             $url = config('xbot.redirect').$data['url'];
-            $xbot->sendMusic($to, $url, $data['title'], "点击🎵收听 {$data['description']}");
+            $xbot->sendMusic($to, $url, $data['title'], "点击▶️收听 {$data['description']}");
         }
         if($type == 'link')     $xbot->sendLink($to, $data['url'], $data['image'], $data['title'], $data['description']);
     }

@@ -35,6 +35,21 @@
 
         @if($isLive)
         <div>
+            <div>
+                <x-input.group for="druingOn" label="上班时间">
+                    <x-jet-input id="druingOn" type="text" class="mt-1 block w-full"  autocomplete="druingOn" 
+                        wire:model="config.druingOn"
+                        wire:blur.stop="$set('config.druingOn', $event.target.value)"
+                        />
+                </x-input.group>
+
+                <x-input.group for="druingOff" label="下班时间">
+                    <x-jet-input id="druingOff" type="text" class="mt-1 block w-full"  autocomplete="druingOff" 
+                        wire:model="config.druingOff"
+                        wire:blur.stop="$set('config.druingOff', $event.target.value)"
+                        />
+                </x-input.group>
+            </div>
             <x-input.toggle 
                 wire:model="config.isAutoAgree"
                 id="config.isAutoAgree" 

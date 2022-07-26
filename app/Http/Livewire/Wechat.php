@@ -83,6 +83,9 @@ class Wechat extends Component
             'isAutoReply' => false, // 关键词自动回复
             'isResourceOn' => false, // x-resources资源自动回复
             'isIrcOn' => false, // AI自动回复
+            // 上下班时间
+            'druingOn' => 0,
+            'druingOff' => 24,
         ]);
         if(!isset($this->config['isResourceOn'])){
             $this->config['isResourceOn'] = false;
@@ -90,7 +93,12 @@ class Wechat extends Component
         if(!isset($this->config['isIrcOn'])){
             $this->config['isIrcOn'] = false;
         }
-
+        if(!isset($this->config['druingOn'])){
+            $this->config['druingOn'] = 0;
+        }
+        if(!isset($this->config['druingOff'])){
+            $this->config['druingOff'] = 24;
+        }
     }
     public function updated($name, $value)
     {
@@ -107,6 +115,8 @@ class Wechat extends Component
             'config.isAutoReply',
             'config.isResourceOn',
             'config.isIrcOn',
+            'config.druingOn',
+            'config.druingOff',
             ])
         ){
             $key = str_replace('config.', '', $name);
