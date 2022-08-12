@@ -111,6 +111,16 @@ final class Xbot {
         $this->request('MT_SEND_IMGMSG', get_defined_vars());
     }
 
+
+    public function sendImageUrl($to_wxid, $url){
+        $this->request('MT_SEND_IMGMSG_BY_URL', get_defined_vars());
+    }
+    
+    // TODO
+    public function sendFileUrl($to_wxid, $url){
+        $this->request('MT_SEND_FILE_BY_URL', get_defined_vars());
+    }
+
     public function getAllContacts(){
         $this->getFriends();
         $this->getRooms();
