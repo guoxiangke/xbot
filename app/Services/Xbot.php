@@ -245,6 +245,20 @@ final class Xbot {
     public function forward($to_wxid, $msgid){
         return $this->request('MT_FORWARD_ANY_MSG', get_defined_vars());
     }
+
+    public function snsList($max_id=0){
+        return $this->request('MT_SNS_TIMELINE_MSG', get_defined_vars());
+    }
+    public function snsLike($object_id){
+        return $this->request('MT_SNS_LIKE_MSG', get_defined_vars());
+    }
+    public function snsComment($object_id, $content="评论内容"){
+        return $this->request('MT_SNS_COMMENT_MSG', get_defined_vars());
+    }
+    // "<TimelineObject><id>13917603808309153885</id><user ..."
+    public function snsPublish($object_desc){
+        return $this->request('MT_SNS_SEND_MSG', get_defined_vars());
+    }
     
 
     // MUSIC 必须备案域名
