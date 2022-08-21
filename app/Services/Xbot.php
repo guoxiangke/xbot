@@ -259,7 +259,38 @@ final class Xbot {
     public function snsPublish($object_desc){
         return $this->request('MT_SNS_SEND_MSG', get_defined_vars());
     }
-    
+
+    // 朋友圈转发视频号
+    // 朋友圈发视频 竖屏 :720 x 1280 横屏：1152 x 720
+    // 需要2张 图片作为封面！
+    // contentUrl 可以来做广告！ support
+    public function sendVideoPost($title, $url, $thumbImgUrl='https://img9.doubanio.com/view/puppy_image/raw/public/1771365ca98ig9er706.jpg'){
+        $msg = '<TimelineObject><id>1234567890</id><username>0000</username><createTime>1661025740</createTime><contentDesc>'.$title.'</contentDesc><contentDescShowType>0</contentDescShowType><contentDescScene>0</contentDescScene><private>0</private><sightFolded>0</sightFolded><showFlag>0</showFlag><appInfo><id></id><version></version><appName></appName><installUrl></installUrl><fromUrl></fromUrl><isForceUpdate>0</isForceUpdate></appInfo><sourceUserName></sourceUserName><sourceNickName></sourceNickName><statisticsData></statisticsData><statExtStr></statExtStr><ContentObject><contentStyle>15</contentStyle><title>0000微信小视频</title><description>Sight</description><mediaList><media><id>13933693810826481954</id><type>6</type><title></title><description>0000视频发送</description><private>0</private><userData></userData><subType>0</subType><videoSize width="720" height="1280"></videoSize><url type="1" md5="" videomd5="">'.$url.'</url><thumb type="1">'.$thumbImgUrl.'</thumb><size width="720" height="1280" totalSize="000"></size><videoDuration>2.035011</videoDuration></media></mediaList><contentUrl>https://support.weixin.qq.com/cgi-bin/mmsupport-bin/readtemplate?t=page/common_page__upgrade&amp;v=1</contentUrl></ContentObject><actionInfo><appMsg><messageAction></messageAction></appMsg></actionInfo><location poiClassifyId="" poiName="" poiAddress="" poiClassifyType="0" city=""></location><publicUserName></publicUserName><streamvideo><streamvideourl></streamvideourl><streamvideothumburl></streamvideothumburl><streamvideoweburl></streamvideoweburl></streamvideo></TimelineObject>';
+        return $this->snsPublish($msg);
+    }
+
+    // 朋友圈转发9宫格 <mediaList><media>
+    public function sendImagesPost($title, $urls){
+        $media = '';
+        foreach ($urls as $url) {
+            $media .= '<media><id>13933920070604632377</id><type>2</type><title></title><description></description><private>0</private><userData></userData><subType>0</subType><videoSize width="0" height="0"></videoSize><url type="1" md5="2" videomd5="">'.$url.'</url><thumb type="1">'.$url.'</thumb><size width="1024.000000" height="943.000000" totalSize="16001"></size></media>';
+        }
+        $msg = '<TimelineObject><id><![CDATA[13933541731974386031]]></id><username>0000</username><createTime><![CDATA[1661007610]]></createTime><contentDescShowType>0</contentDescShowType><contentDescScene>0</contentDescScene><private><![CDATA[0]]></private><contentDesc><![CDATA['.$title.']]></contentDesc><contentattr><![CDATA[0]]></contentattr><sourceUserName></sourceUserName><sourceNickName></sourceNickName><statisticsData></statisticsData><weappInfo><appUserName></appUserName><pagePath></pagePath><version><![CDATA[0]]></version><debugMode><![CDATA[0]]></debugMode><shareActionId></shareActionId><isGame><![CDATA[0]]></isGame><messageExtraData></messageExtraData><subType><![CDATA[0]]></subType><preloadResources></preloadResources></weappInfo><canvasInfoXml></canvasInfoXml><ContentObject><contentStyle><![CDATA[1]]></contentStyle><contentSubStyle><![CDATA[0]]></contentSubStyle><title></title><description></description><contentUrl></contentUrl><mediaList>'.$media.'</mediaList></ContentObject><actionInfo><appMsg><mediaTagName></mediaTagName><messageExt></messageExt><messageAction></messageAction></appMsg></actionInfo><appInfo><id></id></appInfo><location poiClassifyId="" poiName="" poiAddress="" poiClassifyType="0" city=""></location><publicUserName></publicUserName><streamvideo><streamvideourl></streamvideourl><streamvideothumburl></streamvideothumburl><streamvideoweburl></streamvideoweburl></streamvideo></TimelineObject>';
+        return $this->snsPublish($msg);
+    }
+
+
+    // 朋友圈转发链接
+    public function sendLinkPost($title, $url, $comment=''){
+        $msg = '<TimelineObject><id>13933661134568034593</id><username>000</username><createTime>1661021844</createTime><contentDesc>'. $comment. '</contentDesc><contentDescShowType>0</contentDescShowType><contentDescScene>4</contentDescScene><private>0</private><sightFolded>0</sightFolded><showFlag>0</showFlag><appInfo><id></id><version></version><appName></appName><installUrl></installUrl><fromUrl></fromUrl><isForceUpdate>0</isForceUpdate></appInfo><sourceUserName></sourceUserName><sourceNickName></sourceNickName><statisticsData></statisticsData><statExtStr></statExtStr><ContentObject><contentStyle>3</contentStyle><title>'. $title. '</title><description></description><contentUrl>'. $url. '</contentUrl><mediaList></mediaList></ContentObject><actionInfo><appMsg><messageAction></messageAction></appMsg></actionInfo><location poiClassifyId="" poiName="" poiAddress="" poiClassifyType="0" city=""></location><publicUserName></publicUserName><streamvideo><streamvideourl></streamvideourl><streamvideothumburl></streamvideothumburl><streamvideoweburl></streamvideoweburl></streamvideo></TimelineObject>';
+        return $this->snsPublish($msg);
+    }
+
+    // 朋友圈转发音乐消息
+    public function sendMusicPost($url, $title='朋友圈音乐消息标题', $desc='朋友圈音乐消息描述', $thumb='http://mmsns.c2c.wechat.com/mmsns/vRn02nrlYphiaibib27nbILHxvsD6UjZvclzGREZFciaFCmDt9jdhbHu7tL2DiaGjhGh61ibDauiaQWsIU/150'){
+        $msg = '<TimelineObject><id><![CDATA[000]]></id><username><![CDATA[wxid_t36o5djpivk312]]></username><createTime><![CDATA[1661054193]]></createTime><contentDescShowType>0</contentDescShowType><contentDescScene>0</contentDescScene><private><![CDATA[0]]></private><contentDesc></contentDesc><contentattr><![CDATA[0]]></contentattr><sourceUserName></sourceUserName><sourceNickName></sourceNickName><statisticsData></statisticsData><weappInfo><appUserName></appUserName><pagePath></pagePath><version><![CDATA[0]]></version><debugMode><![CDATA[0]]></debugMode><shareActionId></shareActionId><isGame><![CDATA[0]]></isGame><messageExtraData></messageExtraData><subType><![CDATA[0]]></subType><preloadResources></preloadResources></weappInfo><canvasInfoXml></canvasInfoXml><ContentObject><contentStyle><![CDATA[4]]></contentStyle><contentSubStyle><![CDATA[0]]></contentSubStyle><title></title><description></description><contentUrl><![CDATA['. $url. ']]></contentUrl><mediaList><media><id><![CDATA[00]]></id><type><![CDATA[3]]></type><title><![CDATA['. $title. ']]></title><description><![CDATA[点击▶️收听  '. $desc. ']]></description><private><![CDATA[0]]></private><url type="0"><![CDATA['. $url. ']]></url><thumb type="1"><![CDATA[http://mmsns.c2c.wechat.com/mmsns/vRn02nrlYphiaibib27nbILHzTEiaHiaPbWgUVzRjFWDVIccgRxwCSkMJmtpBhJ7zpCH3Zwicxl2tcXK4/150]]></thumb><videoDuration><![CDATA[0.0]]></videoDuration><lowBandUrl type="0"><![CDATA[https://x-statics.yongbuzhixi.com/redirect?target=https://open.729ly.net/ly/audio/2022/mw/mw220821.mp3]]></lowBandUrl><size totalSize="342.0" width="45.0" height="45.0"></size></media></mediaList></ContentObject><actionInfo><appMsg><mediaTagName></mediaTagName><messageExt></messageExt><messageAction></messageAction></appMsg></actionInfo><appInfo><id></id></appInfo><location poiClassifyId="" poiName="" poiAddress="" poiClassifyType="0" city=""></location><publicUserName></publicUserName><streamvideo><streamvideourl></streamvideourl><streamvideothumburl></streamvideothumburl><streamvideoweburl></streamvideoweburl></streamvideo></TimelineObject>';
+        return $this->snsPublish($msg);
+    }
 
     // MUSIC 必须备案域名
     public function sendMusic($to_wxid, $url, $title='', $desc=''){
