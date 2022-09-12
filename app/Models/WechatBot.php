@@ -140,6 +140,13 @@ class WechatBot extends Model
             $xbot->sendMusic($to, $url, $data['title'], "点击▶️收听 {$data['description']}");
         }
         if($type == 'link')     $xbot->sendLink($to, $data['url'], $data['image'], $data['title'], $data['description']);
+
+        // API发送朋友圈消息
+        if($type == 'postVideo')     $xbot->sendVideoPost($data['title'], $data['url'], $data['thumbImgUrl']);
+        if($type == 'postImages')     $xbot->sendImagesPost($data['title'], $data['urls']);
+        if($type == 'postLink')      $xbot->sendLinkPost($data['title'], $data['url'], $data['comment']);
+        if($type == 'postMusic')     $xbot->sendMusicPost($data['title'],$data['url'], $data['description'], $data['comment'], $data['thumbImgUrl']);
+
     }
 
     // 批量发送 batch 第一个参数为数组[] wechatContentOrRes
