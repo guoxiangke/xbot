@@ -134,6 +134,9 @@ class WechatBot extends Model
         // 发送的图片/文件必须放在 WeChat Files\wxid_???\FileStorage\File\ 下，可以创建子目录
         if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\",$data['file']));
         if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\",$data['image']));
+        if($type == 'imageUrl')    $xbot->sendImageUrl($to, $data['url']);
+        
+
         if($type == 'contact')     $xbot->sendContactCard($to, $data['wxid']);
         if($type == 'music')    {
             $url = config('xbot.redirect').$data['url'];
@@ -146,6 +149,7 @@ class WechatBot extends Model
         if($type == 'postImages')     $xbot->sendImagesPost($data['title'], $data['urls']);
         if($type == 'postLink')      $xbot->sendLinkPost($data['title'], $data['url'], $data['comment']);
         if($type == 'postMusic')     $xbot->sendMusicPost($data['title'],$data['url'], $data['description'], $data['comment'], $data['thumbImgUrl']);
+        if($type == 'postQQMusic')     $xbot->sendQQMusicPost($data['title'],$data['url'], $data['description'], $data['comment'], $data['thumbImgUrl']);
 
     }
 
@@ -174,10 +178,13 @@ class WechatBot extends Model
                 $this->_send($to, $wechatContent);
             }
         }
-
+        sleep(3);
         // 发送第2条信息
         if(is_array($res) && isset($res['addition'])){
             $this->send($tos, $res['addition']);
+        }
+        if(isset($res->content['addition'])){
+            $this->send($tos, $res->content['addition']);
         }
     }
 

@@ -46,6 +46,8 @@ class XbotCallbackController extends Controller
         // 缓存以供前端调用扫码（2个client同一个id，如果已登陆的，不显示二维码！）
         $whoNeedQrKey = 'who_need_qr'; // 谁获取了二维码
         if($type == 'MT_RECV_QRCODE_MSG') {
+            // 首次初始化时发来的 二维码，data为空，需要响应为空即可
+            if(!$data) return response()->json(null);
             // TODO 发送到管理群里
             // 3号windows10发过来的二维码
             if($wechatClientId == 3){
