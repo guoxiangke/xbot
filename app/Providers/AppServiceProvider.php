@@ -32,8 +32,8 @@ class AppServiceProvider extends ServiceProvider
         Carbon::setLocale('zh');
         WechatMessage::observe(WechatMessageObserver::class);
         WechatBotContact::observe(WechatBotContactObserver::class);
-        // if ($this->app->environment() !== 'local') {
-        //     URL::forceScheme('https');
-        // }
+        if ($this->app->environment() !== 'local') {
+            URL::forceScheme('https');
+        }
     }
 }

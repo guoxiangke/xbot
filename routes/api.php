@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\XbotCallbackController;
 use App\Http\Controllers\WechatBotController;
 use Illuminate\Support\Facades\Log;
+use App\Models\WechatBot;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,39 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/wechat/add', [WechatBotController::class, 'add']);
     Route::get('/wechat/friends', [WechatBotController::class, 'getFriends']);
 });
+
+Route::post('/xbot/chatwoot', function (Request $request) {
+    Log::debug('WebHook_chatwoot',$request->all());
+
+    $message_type = $request['message_type']; //incoming
+    if($message_type != 'incoming') return []; //只处理contact发的信息
+
+    $event = $request['event'];
+    if($event == 'message_created'){
+        $content_type = $request['content_type']; //text
+
+        $user = $request['account']['name']; //以琳科技
+        $inbox = $request['inbox']['name']; //X牧
+
+        if($content_type == 'text'){
+            $content = $request['content']; //hi22222
+
+            $contact = $request['conversation']['meta']['sender']['id']."\n";
+            $contact .= $request['conversation']['meta']['sender']['name']."\n";
+            $contact .= $request['conversation']['meta']['sender']['email']."\n";
+            $contact .= $request['conversation']['meta']['sender']['phone_number']."\n";
+            $contact .= $request['conversation']['meta']['sender']['additional_attributes']['country_code']."\n";
+            $contact .= $request['conversation']['meta']['sender']['additional_attributes']['created_at_ip'];
+
+            $wechatBot= WechatBot::find(1);
+            $content = "Message from chatwoot:\n=============\n".$content."\n=============\nBy:".$contact;
+            $wechatBot->xbot()->sendText('bluesky_still',$content);
+        }
+
+    }
+    return [];
+});
+
 
 // webhook client test!
 // TODO：

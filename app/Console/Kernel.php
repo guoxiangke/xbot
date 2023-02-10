@@ -5,6 +5,7 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Models\XbotSubscription;
+use Illuminate\Support\Str;
 class Kernel extends ConsoleKernel
 {
     /**
@@ -18,6 +19,11 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         $xbotSubscriptions = XbotSubscription::with(['wechatBotContact'])->get();
         foreach ($xbotSubscriptions as $xbotSubscription) {
+            // 不是群的不订阅！
+            $to = $xbotSubscription->wechatBotContact->wxid;
+            if($xbotSubscription->wechat_bot_id==13 && !Str::endsWith($to, '@chatroom')){
+                continue;
+            }
             $schedule->command("trigger:xbot $xbotSubscription->id")->cron($xbotSubscription->cron);
         }
     }

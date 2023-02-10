@@ -621,6 +621,7 @@ class XbotCallbackController extends Controller
         // ✅ 收到语音消息，即刻调用转文字
         // 监控上传文件夹2 C:\Users\Administrator\AppData\Local\Temp\ =》/xbot/silk/ => /xbot/voice/
         if($type == 'MT_RECV_VOICE_MSG'){
+            return;
             $silk_file = $data['silk_file'];
             // "silk_file":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\2\\wxs40F9.tmp" =>  \1\wxs40F9.tmp
             $file = str_replace($wechatClient->silk_path, '', $silk_file);
@@ -634,12 +635,12 @@ class XbotCallbackController extends Controller
         }
         // ✅ 提取转成的文字
         // TODO 下面的post要带上 转换后的文字
-        if($type == 'MT_TRANS_VOICE_MSG'){
+        if($type == 'MT_TRANS_VOICE_MSG' && isset($data['text'])){
+            Log::error(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '语音消息转文本', $data]);
             WechatMessageVoice::create([
                 'msgid' => $msgid,
                 'content' => $data['text'],
             ]);
-            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '语音消息转文本', $data]);
             return response()->json(null);
         }
         // ✅ 收到gif表情
@@ -835,6 +836,13 @@ class XbotCallbackController extends Controller
                         }
                     }
                     if($res){ // 订阅成功！
+                        // FEBC-US 5点发送
+                        $clock = $wechatBot->id==13?5:7;
+                        $cron = "0 {$clock} * * *";
+                        if(!$isRoom && $wechatBot->id==13){
+                            // FEBC-US 不支持个人订阅
+                            return $xbot->sendText($conversation->wxid, '暂不支持个人订阅，请入群获取或回复编号！');
+                        }
                         $xbotSubscription = XbotSubscription::withTrashed()->firstOrCreate(
                             [
                                 'wechat_bot_id' => $wechatBot->id,
@@ -842,11 +850,11 @@ class XbotCallbackController extends Controller
                                 'keyword' => $keyword,
                             ],
                             [
-                                'cron' => '0 7 * * *'
+                                'cron' => $cron
                             ]
                         );
                         if($xbotSubscription->wasRecentlyCreated){
-                            $xbot->sendText($conversation->wxid, '成功订阅，每早7点，不见不散！');
+                            $xbot->sendText($conversation->wxid, "成功订阅，每早{$clock}点，不见不散！");
                         }else{
                             $xbotSubscription->restore();
                             $xbot->sendText($conversation->wxid, '已订阅成功！时间和之前一样');
