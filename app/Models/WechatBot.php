@@ -193,7 +193,10 @@ class WechatBot extends Model
         $cacheKey = "resources.{$keyword}";
         if(!($res = Cache::get($cacheKey, false))){
             $response = Http::get(config('xbot.resource_endpoint')."{$keyword}");
-            if($response->ok() && $res = $response->json()) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
+            if($response->ok() && $res = $response->json()){
+                $isNoCache = in_array($keyword, ['cc','dy','gf']);
+                if(!$isNoCache) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
+            }
         }
         return $res;
     }
