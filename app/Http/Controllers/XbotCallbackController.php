@@ -925,6 +925,18 @@ class XbotCallbackController extends Controller
                 $switchOn = $config['isIrcOn'];
                 $isReplied = Cache::get($cacheKeyIsRelpied, false);
                 // $isBot = WechatBot::where('wxid', $conversation->wxid)
+                if(!$isReplied && $switchOn && $isRoom && $islistenMsg) {
+                    if(Str::contains($content, '@AI助理')){
+                        $content = trim(Str::remove('@AI助理', $content));
+                        $start = now();
+                        // $content = "请以我的微信助理身份，回答我的好友给我的以下消息，要求简洁、友好，如果不知道如何回答，告诉好友我晚点会联系他，请他谅解。". $content;
+                        $url = 'https://gpt3.51chat.net/api/' . $content;
+                        $response = Http::get($url);
+                        $data = $response->json();
+                        $dur = now()->diffInSeconds($start);
+                        return $wechatBot->xbot()->sendText($conversation->wxid, "本次请求GPT用时{$dur}秒".$data['choices'][0]['message']['content']);
+                    }
+                }
                 if(!$isReplied && $switchOn && !$isRoom) {
                     // ICR 和小爱 随机回复
                     if(rand(1,2) == 1){
