@@ -132,24 +132,40 @@ class WechatBot extends Model
         }
 
         // 发送的图片/文件必须放在 WeChat Files\wxid_???\FileStorage\File\ 下，可以创建子目录
-        if($type == 'file')     $xbot->sendFile($to, str_replace("/","\\",$data['file']));
-        if($type == 'image')    $xbot->sendImage($to, str_replace("/","\\",$data['image']));
-        if($type == 'imageUrl')    $xbot->sendImageUrl($to, $data['url']);
-        
+        if($type == 'file')
+            $xbot->sendFile($to, str_replace("/","\\",$data['file']));
+        if($type == 'image')
+            $xbot->sendImage($to, str_replace("/","\\",$data['image']));
+        if($type == 'imageUrl')
+            $xbot->sendImageUrl($to, $data['url']);
+        if($type == 'contact')
+            $xbot->sendContactCard($to, $data['wxid']);
 
-        if($type == 'contact')     $xbot->sendContactCard($to, $data['wxid']);
-        if($type == 'music')    {
+        if(isset($data['url'])){
             $url = config('xbot.redirect').$data['url'];
-            $xbot->sendMusic($to, $url, $data['title'], "{$data['description']}");
+            if(isset($data['statistics'])){
+                $data['statistics']['bot'] = $this->id;
+                $tags = http_build_query($data['statistics'], '', '%26');
+                $url .= "?".$tags;
+            }
         }
-        if($type == 'link')     $xbot->sendLink($to, $data['url'], $data['image'], $data['title'], $data['description']);
+
+        if($type == 'music')
+            $xbot->sendMusic($to, $url, $data['title'], "{$data['description']}");
+        if($type == 'link')
+            $xbot->sendLink($to, $url, $data['image'], $data['title'], $data['description']);
 
         // API发送朋友圈消息
-        if($type == 'postVideo')     $xbot->sendVideoPost($data['title'], $data['url'], $data['thumbImgUrl']);
-        if($type == 'postImages')     $xbot->sendImagesPost($data['title'], $data['urls']);
-        if($type == 'postLink')      $xbot->sendLinkPost($data['title'], $data['url'], $data['comment']);
-        if($type == 'postMusic')     $xbot->sendMusicPost($data['title'],$data['url'], $data['description'], $data['comment'], $data['thumbImgUrl']);
-        if($type == 'postQQMusic')     $xbot->sendQQMusicPost($data['title'],$data['url'], $data['description'], $data['comment'], $data['thumbImgUrl']);
+        if($type == 'postImages')
+            $xbot->sendImagesPost($data['title'], $data['urls']);
+        if($type == 'postVideo')
+            $xbot->sendVideoPost($data['title'], $url, $data['thumbImgUrl']);
+        if($type == 'postLink')
+            $xbot->sendLinkPost($data['title'], $url, $data['comment']);
+        if($type == 'postMusic')
+            $xbot->sendMusicPost($data['title'], $url, $data['description'], $data['comment'], $data['thumbImgUrl']);
+        if($type == 'postQQMusic')
+            $xbot->sendQQMusicPost($data['title'], $url, $data['description'], $data['comment'], $data['thumbImgUrl']);
 
     }
 
