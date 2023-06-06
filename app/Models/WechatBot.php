@@ -147,6 +147,7 @@ class WechatBot extends Model
                 $data['statistics']['bot'] = $this->id;
                 $tags = http_build_query($data['statistics'], '', '%26');
                 $url .= "?".$tags;
+                $url .= '%26to='.$to; //unset(to) => Field[to]=wxid;
             }
         }
 
