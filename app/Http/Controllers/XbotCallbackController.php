@@ -725,7 +725,7 @@ class XbotCallbackController extends Controller
                     switch ($data['wx_sub_type']) {
                         case  3:
                             $title = $xml['appmsg']['title']??'';
-                            $content = "音乐消息｜{$title}: {$xml['appmsg']['url']}";
+                            $content = "音乐消息｜{$title}";//: {$xml['appmsg']['url']}
                             break;
                         case  19: //聊天记录
                             $content = "{$xml['appmsg']['title']} : {$xml['appmsg']['des']}";
