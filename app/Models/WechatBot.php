@@ -200,7 +200,12 @@ class WechatBot extends Model
         sleep(3);
         // 发送第2条信息
         if(is_array($res) && isset($res['addition'])){
-            $this->send($tos, $res['addition']);
+            $res = $res['addition'];
+            if(isset($res['statistics'])){
+                $res['data']['statistics'] = $res['statistics'];
+                unset($res['statistics']);
+            }
+            $this->send($tos, $res);
         }
         if(isset($res->content['addition'])){
             $this->send($tos, $res->content['addition']);
