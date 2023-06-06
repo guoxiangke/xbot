@@ -142,6 +142,8 @@ class WechatBot extends Model
             $xbot->sendContactCard($to, $data['wxid']);
 
         if(isset($data['url'])){
+            //clean URL ?_=1
+            $data['url'] = strtok($data['url'],'?')
             $url = config('xbot.redirect').$data['url'];
             if(isset($data['statistics'])){
                 $data['statistics']['bot'] = $this->id;
@@ -211,6 +213,10 @@ class WechatBot extends Model
         if(!($res = Cache::get($cacheKey, false))){
             $response = Http::get(config('xbot.resource_endpoint')."{$keyword}");
             if($response->ok() && $res = $response->json()){
+                if(isset($res['statistics'])){
+                    $res['data']['statistics'] = $res['statistics'];
+                    unset($res['statistics']);
+                }
                 $isNoCache = in_array($keyword, ['cc','dy','gf']);
                 if(!$isNoCache) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
             }
