@@ -161,6 +161,7 @@ class WechatBot extends Model
         // API发送朋友圈消息
         if($type == 'postImages')
             $xbot->sendImagesPost($data['title'], $data['urls']);
+        $url .= '%26type=post'; // overwrite statistics type
         if($type == 'postVideo')
             $xbot->sendVideoPost($data['title'], $url, $data['thumbImgUrl']);
         if($type == 'postLink')
