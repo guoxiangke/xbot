@@ -183,7 +183,7 @@ final class Xbot {
     }
 
 
-    private function _sendXMLLink($xml, $to_wxid='filehelper'){
+    public function _sendXMLLink($xml, $to_wxid='filehelper'){
         return $this->request('MT_SEND_XMLMSG', get_defined_vars());
     }
 
