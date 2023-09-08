@@ -161,7 +161,9 @@ class WechatBot extends Model
         // API发送朋友圈消息
         if($type == 'postImages')
             $xbot->sendImagesPost($data['title'], $data['urls']);
-        $url .= '%26type=post'; // overwrite statistics type
+        
+        // overwrite statistics type
+        if(isset($data['statistics']) && isset($url)) $url .= '%26type=post';
         if($type == 'postVideo')
             $xbot->sendVideoPost($data['title'], $url, $data['thumbImgUrl']);
         if($type == 'postLink')
@@ -176,6 +178,10 @@ class WechatBot extends Model
     // 批量发送 batch 第一个参数为数组[] wechatContentOrRes
     public function send(array | Collection $tos, array | wechatContent $res){
         if(is_array($res)) {
+            if(isset($res['statistics'])){
+                $res['data']['statistics'] = $res['statistics'];
+                unset($res['statistics']);
+            }
             $wechatContent = WechatContent::make([
                 'name' => 'tmpSendStructure',
                 'type' => array_search($res['type'], WechatContent::TYPES),
