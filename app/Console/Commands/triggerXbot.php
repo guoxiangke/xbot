@@ -45,7 +45,7 @@ class triggerXbot extends Command
         $keyword = $xbotSubscription->keyword;
 
         // $wechatBot = $xbotSubscription->wechatBotContact->wechatBot;
-        $wechatBot = $xbotSubscriptions->wechatBot;
+        $wechatBot = $xbotSubscription->wechatBot;
         // $xbot = $wechatBot->xbot();
         // 同时发送多个关键词
         $keywords = explode(';', $keyword);
