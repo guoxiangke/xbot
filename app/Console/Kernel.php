@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+        $schedule->command('xbot:islive')->cron('30 * * * *');
         $xbotSubscriptions = XbotSubscription::with(['wechatBotContact'])->get();
         foreach ($xbotSubscriptions as $xbotSubscription) {
             // 不是群的不订阅！
@@ -26,6 +27,7 @@ class Kernel extends ConsoleKernel
             }
             $schedule->command("trigger:xbot $xbotSubscription->id")->cron($xbotSubscription->cron);
         }
+
     }
 
     /**
