@@ -16,7 +16,8 @@ class WechatContent extends Model
         '朋友圈链接',
         '朋友圈音乐',
         '图片链接',
-        '朋友圈QQ音乐'
+        '朋友圈QQ音乐',
+        "消息转发",
     ];
     const TYPES = [
         "text",
@@ -33,6 +34,7 @@ class WechatContent extends Model
         "postMusic",
         'imageUrl',
         "postQQMusic",
+        "forward",
     ];
 
     protected $casts = [ 'content' => 'array'];

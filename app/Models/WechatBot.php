@@ -140,6 +140,8 @@ class WechatBot extends Model
             $xbot->sendImageUrl($to, $data['url']);
         if($type == 'contact')
             $xbot->sendContactCard($to, $data['wxid']);
+        if($type == 'forward')
+            $xbot->forward($to, $data['msgid']);
 
         if(isset($data['url'])){
             //clean URL ?_=1
