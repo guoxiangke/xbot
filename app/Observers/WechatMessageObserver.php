@@ -70,7 +70,8 @@ class WechatMessageObserver
 
         if($webhookOn && $webhookUrl && $webhookSecret){
             $data = [
-                'msgid' => $wechatMessage->id,
+                'id' => $wechatMessage->id,
+                'msgid' => $wechatMessage->msgid,
                 'type' => WechatMessage::TYPES_TEXT[$wechatMessage->type],
                 'wxid' => $wechatMessage->to->wxid,
                 'remark' => $wechatMessage->to->remark,
