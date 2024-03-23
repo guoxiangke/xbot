@@ -61,11 +61,13 @@ class WechatMessageObserver
             'isListenRoomAll' => false,
             'isWebhook' => false,
             'webhookUrl' => '',
+            'webhookUrl2' => '',
             'webhookSecret' => '',
         ]);
 
         $webhookOn = $config['isWebhook'];
         $webhookUrl = $config['webhookUrl'];
+        $webhookUrl2 = $config['webhookUrl2'];
         $webhookSecret = $config['webhookSecret'];
 
         if($webhookOn && $webhookUrl && $webhookSecret){
@@ -91,6 +93,13 @@ class WechatMessageObserver
                 ->useSecret($webhookSecret)
                 ->payload($data)
                 ->dispatchSync();//dispatch Now
+
+            if($webhookUrl2)
+                WebhookCall::create()
+                    ->url($webhookUrl2)
+                    ->doNotSign()
+                    ->payload($data)
+                    ->dispatchSync();//dispatch Now
 
             Log::debug(__METHOD__, [__LINE__, $wechatBot->wxid, $data]);
         }

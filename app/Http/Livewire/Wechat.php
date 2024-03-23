@@ -79,6 +79,7 @@ class Wechat extends Component
             'isListenRoomAll' => false,
             'isWebhook' => false,
             'webhookUrl' => 'http://192.168.168.117/api/webhook/xbot',
+            'webhookUrl2' => 'http://192.168.168.117/api/webhook/xbot',
             'webhookSecret' => '123456',
             'isAutoReply' => false, // 关键词自动回复
             'isResourceOn' => false, // x-resources资源自动回复
@@ -103,6 +104,7 @@ class Wechat extends Component
             'config.isListenRoomAll',
             'config.isWebhook',
             'config.webhookUrl',
+            'config.webhookUrl2',
             'config.webhookSecret',
             'config.isAutoReply',
             'config.isResourceOn',

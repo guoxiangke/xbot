@@ -117,6 +117,13 @@
                     wire:blur.stop="$set('config.webhookSecret', $event.target.value)"
                     />
             </x-input.group>
+
+            <x-input.group for="webhookUrl2" label="webhookUrl2">
+                <x-jet-input id="webhookUrl2" type="text" class="mt-1 block w-full"  autocomplete="webhookUrl2" 
+                    wire:model="config.webhookUrl2"
+                    wire:blur.stop="$set('config.webhookUrl2', $event.target.value)"
+                    />
+            </x-input.group>
             @endif
         </div>
         @endif
