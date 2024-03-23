@@ -67,7 +67,7 @@ class WechatMessageObserver
 
         $webhookOn = $config['isWebhook'];
         $webhookUrl = $config['webhookUrl'];
-        $webhookUrl2 = $config['webhookUrl2'];
+        $webhookUrl2 = $config['webhookUrl2']??false;
         $webhookSecret = $config['webhookSecret'];
 
         if($webhookOn && $webhookUrl && $webhookSecret){
