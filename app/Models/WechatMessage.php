@@ -20,6 +20,7 @@ class WechatMessage extends Model
         'MT_RECV_VIDEO_MSG',
         'MT_RECV_WCPAY_MSG',
         'MT_RECV_LOCATION_MSG',
+        'MT_RECV_OTHER_APP_MSG',
     ];
     const TYPES_TEXT = [
         'text',             //0
@@ -30,6 +31,7 @@ class WechatMessage extends Model
         'video',             //5
         'wcpay',             //6
         'location',          //7
+        'appLink',           //8 "wx_sub_type":4,"wx_type":49 <type>4</type>
     ];
 
     protected $appends = ['isSentByBot'];

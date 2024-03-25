@@ -161,16 +161,6 @@ class XbotCallbackController extends Controller
             Log::debug(__CLASS__, [__LINE__, "忽略 公众号 消息"]);
             return response()->json(null);
         }
-        // 其他特殊卡片消息
-        if($type == 'MT_RECV_LINK_MSG' && !$isGh) { // 收到卡片消息，转发公众号消息/LINK消息
-            // For test.
-            $key = "xbot-test-link";
-            $xml = xStringToArray($data['raw_msg']);
-            $value = $xml['appmsg']['url'];
-            Cache::put($key, $value, 20);
-            Log::debug(__CLASS__, [__LINE__, "转发公众号消息/LINK消息", $value]);
-            return response()->json(null);
-        }
 
         //**********************DEBUG IGNORE BEGIN***********************************
         $ignoreHooks = [
@@ -252,6 +242,14 @@ class XbotCallbackController extends Controller
         //*********************************************************
 
         $content = ''; //写入 WechatMessage 的 content
+
+        // 其他特殊卡片消息
+        if($type == 'MT_RECV_LINK_MSG' && !$isGh) { // 收到卡片消息，转发公众号消息/LINK消息
+            $xml = xStringToArray($data['raw_msg']);
+            $content = $xml['appmsg']['url'];
+            Log::debug(__CLASS__, [__LINE__, "转发公众号消息/LINK消息", $content]);
+        }
+
         $config = $wechatBot->getMeta('xbot.config', [
             'isAutoWcpay' => false, // MT_RECV_WCPAY_MSG
             'isAutoAgree' => false, // 自动同意好友请求
@@ -261,13 +259,9 @@ class XbotCallbackController extends Controller
             'isListenRoomAll' => false,
             'isAutoReply' => false, // 关键词自动回复
             'isResourceOn' => false,
-            'isIrcOn' => false,
         ]);
         if(!isset($config['isResourceOn'])){
             $config['isResourceOn'] = false;
-        }
-        if(!isset($config['isIrcOn'])){
-            $config['isIrcOn'] = false;
         }
 
         // AutoReply  响应 预留 关键词 + 群配置
@@ -759,6 +753,7 @@ class XbotCallbackController extends Controller
             'MT_RECV_FILE_MSG',
             'MT_RECV_VIDEO_MSG',
             'MT_RECV_SYSTEM_MSG',
+            'MT_RECV_LINK_MSG',
         ];
         if($islistenMsg && in_array($type,$recordWechatMessageTypes)) {
             $conversationWxid = $fromWxid;
@@ -920,49 +915,7 @@ class XbotCallbackController extends Controller
                     }
                 }
 
-                // TODO 付费开启
-                // 3号体验windows10的默认开启
-                $switchOn = $config['isIrcOn'];
-                $isReplied = Cache::get($cacheKeyIsRelpied, false);
-                // $isBot = WechatBot::where('wxid', $conversation->wxid)
-                if(!$isReplied && $switchOn && $isRoom && $islistenMsg) {
-                    if(Str::contains($content, '@AI助理')){
-                        $content = trim(Str::remove('@AI助理', $content));
-                        $start = now();
-                        // $content = "请以我的微信助理身份，回答我的好友给我的以下消息，要求简洁、友好，如果不知道如何回答，告诉好友我晚点会联系他，请他谅解。". $content;
-                        $url = 'https://gpt3.51chat.net/api/' . $content;
-                        $response = Http::get($url);
-                        $data = $response->json();
-                        $dur = now()->diffInSeconds($start);
-                        return $wechatBot->xbot()->sendText($conversation->wxid, "本次请求GPT用时{$dur}秒".$data['choices'][0]['message']['content']);
-                    }
-                }
-                if(!$isReplied && $switchOn && !$isRoom) {
-                    // ICR 和小爱 随机回复
-                    if(rand(1,2) == 1){
-                        $url = "http://jiuli.xiaoapi.cn/i/xiaoai_tts.php?msg={$content}";
-                        $json = Http::get($url)->json();
-                        Cache::put($cacheKeyIsRelpied, true, 10);
-                        // $wechatBot->xbot()->sendText($conversation->wxid, $json['text']);
-                        $res = [
-                            'type' => 'music',
-                            "data"=> [
-                                "url" => $json['mp3'],
-                                'title' => $json['title'], //小爱同学
-                                'description' => $json['requestText'],
-                            ]
-                        ];
-                        $wechatBot->send([$conversation->wxid], $res);
-                    }else{
-                        $irc = new Icr;
-                        $res = $irc->run($content);
-                        if($res) {
-                            Cache::put($cacheKeyIsRelpied, true, 10);
-                            $wechatBot->xbot()->sendText($conversation->wxid, $res->Reply);
-                        }
 
-                    }
-                }
             }
         }
         Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, '******************']);//已执行到最后一行
