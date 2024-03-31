@@ -104,6 +104,14 @@ class WechatBot extends Model
         $type = WechatContent::TYPES[$wechatContent->type];
         $xbot = $this->xbot();
         $data = $wechatContent->content;
+        if(isset($data['title'])) {
+            $data['title'] = str_replace('圣经', '聖經', $data['title']);
+            $data['title'] = str_replace('会', '會', $data['title']);
+            $data['title'] = str_replace('亚', '亞', $data['title']);
+        }
+        // TODO
+        // if(isset($data['description']));
+        // if(isset($data['content']));
         if($type == 'text' || $type == 'at') {
             // template :nickname :sex @bluesky_still
             $content = $data['content'];
@@ -206,7 +214,7 @@ class WechatBot extends Model
                 $this->_send($to, $wechatContent);
             }
         }
-        sleep(3);
+        sleep(3);//TODO think
         // 发送第2条信息
         if(is_array($res) && isset($res['addition'])){
             $res = $res['addition'];
