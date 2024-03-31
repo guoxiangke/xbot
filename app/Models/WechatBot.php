@@ -108,6 +108,7 @@ class WechatBot extends Model
             $data['title'] = str_replace('圣经', '聖經', $data['title']);
             $data['title'] = str_replace('会', '會', $data['title']);
             $data['title'] = str_replace('亚', '亞', $data['title']);
+            $data['title'] = str_replace('赞', '讚', $data['title']);
         }
         // TODO
         // if(isset($data['description']));
