@@ -306,9 +306,12 @@ final class Xbot {
     }
     public function getRandomApp(){
         return Arr::random([
-            ['name'=> '良友聆听',   'id' => 'wxf29f73c2c441295e'],
+            //['name'=> '良友聆听',   'id' => 'wxf29f73c2c441295e'],
             ['name'=> '小红书',    'id' => 'wxd8a2750ce9d46980'],
             ['name'=> '酷狗音乐',   'id' => 'wx79f2c4418704b4f8'],
+            ['name'=> '今日头条',   'id' => 'wx50d801314d9eb858'],
+            ['name'=> '微信读书',   'id' => 'wxab9b71ad2b90ff34'],
+            ['name'=> '腾讯视频',   'id' => 'wx4b28606f2bac0546'],
         ]);
     }
     
