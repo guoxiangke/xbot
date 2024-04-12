@@ -305,8 +305,12 @@ final class Xbot {
         return $this->_sendXMLLink($xml, $to_wxid);
     }
     public function getRandomApp(){
+        return ['name'=> '得到',    'id' => 'wxa54deb331c142f46'];
         return Arr::random([
-            //['name'=> '良友聆听',   'id' => 'wxf29f73c2c441295e'],
+            ['name'=> '良友聆听',   'id' => 'wxf29f73c2c441295e'],
+            ['name'=> '微信听书',    'id' => 'wx6e2916f11a01e436'],
+            ['name'=> '得到',    'id' => 'wxa54deb331c142f46'],
+            ['name'=> '小红书',    'id' => 'wxd8a2750ce9d46980'],
             ['name'=> '小红书',    'id' => 'wxd8a2750ce9d46980'],
             ['name'=> '酷狗音乐',   'id' => 'wx79f2c4418704b4f8'],
             ['name'=> '今日头条',   'id' => 'wx50d801314d9eb858'],
