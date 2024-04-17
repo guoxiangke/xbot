@@ -30,6 +30,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/wechat/friends', [WechatBotController::class, 'getFriends']);
 });
 
+
+// '26' = [// lu // '7' = [// xiaoyong
+Route::post('/chatwoot/{$id}', function (Request $request, $id) {
+    Log::error('inboxAPI', $id, $request->all());
+});
+
 Route::post('/xbot/chatwoot', function (Request $request) {
     Log::debug('WebHook_chatwoot',$request->all());
 
@@ -50,7 +56,8 @@ Route::post('/xbot/chatwoot', function (Request $request) {
             $contact .= $request['conversation']['meta']['sender']['name']."\n";
             $contact .= $request['conversation']['meta']['sender']['email']."\n";
             $contact .= $request['conversation']['meta']['sender']['phone_number']."\n";
-            $contact .= $request['conversation']['meta']['sender']['additional_attributes']['country_code']."\n";
+            // Undefined array key "country_code"
+            // $contact .= $request['conversation']['meta']['sender']['additional_attributes']['country_code']."\n";
             $contact .= $request['conversation']['meta']['sender']['additional_attributes']['created_at_ip'];
 
             $wechatBot= WechatBot::find(1);
