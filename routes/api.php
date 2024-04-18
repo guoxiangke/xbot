@@ -32,8 +32,17 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
 
 // '26' = [// lu // '7' = [// xiaoyong
-Route::post('/chatwoot/{$id}', function (Request $request, $id) {
-    Log::error('inboxAPI', $id, $request->all());
+// Inbox webhook of chatwoot
+Route::post('/chatwoot/{wechatBotid}', function (Request $request, $wechatBotid) {
+    $messageType = $request['message_type']; //只处理 outgoing ，即发送的消息，=》xbot处理发送。ignore incoming
+    $event = $request['event']; //只处理message_created，不处理conversation_updated
+    if($event == 'message_created' && $messageType='outgoing'){
+        $content = $request['content'];
+        $to_wxid = $request['conversation']['meta']['sender']['identifier'];
+        $wechatBot = WechatBot::find($wechatBotid);
+        $wechatBot->xbot()->sendText($to_wxid, $content);//TODO add to send queue!
+    }
+    return true;
 });
 
 Route::post('/xbot/chatwoot', function (Request $request) {
