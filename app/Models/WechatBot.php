@@ -155,7 +155,7 @@ class WechatBot extends Model
         if(isset($data['url'])){
             //clean URL ?_=1
             $data['url'] = strtok($data['url'],'?');
-            $url = config('xbot.redirect').$data['url'];
+            $url = config('xbot.redirect').urlencode($data['url']);
             if(isset($data['statistics'])){
                 $data['statistics']['bot'] = $this->id;
                 $tags = http_build_query($data['statistics'], '', '%26');
