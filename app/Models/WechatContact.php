@@ -21,6 +21,12 @@ class WechatContact extends Model
         'group'=>2, // 2 group
         'stranger'=>3, // 3 group stranger
     ];
+    const TYPES_NAME = [
+        '公众号', // 0
+        '好友', // 1
+        '群聊', // 2 group
+        '群友', // 3 group stranger
+    ];
     const TYPE_PUBLIC = 0;
     const TYPE_FRIEND = 1;
     const TYPE_GROUP = 2;

@@ -21,6 +21,7 @@ class WechatMessage extends Model
         'MT_RECV_WCPAY_MSG',
         'MT_RECV_LOCATION_MSG',
         'MT_RECV_OTHER_APP_MSG',
+        'MT_TRANS_VOICE_MSG',
     ];
     const TYPES_TEXT = [
         'text',             //0
@@ -32,6 +33,7 @@ class WechatMessage extends Model
         'wcpay',             //6
         'location',          //7
         'appLink',           //8 "wx_sub_type":4,"wx_type":49 <type>4</type>
+        'voice_text', //9
     ];
 
     protected $appends = ['isSentByBot'];

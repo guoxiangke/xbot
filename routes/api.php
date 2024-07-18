@@ -6,6 +6,7 @@ use App\Http\Controllers\XbotCallbackController;
 use App\Http\Controllers\WechatBotController;
 use Illuminate\Support\Facades\Log;
 use App\Models\WechatBot;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,11 +37,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 Route::post('/chatwoot/{wechatBotid}', function (Request $request, $wechatBotid) {
     $messageType = $request['message_type']; //只处理 outgoing ，即发送的消息，=》xbot处理发送。ignore incoming
     $event = $request['event']; //只处理message_created，不处理conversation_updated
-    if($event == 'message_created' && $messageType='outgoing'){
+    if($event == 'message_created' && $messageType == 'outgoing'){
         $content = $request['content'];
         $to_wxid = $request['conversation']['meta']['sender']['identifier'];
         $wechatBot = WechatBot::find($wechatBotid);
         $wechatBot->xbot()->sendText($to_wxid, $content);//TODO add to send queue!
+        Log::debug('App\Api\Webhook\Chatwoot', [$to_wxid, $content, $request['conversation']['meta']['sender']['name']]);
     }
     return true;
 });
@@ -67,11 +69,12 @@ Route::post('/xbot/chatwoot', function (Request $request) {
             $contact .= $request['conversation']['meta']['sender']['phone_number']."\n";
             // Undefined array key "country_code"
             // $contact .= $request['conversation']['meta']['sender']['additional_attributes']['country_code']."\n";
-            $contact .= $request['conversation']['meta']['sender']['additional_attributes']['created_at_ip'];
+            $contact .= $request['conversation']['meta']['sender']['additional_attributes']['created_at_ip']??'no-ip';
 
-            $wechatBot= WechatBot::find(1);
-            $content = "Message from chatwoot:\n=============\n".$content."\n=============\nBy:".$contact;
-            $wechatBot->xbot()->sendText('bluesky_still',$content);
+            $wechatBot= WechatBot::find(7);
+            $content = "Message received:\n=============\n".$content."\n=============\nBy:".$contact;
+            if(Str::of($request['conversation']['meta']['sender']['email'])->endsWith(['@chatroom', '@wx.com'])) return; //微信里的消息，不再次hook推送
+            $wechatBot->xbot()->sendText('bluesky_still', $content);
         }
 
     }

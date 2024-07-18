@@ -12,6 +12,7 @@ use App\Models\WechatMessage;
 use App\Models\WechatMessageFile;
 use App\Models\WechatMessageVoice;
 use App\Models\XbotSubscription;
+use App\Chatwoot\Chatwoot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Services\Xbot;
@@ -40,6 +41,7 @@ class XbotCallbackController extends Controller
         $wechatClientId = $wechatClient->id;
         $wechatClientName = $wechatClient->token;
         $data = $request['data'];
+        $requestData = $request['data'];
 
         $QrPoolCacheKey = $wechatClientId;
         // 1.获取到登陆二维码
@@ -50,10 +52,10 @@ class XbotCallbackController extends Controller
             if(!$data) return response()->json(null);
             // TODO 发送到管理群里
             // 3号windows10发过来的二维码
-            if($wechatClientId == 3){
+            if($wechatClientId == 8){
                 $whoNeedQr = Cache::get($whoNeedQrKey, []);
                 if($who = array_pop($whoNeedQr)){
-                    $wechatBotAdmin = WechatBot::find(8);// a个人微信AI应用定制解决方案
+                    $wechatBotAdmin = WechatBot::find(7);// a个人微信AI应用定制解决方案
                     $wechatBotAdmin->xbot()->sendText($who, '2.请点击链接打开，使用申请体验的微信来扫码登陆！二维码将1分钟内将失效，登陆成功请等待初始化完毕后体验智能AI回复，更多功能请付费体验！ https://api.qrserver.com/v1/create-qr-code/?data='.$data['code']);
                     Cache::put($whoNeedQrKey, $whoNeedQr, 30); // 重新写入
                 }
@@ -69,7 +71,7 @@ class XbotCallbackController extends Controller
             Cache::put("xbots.{$QrPoolCacheKey}.qrPool", $qrPool);
             // 前端刷新获取二维码总是使用第一个QR，登陆成功，则弹出对于clientId的QR
             // '获取到登陆二维码，已压入qrPool',
-            Log::debug(__CLASS__, [__LINE__, $type, $wechatClientId, $wechatClientName, $clientId, $qr]);
+            Log::debug(__CLASS__, [__LINE__, $request->all()]);
 
             //如果登陆中！
             $wechatBot = WechatBot::where('wechat_client_id', $wechatClientId)
@@ -206,6 +208,7 @@ class XbotCallbackController extends Controller
             'MT_ZOMBIE_CHECK_MSG', //僵尸检测
         ];
         if(!in_array($type, $ignoreRAW)){
+            // MT_INVITE_TO_ROOM_MSG : wait for group owner or admin approval to send invitations.
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $request->all()]);
         }
         //**********************DEBUG IGNORE END***********************************
@@ -332,6 +335,7 @@ class XbotCallbackController extends Controller
             $rawMsg = $data['raw_msg'];
             // 'MT_RECV_SYSTEM_MSG', // 群名修改
             // "raw_msg":"\"天空蔚蓝\"修改群名为“#xbot001”"
+            // "raw_msg":"\"天空蔚蓝\" changed the group name to \"收听互助\"" "wx_type":10000}
             // "room_name":"#xbot"
             if(Str::contains($rawMsg, '修改群名为')){
                 //“#xbot001” => #xbot001
@@ -456,8 +460,10 @@ class XbotCallbackController extends Controller
             if(Str::startsWith($tmpData, '<?xml ') || Str::startsWith($tmpData, '<msg')) {
                  $xml = xStringToArray($tmpData);
             }else{
-                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $data, 'raw data not xml']);
-                // MT_RECV_SYSTEM_MSG "raw_msg":"你已添加了天空蔚蓝，现在可以开始聊天了。"
+                Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, $data, 'raw data not xml']);
+                // MT_RECV_SYSTEM_MSG 
+                    // 同意好友：你已添加了天空蔚蓝，现在可以开始聊天了。"
+                    // 群名修改：changed the group name to 
                 $content = $data['raw_msg'];
             }
         }
@@ -635,7 +641,8 @@ class XbotCallbackController extends Controller
                 'msgid' => $msgid,
                 'content' => $data['text'],
             ]);
-            return response()->json(null);
+            $content = "【语音消息】". $data['text'];
+            // return response()->json(null);
         }
         // ✅ 收到gif表情
         if($type == 'MT_RECV_EMOJI_MSG'){
@@ -754,6 +761,7 @@ class XbotCallbackController extends Controller
             'MT_RECV_VIDEO_MSG',
             'MT_RECV_SYSTEM_MSG',
             'MT_RECV_LINK_MSG',
+            'MT_TRANS_VOICE_MSG',
         ];
         if($islistenMsg && in_array($type,$recordWechatMessageTypes)) {
             $conversationWxid = $fromWxid;
@@ -894,9 +902,9 @@ class XbotCallbackController extends Controller
                 }
 
                 if(!$isRoom && $content == '试用体验微信机器人'){
-                    $client = WechatClient::find(3);
+                    $client = WechatClient::find(8);
                     $client->new();
-                    $wechatBot->xbot()->sendText($conversation->wxid, '1.已向腾讯请求获取二维码，请耐心等待, 2.请添加微信 wxid_k6uqk386r8gw22  获取二维码链接');
+                    $wechatBot->xbot()->sendText($conversation->wxid, '1.已向腾讯请求获取二维码，请耐心等待, 2.请添加微信 ');
                     
                     $whoNeedQr = Cache::get($whoNeedQrKey, []);
                     $whoNeedQr[] = $conversation->wxid;
@@ -908,13 +916,98 @@ class XbotCallbackController extends Controller
                 $switchOn = $config['isResourceOn'];
                 $isReplied = Cache::get($cacheKeyIsRelpied, false);
                 if(!$isReplied && $switchOn) {
+                    // if($wechatBot->id == 'ly' && !$isRoom) return [];
                     $res = $wechatBot->getResouce($content);
-                    if($res) {
+                    if(Str::contains($content,['youtube.','youtu.be'])){
+                        //18403467252@chatroom Youtube精选
+                        // TODO 根据群名字配置来发送，包含 youtube 的群才响应。
+                        if($isRoom && in_array($requestData['room_wxid'],["26570621741@chatroom","18403467252@chatroom","34974119368@chatroom"])){
+                            Cache::put($cacheKeyIsRelpied, true, 10);
+                            return $wechatBot->send([$conversation->wxid], $res);
+                        }else{
+                            // don't send
+                            return response()->json(null);
+                        }
+                    }elseif($res){
                         Cache::put($cacheKeyIsRelpied, true, 10);
                         $wechatBot->send([$conversation->wxid], $res);
+                        // 返回，不执行下面的chatwoot👇
+                        return response()->json(null);
                     }
                 }
 
+                if(!$isReplied && $isRoom) {// $isRoom = roomwxid
+                    //各位兄弟姐妹早上好！
+                    if(Str::containsAll($content, ['早上好','各位兄弟姐妹'])){
+                        $keyword = 784;
+                        $res = $wechatBot->getResouce($keyword);
+                        Log::error(__CLASS__, [__LINE__, '各位兄弟姐妹', $content, $res]);
+                        return $wechatBot->send([$conversation->wxid], $res);
+
+                        // $content = trim(Str::remove('@AI助理', $content));
+                        $cacheKey = 'is.group.ai.moring.replied.'.$isRoom;
+                        $isAIReplied = Cache::get($cacheKey, false);
+                        if($isAIReplied) return response()->json(null);
+                        $start = now();
+                        $content = "你是一位牧师，非常熟悉中文和合本圣经，下面是教会微信群里的弟兄姐妹发来的问安语，请引用少于5节的诗篇的相关经文（根据当前day in the year%150 来随机引用）和简短的话语来鼓励群里的弟兄姐妹。鼓励时的主题可以从读经、祷告、听道、行道、激发爱心、信心、盼望中任选一个（不要无论、都的讲论，可以使用愿开头的语句（如新约里的祝福祷告和劝慰）；语句简洁，小于120字，引用圣经时不要“让我们读”或“记得”，结尾不要‘祝福你们！’，先英文后中文，不要分段）：" . $content;
+                        $url = 'https://gpt3.51chat.net/api/gpt-4/' . $content;
+                        $response = Http::get($url);
+                        $data = $response->json();
+                        // TODO add to queue then send back.
+                        // $dur = now()->diffInSeconds($start);
+                        date_default_timezone_set('Asia/Shanghai');
+                        Cache::put($cacheKey, true, strtotime('tomorrow') - time());
+                        return $wechatBot->xbot()->sendText($conversation->wxid, $data['choices'][0]['message']['content']);
+                        // "本次请求GPT用时{$dur}秒".
+                    }
+                }
+
+                // begin send message to chatwoot
+                // 只记录机器人收到的消息
+                $recordWechatMessageTypes = [
+                    'MT_RECV_TEXT_MSG',
+                    'MT_RECV_VOICE_MSG',
+                    'MT_RECV_EMOJI_MSG',
+                    'MT_RECV_PICTURE_MSG',
+                    'MT_RECV_FILE_MSG',
+                    'MT_RECV_VIDEO_MSG',
+                    // 'MT_RECV_SYSTEM_MSG', //群名修改 &&// 你已添加了天空蔚蓝，现在可以开始聊天了。
+                    'MT_RECV_LINK_MSG',
+                    'MT_TRANS_VOICE_MSG',
+                ];
+                if(in_array($type,$recordWechatMessageTypes)){// !$isRoom && 暂不记录群消息
+                    if($fromWxid != $wechatBot->wxid){
+                        $chatwoot = new Chatwoot($wechatBot);
+                        $wxid = $isRoom?$conversationWxid:$fromWxid;//roomWxid
+                        $contact = $chatwoot->getContactByWxid($wxid);
+                        $isHost = false;
+                        if(!$contact) {
+                            $wechatBotContact = WechatBotContact::query()
+                                ->where('wechat_bot_id', $wechatBot->id)
+                                ->where('wxid', $wxid)
+                                ->first();
+
+                            $contact = $chatwoot->saveContact($wechatBotContact);
+                            // Add label // $label="群聊"
+                            $label = $wechatBotContact::TYPES_NAME[$wechatBotContact->type];
+                            $chatwoot->setLabelByContact($contact, $label);
+
+                            $isHost = true;// 第一次创建对话，不发消息给微信用户，只记录到chatwoot
+                        }
+                        // 如果是群，加上by xx
+                        if($isRoom){
+                            // TODO save 群陌生人 
+                            $wechatBotContact = WechatBotContact::query()
+                                ->where('wechat_bot_id', $wechatBot->id)
+                                ->where('wxid', $fromWxid)
+                                ->first();
+                                $content .= "\r\n by {$wechatBotContact->contact->nickname}";
+                        }
+                        $chatwoot->sendMessageToContact($contact, $content, $isHost);
+                        Log::debug(__CLASS__, [__LINE__, 'POST_TO_CHATWOOT', $content, $isHost]);
+                    }
+                }
+                // end send message to chatwoo
 
             }
         }
