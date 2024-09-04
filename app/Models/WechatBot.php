@@ -240,7 +240,7 @@ class WechatBot extends Model
                     $res['data']['statistics'] = $res['statistics'];
                     unset($res['statistics']);
                 }
-                $isNoCache = in_array($keyword, ['cc','dy','gf']);
+                $isNoCache = in_array($keyword, ['603','618','680']);
                 if(!$isNoCache) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
             }
         }
