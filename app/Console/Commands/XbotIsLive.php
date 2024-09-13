@@ -3,8 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\WechatBot;
-use App\Models\WechatContent;
-use App\Services\Wechat;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -48,7 +46,12 @@ class XbotIsLive extends Command
             ->whereNotNull('client_id')
             ->whereNotNull('is_live_at')
             ->each(function(WechatBot $wechatBot){
-                $wechatBot->isLive();
+                $isLive = $wechatBot->isLive();
+                if(!$isLive) {
+                    Log::error('XbotIsNotLive', [$wechatBot->name, $wechatBot->wxid, $isLive, __CLASS__]);
+                    //TODO send alert message by sms/email/wechat!
+
+                }
             });
     }
 }

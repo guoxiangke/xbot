@@ -138,10 +138,8 @@ class XbotCallbackController extends Controller
         // MT_DATA_OWNER_MSG
         if($type == 'MT_DATA_OWNER_MSG') {
             $wechatBot = WechatBot::where('wxid', $cliendWxid)->first();
-            // 程序崩溃时，login_at 还在，咋办？
             $wechatBot->update(['is_live_at'=>now()]);
-            $data['avatar'] = str_replace('http://','https://', $data['avatar']);
-            $wechatBot->setMeta('xbot', $data); //account avatar nickname wxid
+            Log::debug('XbotIsLive',[$wechatBot->name,$wechatBot->wxid, __CLASS__]);
         }
 
         // 忽略1小时以上的信息 60*60
