@@ -56,6 +56,7 @@ Route::group([
             // clear cache then reSend!
             $cacheKey = "resources.{$keyword}";
             Cache::forget($cacheKey);
+            
             foreach ($xbotSubscriptions as $xbotSubscription) {
                 Log::debug('reSend', [$wechatBot->id, $keyword, $xbotSubscription->id]);
                 reSendQueue::dispatch($xbotSubscription);
@@ -67,11 +68,15 @@ Route::group([
             $botOwnerId = auth()->user()->currentTeam->owner->id;
             $wechatBot = WechatBot::where('user_id', $botOwnerId)->firstOrFail();
             $xbotSubscriptions = XbotSubscription::where('wechat_bot_id', $wechatBot->id)->get();
-            foreach ($xbotSubscriptions as $xbotSubscription) {
-                $keyword = $xbotSubscription->keyword;
-                // clear cache then reSend!
+
+            // clear cache then reSend!
+            foreach ($xbotSubscriptions->pluck('keyword')->unique() as $keyword) {
                 $cacheKey = "resources.{$keyword}";
                 Cache::forget($cacheKey);
+            };
+
+            foreach ($xbotSubscriptions as $xbotSubscription) {
+                $keyword = $xbotSubscription->keyword;
                 Log::debug('reSendAll', [$wechatBot->id, $keyword, $xbotSubscription->id]);
                 reSendQueue::dispatch($xbotSubscription);
             }
