@@ -50,7 +50,15 @@ class XbotIsLive extends Command
                 if(!$isLive) {
                     Log::error('XbotIsNotLive', [$wechatBot->name, $wechatBot->wxid, $isLive, __CLASS__]);
                     //TODO send alert message by sms/email/wechat!
+                    $wechatBot2 = WechatBot::find(7);
+                    $wechatBot2->xbot()->sendText("17916158456@chatroom", "whoami");//Febc微信机器人掉线监控
+                    $wechatBot2->xbot()->sendText("5829025039@chatroom", "whoami");//"主人0421"
 
+                    $content = "掉线了:".$wechatBot->name;
+                    $wechatBot2->xbot()->sendText("5829025039@chatroom", $content);
+
+                    $url = "https://api.day.app/hzJ44um4NTx9JWoNJ5TFia/$content";
+                    file_get_contents($url);
                 }
             });
     }
