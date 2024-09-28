@@ -14,6 +14,7 @@ use Plank\Metable\Metable;
 // use Mvdnbrk\EloquentExpirable\Expirable;
 use App\Services\Xbot;
 use App\Models\User;
+use App\Models\WechatContent;
 use App\Models\WechatBotContact;
 use App\Events\WechatBotLogin;
 use App\Jobs\XbotSendQueue;
@@ -109,7 +110,9 @@ class WechatBot extends Model
         $data = $wechatContent->content;
         if(isset($data['title'])) {
             $data['title'] = str_replace('经', 'J', $data['title']);
+            $data['title'] = str_replace('經', 'J', $data['title']);
             $data['title'] = str_replace('祷', 'D', $data['title']);
+            $data['title'] = str_replace('禱', 'D', $data['title']);
             $data['title'] = str_replace('教会', 'JH', $data['title']);
             $data['title'] = str_replace('亚', '亞', $data['title']);
             $data['title'] = str_replace('赞', '讚', $data['title']);
