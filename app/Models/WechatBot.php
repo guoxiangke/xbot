@@ -108,15 +108,15 @@ class WechatBot extends Model
         $type = WechatContent::TYPES[$wechatContent->type];
         $xbot = $this->xbot();
         $data = $wechatContent->content;
-        // if(isset($data['title'])) {
-        //     $data['title'] = str_replace('经', 'J', $data['title']);
-        //     $data['title'] = str_replace('經', 'J', $data['title']);
-        //     $data['title'] = str_replace('祷', 'D', $data['title']);
-        //     $data['title'] = str_replace('禱', 'D', $data['title']);
-        //     $data['title'] = str_replace('教会', 'JH', $data['title']);
-        //     $data['title'] = str_replace('亚', '亞', $data['title']);
-        //     $data['title'] = str_replace('赞', '讚', $data['title']);
-        // }
+        if(isset($data['title'])) {
+            $data['title'] = str_replace('经', 'J', $data['title']);
+            $data['title'] = str_replace('經', 'J', $data['title']);
+            $data['title'] = str_replace('祷', 'D', $data['title']);
+            $data['title'] = str_replace('禱', 'D', $data['title']);
+            $data['title'] = str_replace('教会', 'JH', $data['title']);
+            $data['title'] = str_replace('亚', '亞', $data['title']);
+            $data['title'] = str_replace('赞', '讚', $data['title']);
+        }
         // TODO
         // if(isset($data['description']));
         // if(isset($data['content']));
