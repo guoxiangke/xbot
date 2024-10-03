@@ -109,6 +109,8 @@ class WechatBot extends Model
         $xbot = $this->xbot();
         $data = $wechatContent->content;
         if(isset($data['title'])) {
+            $data['title'] = str_replace('禱告', 'DG', $data['title']);
+            $data['title'] = str_replace('經文', 'JW', $data['title']);
             $data['title'] = str_replace('经', 'J', $data['title']);
             $data['title'] = str_replace('經', 'J', $data['title']);
             $data['title'] = str_replace('祷', 'D', $data['title']);
