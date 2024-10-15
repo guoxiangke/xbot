@@ -260,9 +260,13 @@ class XbotCallbackController extends Controller
             'isListenRoomAll' => false,
             'isAutoReply' => false, // 关键词自动回复
             'isResourceOn' => false,
+            'isChatwootOn' => false,
         ]);
         if(!isset($config['isResourceOn'])){
             $config['isResourceOn'] = false;
+        }
+        if(!isset($config['isChatwootOn'])){
+            $config['isChatwootOn'] = false;
         }
 
         // AutoReply  响应 预留 关键词 + 群配置
@@ -973,7 +977,8 @@ class XbotCallbackController extends Controller
                     'MT_RECV_LINK_MSG',
                     'MT_TRANS_VOICE_MSG',
                 ];
-                if(in_array($type,$recordWechatMessageTypes)){// !$isRoom && 暂不记录群消息
+                $switchOn = $config['isChatwootOn'];
+                if($switchOn&&in_array($type,$recordWechatMessageTypes)){// !$isRoom && 暂不记录群消息
                     if($fromWxid != $wechatBot->wxid){
                         $chatwoot = new Chatwoot($wechatBot);
                         $wxid = $isRoom?$conversationWxid:$fromWxid;//roomWxid

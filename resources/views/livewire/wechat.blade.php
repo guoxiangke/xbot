@@ -83,6 +83,12 @@
                 :checked="$config['isResourceOn']"
                 label="X-resources资源关键词自动回复"
                 />
+            <x-input.toggle
+                wire:model="config.isChatwootOn"
+                id="config.isChatwootOn" 
+                :checked="$config['isChatwootOn']"
+                label="开启Chatwoot"
+                />
 
             <x-input.toggle 
                 wire:model="config.isAutoWcpay"
