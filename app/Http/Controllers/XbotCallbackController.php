@@ -923,7 +923,12 @@ class XbotCallbackController extends Controller
                     if(Str::contains($content,['youtube.','youtu.be'])){
                         //18403467252@chatroom Youtube精选
                         // TODO 根据群名字配置来发送，包含 youtube 的群才响应。
-                        if($isRoom && in_array($requestData['room_wxid'],["26570621741@chatroom","18403467252@chatroom","34974119368@chatroom"])){
+                        if($isRoom && in_array($requestData['room_wxid'],[
+                            "26570621741@chatroom",
+                            "18403467252@chatroom",
+                            "34974119368@chatroom",
+                            "57526085509@chatroom",//LFC活力生命
+                        ])){
                             Cache::put($cacheKeyIsRelpied, true, 10);
                             return $wechatBot->send([$conversation->wxid], $res);
                         }else{
@@ -940,7 +945,7 @@ class XbotCallbackController extends Controller
 
                 if(!$isReplied && $isRoom) {// $isRoom = roomwxid
                     //各位兄弟姐妹早上好！
-                    if(Str::containsAll($content, ['早上好','各位兄弟姐妹'])){
+                    if(Str::containsAll($content, ['早','各位兄弟姐妹'])){
                         $keyword = 784;
                         $res = $wechatBot->getResouce($keyword);
                         Log::error(__CLASS__, [__LINE__, '各位兄弟姐妹', $content, $res]);
