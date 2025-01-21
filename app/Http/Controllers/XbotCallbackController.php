@@ -946,26 +946,8 @@ class XbotCallbackController extends Controller
                 if(!$isReplied && $isRoom) {// $isRoom = roomwxid
                     //各位兄弟姐妹早上好！
                     if(Str::containsAll($content, ['早','各位兄弟姐妹'])){
-                        $keyword = 784;
-                        $res = $wechatBot->getResouce($keyword);
-                        Log::error(__CLASS__, [__LINE__, '各位兄弟姐妹', $content, $res]);
-                        return $wechatBot->send([$conversation->wxid], $res);
-
-                        // $content = trim(Str::remove('@AI助理', $content));
-                        $cacheKey = 'is.group.ai.moring.replied.'.$isRoom;
-                        $isAIReplied = Cache::get($cacheKey, false);
-                        if($isAIReplied) return response()->json(null);
-                        $start = now();
-                        $content = "你是一位牧师，非常熟悉中文和合本圣经，下面是教会微信群里的弟兄姐妹发来的问安语，请引用少于5节的诗篇的相关经文（根据当前day in the year%150 来随机引用）和简短的话语来鼓励群里的弟兄姐妹。鼓励时的主题可以从读经、祷告、听道、行道、激发爱心、信心、盼望中任选一个（不要无论、都的讲论，可以使用愿开头的语句（如新约里的祝福祷告和劝慰）；语句简洁，小于120字，引用圣经时不要“让我们读”或“记得”，结尾不要‘祝福你们！’，先英文后中文，不要分段）：" . $content;
-                        $url = 'https://gpt3.51chat.net/api/gpt-4/' . $content;
-                        $response = Http::get($url);
-                        $data = $response->json();
-                        // TODO add to queue then send back.
-                        // $dur = now()->diffInSeconds($start);
-                        date_default_timezone_set('Asia/Shanghai');
-                        Cache::put($cacheKey, true, strtotime('tomorrow') - time());
-                        return $wechatBot->xbot()->sendText($conversation->wxid, $data['choices'][0]['message']['content']);
-                        // "本次请求GPT用时{$dur}秒".
+                        // $keyword = 808;
+                        // return $wechatBot->sendResouce([$conversation->wxid], $keyword);
                     }
                 }
 
