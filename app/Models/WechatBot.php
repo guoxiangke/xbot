@@ -250,7 +250,14 @@ class WechatBot extends Model
                     unset($res['statistics']);
                 }
                 $isNoCache = in_array($keyword, ['603','618','680','813','814','815','816']);
-                if(!$isNoCache) Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
+                $isFebc = in_array($keyword, ['701','702','703','704','705','706','707','708','709','710','711','712','713']);
+                if($isFebc) {
+                    $cacheDuration = 3 * 60 * 60; // 3小时（秒）
+                    $expiresAt = min($cacheDuration, strtotime('tomorrow') - time()); // 取3小时或明天0点前的最小值
+                    Cache::put($cacheKey, $res, $expiresAt);
+                }elseif(!$isNoCache) {
+                    Cache::put($cacheKey, $res, strtotime('tomorrow') - time());
+                }
             }
         }
         return $res;
