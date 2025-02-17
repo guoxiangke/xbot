@@ -928,8 +928,8 @@ class XbotCallbackController extends Controller
                             "18403467252@chatroom",
                             "34974119368@chatroom",
                             "57526085509@chatroom",//LFC活力生命
-                            "18403467252@chatroom",//每天一章
                             "58088888496@chatroom",//活泼的生命
+                            "57057092201@chatroom",//每天一章
                         ])){
                             Cache::put($cacheKeyIsRelpied, true, 10);
                             return $wechatBot->send([$conversation->wxid], $res);
