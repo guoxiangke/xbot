@@ -423,7 +423,7 @@ class XbotCallbackController extends Controller
                         }
                         $msg = "{$memberString}退出了本群";
                         // TODO 后台设置 是否提醒@群主？
-                        $wechatBot->xbot()->sendText($data['room_wxid'], $msg);
+                        // $wechatBot->xbot()->sendText($data['room_wxid'], $msg);
                     }
                 }
             }
