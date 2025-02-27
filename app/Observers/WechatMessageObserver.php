@@ -92,7 +92,7 @@ class WechatMessageObserver
                 ->payload($data)
                 ->dispatchSync();//dispatch Now
 
-            if(isset($config['webhookUrl2'])){
+            if(isset($config['webhookUrl2']) && $config['webhookUrl2']){
                 Log::debug(__METHOD__, ['webhookUrl2', $wechatBot->wxid, $data]);
                 WebhookCall::create()
                     ->url($config['webhookUrl2'])
