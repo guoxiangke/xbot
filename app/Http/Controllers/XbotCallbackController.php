@@ -662,7 +662,7 @@ class XbotCallbackController extends Controller
             $dest_file = $wechatClient->file_path . $path . "\\{$md5}.png";
             // if file_exist($md5), 则不再下载！
             $xbot->decryptImage($src_file, $dest_file, $size);
-            $content = str_replace('\\', '/', $path) . "/{$md5}.png";
+            $content = "https://webot.image.51chat.net" . str_replace('\\', '/', $path) . "/{$md5}.png";
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '收到|发送图片', $src_file, $dest_file, $size, $content]);
 
             WechatMessageFile::create([
