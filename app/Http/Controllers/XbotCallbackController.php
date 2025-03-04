@@ -381,8 +381,8 @@ class XbotCallbackController extends Controller
                     $memberString .= "@{$member['nickname']} ";
                     $atList[] = $member['nickname'];
                 }
-                $msg = $roomWelcomeMessages[$roomWxid]??"欢迎{$memberString}加入本群👏";
-                $wechatBot->xbot()->sendText($roomWxid, $msg);
+                // $msg = $roomWelcomeMessages[$roomWxid]??"欢迎{$memberString}加入本群👏";
+                // $wechatBot->xbot()->sendText($roomWxid, $msg);
             }
             // 创建群后，再次手动掉getRooms()以执行273行 来初始化群数据
             $wechatBot->xbot()->getRooms();
