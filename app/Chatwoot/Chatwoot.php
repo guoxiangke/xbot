@@ -21,25 +21,25 @@ class Chatwoot
 		    '7' => [// xiaoyong
 		    	'accountId' => 1,
 		    	'inboxId' => 1,
-		    	'token' => '86rA3rhTXgEUPvsLYsJJ6VC1',
+		    	'token' => '',
 		    	'baseUrl' => 'https://51chat.net',
 		    ],
 		    '26' => [// lu
 		    	'accountId' => 2,
 		    	'inboxId' => 2,
-		    	'token' => '2CbcYPk4v46QnGjaw3UoYQr4',
+		    	'token' => '',
 		    	'baseUrl' => 'https://51chat.net',
 		    ],
 		    '1' => [// you4
 		    	'accountId' => 3,
 		    	'inboxId' => 3,
-		    	'token' => 'QbcKLmgPBJzxYg7jsJkNQJQ6',
+		    	'token' => '',
 		    	'baseUrl' => 'https://51chat.net',
 		    ],
 		    '13' => [// luke
-		    	'accountId' => 4,
-		    	'inboxId' => 4,
-		    	'token' => 'sTDGNLRiKTnyAAANQxLkbvDW',
+		    	'accountId' => 2,
+		    	'inboxId' => 1,
+		    	'token' => 'RutaakVSGLnhvo3Abbtj7tYL',
 		    	'baseUrl' => 'https://51chat.net',
 		    ],
 		    
