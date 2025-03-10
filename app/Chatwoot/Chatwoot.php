@@ -185,6 +185,14 @@ class Chatwoot
 	    return $this->http->put($url, $body)->json();
     }
 
+    public function updateContactAvatarById($contactId, $avatarUrl){
+    	$url = "{$this->baseUrl}/{$this->api_version}/accounts/{$this->accountId}/contacts/{$contactId}";
+    	$body = [
+		  "avatar_url" => $avatarUrl,
+	    ];
+	    return $this->http->put($url, $body)->json();
+    }
+
     public function updateContactName($contactId, $name){
     	$url = "{$this->baseUrl}/{$this->api_version}/accounts/{$this->accountId}/contacts/{$contactId}";
     	$body = [

@@ -565,7 +565,7 @@ class XbotCallbackController extends Controller
             return response()->json(null);
         }
 
-        // ✅ 收到好友请求
+        // ✅ 收到好友请求后自动同意加好友
         $switchOn = $config['isAutoAgree'];
         if($switchOn && $type == 'MT_RECV_FRIEND_MSG'){
             $attributes = $xml['@attributes'];
@@ -576,10 +576,10 @@ class XbotCallbackController extends Controller
         }
 
         // ✅ 手动同意好友请求 发送 欢迎信息
-        $switchOn = $config['isWelcome'];
-        if($switchOn && $type == 'MT_CONTACT_ADD_NOITFY_MSG'){
-            Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, $type, '同意好友请求 发送 欢迎信息']);
-            $xbot->sendText($cliendWxid, $config['weclomeMsg']);
+        if($type == 'MT_CONTACT_ADD_NOITFY_MSG'){
+            $xbot->getFriends();
+            $switchOn = $config['isWelcome'];
+            $switchOn && $xbot->sendText($cliendWxid, $config['weclomeMsg']);
             // 写入数据库
             $wechatBotContact = WechatBotContact::query()
                 ->withTrashed()
@@ -591,21 +591,24 @@ class XbotCallbackController extends Controller
                 $wechatBotContact->type = 1;
                 $wechatBotContact->save();
             }else{
-                //是否存在contact用户
-                $data['type'] = WechatContact::TYPES['friend']; //1=friend
-                $data['nickname'] = $data['nickname']??$cliendWxid; //默认值为null的情况
-                $data['avatar'] = $data['avatar']??WechatBotContact::DEFAULT_AVATAR; //默认值为null的情况
-                // $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
-                ($contact = WechatContact::firstWhere('wxid', $cliendWxid))
-                    ? $contact->update($data) // 更新资料
-                    : $contact = WechatContact::create($data);
-                WechatBotContact::create([
-                    'wechat_bot_id' => $wechatBot->id,
-                    'wechat_contact_id' => $contact->id,
-                    'wxid' => $contact->wxid,
-                    'remark' => $data['remark']??$data['nickname'],
-                    'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
-                ]);
+                // 首次不再创建用户： 因为 首次添加好友时，微信提供的信息不全，只有一个 wxid
+                // @see WechatBot->syncContacts()
+
+                // //是否存在contact用户
+                // $data['type'] = WechatContact::TYPES['friend']; //1=friend
+                // $data['nickname'] = $data['nickname']??$cliendWxid; //默认值为null的情况
+                // $data['avatar'] = $data['avatar']??WechatBotContact::DEFAULT_AVATAR; //默认值为null的情况
+                // // $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
+                // ($contact = WechatContact::firstWhere('wxid', $cliendWxid))
+                //     ? $contact->update($data) // 更新资料
+                //     : $contact = WechatContact::create($data);
+                // WechatBotContact::create([
+                //     'wechat_bot_id' => $wechatBot->id,
+                //     'wechat_contact_id' => $contact->id,
+                //     'wxid' => $contact->wxid,
+                //     'remark' => $data['remark']??$data['nickname'],
+                //     'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
+                // ]);
             }
         }
 

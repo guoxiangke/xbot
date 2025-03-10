@@ -17,15 +17,6 @@ class WechatBotContactObserver
     }
 
     // Only Luke 同步到 chatwoot 
-    public function created(WechatBotContact $wechatBotContact)
-    {
-        $wechatBotId = $wechatBotContact->wechat_bot_id;
-        if($wechatBotId != 13) return;
-        $chatwoot = new Chatwoot(WechatBot::find($wechatBotId));
-        $contact = $chatwoot->saveContact($wechatBotContact);
-        // $label="好友"
-        $label = $wechatBotContact::TYPES_NAME[$wechatBotContact->type];
-        $chatwoot->setLabelByContact($contact, $label);
-        Log::debug(__CLASS__, [__LINE__, $wechatBotContact, $contact]);
-    }
+    // Not work，因为 首次添加好友时，微信提供的信息不全，只有一个 wxid
+    // @see WechatBot->syncContacts()
 }

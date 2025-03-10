@@ -40,7 +40,7 @@ class WechatBot extends Model
     //     Log::info(__CLASS__,[__FUNCTION__, $this->name, $value, $this->expires_at]);
     //     // $this->save();
     // }
-    
+
     public function expired(){
         return $this->expires_at->diffInSeconds() <= 0;
     }
@@ -181,7 +181,7 @@ class WechatBot extends Model
         // API发送朋友圈消息
         if($type == 'postImages')
             $xbot->sendImagesPost($data['title'], $data['urls']);
-        
+
         // overwrite statistics type
         if(isset($data['statistics']) && isset($url)) $url .= '%26type=post';
         if($type == 'postVideo')
@@ -311,13 +311,17 @@ class WechatBot extends Model
 
     public function syncContacts($contacts, $xbotContactCallbackType){
         $attachs = [];
+
+        if($this->id == 13) $chatwoot = new Chatwoot($this);
+
         foreach ($contacts as $data) {
+            $wxid = $data['wxid'];
             $type = WechatContact::CALLBACKTYPES[$xbotContactCallbackType]; //0公众号，1联系人，2群 3群陌生人
             $data['type'] = $type;
-            $data['nickname'] = $data['nickname']??$data['wxid'];
+            $data['nickname'] = $data['nickname']??$wxid;
             $data['avatar'] = $data['avatar']??'';
             // 联系人 入库
-            ($wechatContact = WechatContact::firstWhere('wxid', $data['wxid']))
+            ($wechatContact = WechatContact::firstWhere('wxid', $wxid))
                 ? $wechatContact->update($data) // 更新资料
                 : $wechatContact = WechatContact::create($data);
 
@@ -340,7 +344,7 @@ class WechatBot extends Model
                         'wechat_bot_id' => $this->id,
                         'wechat_contact_id' => $wechatContact->id,
                         'type' => $type,
-                        'wxid' => $wechatContact->wxid,
+                        'wxid' => $wxid,
                         'remark' => $remark,
                         'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                     ]);
@@ -352,10 +356,42 @@ class WechatBot extends Model
             if(!$wechatBotContact || $wechatBotContact->remark!=$remark){
                 $attachs[$wechatContact->id] = [
                     'type' => $type,
-                    'wxid' => $wechatContact->wxid,
+                    'wxid' => $wxid,
                     'remark' => $remark,
                     'seat_user_id' => $this->user_id, //默认坐席为bot管理员
                 ];
+            }
+
+            // Only Luke 同步到 chatwoot
+            if($this->id == 13) {
+                $contact = $chatwoot->getContactByWxid($wxid);
+                if(isset($contact['id']) && $wechatBotContact) {
+                    if($contact['name'] != $remark){
+                        $chatwoot->updateContactName($contact['id'], $remark);
+                        Log::debug('UPDATE_CHATWOOT_CONTACT_NAME', [$wechatBotContact->toArray(), $remark]);
+                    }
+
+                    $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
+                    if($avatarUrl != $data['avatar']){
+                        $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
+                        Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [$wechatBotContact->toArray(), $avatarUrl]);
+                    }
+                }
+                // chatwoot中么有
+                if(!isset($contact['id'])){
+                     if(!$wechatBotContact){
+                        $wechatBotContact = new WechatBotContact([
+                            'wechat_bot_id' => $this->id,
+                            'wechat_contact_id' => $wechatContact->id,
+                            'type' => $type,
+                            'wxid' => $wxid,
+                            'remark' => $remark,
+                            'seat_user_id' => $this->user_id, //默认坐席为bot管理员
+                        ]);
+                     }
+                     Log::debug('SAVING_NEW_CONTACT_TO_CHATWOOT', $wechatBotContact->toArray());
+                     $chatwoot->saveContact($wechatBotContact);
+                }
             }
         }
 
