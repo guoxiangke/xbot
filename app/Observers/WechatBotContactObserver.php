@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\Models\WechatBotContact;
-use App\Chatwoot\Chatwoot;
 use Illuminate\Support\Facades\Log;
 
 class WechatBotContactObserver

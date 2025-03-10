@@ -792,7 +792,7 @@ class XbotCallbackController extends Controller
                         }else{
                             // 陌生人还没有入库
                             $xbot->getFriends();
-                            Log::error(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
+                            Log::debug(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
                         }
                     }else{
                         $fromId = $from->id;
@@ -811,6 +811,7 @@ class XbotCallbackController extends Controller
                 // 下一步，搜索好友，加好友
                 if(!$isRoom){
                     Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid,  $conversationWxid, '给不是好友的人发的信息，即把他删了，对方又请求好友了，我没答应，此时还可以发信息|新群！']);
+                    // 另一种情况：即同意添加好友！
                     $xbot->addFriendBySearch($conversationWxid);
                     return response()->json(null);
                 }else{
