@@ -441,9 +441,8 @@ class WechatBot extends Model
                 }
 
                 $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
-                // 单个获取时，头像带（http）s
-                if($avatarUrl != str_replace($data['avatar'],'http://','https://')){
-                    $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
+                if($avatarUrl != $data['avatar']){
+                    $chatwoot->updateContactAvatarById($contact['id'], $data['avatar']);
                     Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [__FUNCTION__, $wechatBotContact->wxid, $avatarUrl, $data]);
                 }
             }
