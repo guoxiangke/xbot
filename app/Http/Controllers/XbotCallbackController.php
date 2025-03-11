@@ -553,6 +553,7 @@ class XbotCallbackController extends Controller
         
 
         // ✅ 搜索用户信息后的callback，主动+好友
+        // 同意好友请求后，好像也有这个 MT_SEARCH_CONTACT_MSG
         if ($type == 'MT_SEARCH_CONTACT_MSG') {
             if(isset($data['v1']) && isset($data['v2'])){
                 $remark = "朋友介绍"; //todo remark settings in FE

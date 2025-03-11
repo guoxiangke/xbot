@@ -369,16 +369,15 @@ class WechatBot extends Model
                 if(isset($contact['id']) && $wechatBotContact) {
                     if($contact['name'] != $remark){
                         $chatwoot->updateContactName($contact['id'], $remark);
-                        Log::debug('UPDATE_CHATWOOT_CONTACT_NAME', [$wechatBotContact->toArray(), $remark]);
                     }
 
                     $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
 
                     // https://51chat.net/api/v1/accounts/2/contacts/1013
                     if($contact['id'] == 1013) Log::error('UPDATE_AVATAR_ERROR',[$wechatBotContact->toArray(), $avatarUrl, $data['avatar']]);
+                    
                     if($avatarUrl != $data['avatar']){
                         $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
-                        Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [$wechatBotContact->toArray(), $avatarUrl]);
                     }
                 }
                 // chatwoot中么有
@@ -441,13 +440,13 @@ class WechatBot extends Model
             if(isset($contact['id']) && $wechatBotContact) {
                 if($contact['name'] != $remark){
                     $chatwoot->updateContactName($contact['id'], $remark);
-                    Log::debug('UPDATE_CHATWOOT_CONTACT_NAME', [$wechatBotContact->toArray(), $remark]);
+                    Log::debug('UPDATE_CHATWOOT_CONTACT_NAME', [__FUNCTION__, $wechatBotContact->wxid, $remark]);
                 }
 
                 $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
                 if($avatarUrl != $data['avatar']){
                     $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
-                    Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [$wechatBotContact->toArray(), $avatarUrl]);
+                    Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [__FUNCTION__, $wechatBotContact->wxid, $avatarUrl]);
                 }
             }
             // chatwoot中么有
