@@ -168,7 +168,6 @@ class XbotCallbackController extends Controller
             "MT_WX_WND_CHANGE_MSG"=>'',
             "MT_DEBUG_LOG" =>'调试信息',
             "MT_UNREAD_MSG_COUNT_CHANGE_MSG" => '未读消息',
-            "MT_DATA_WXID_MSG" => '从网络获取信息',
             "MT_TALKER_CHANGE_MSG" => '客户端点击头像',
             "MT_RECV_REVOKE_MSG" => 'xx 撤回了一条消息',
             "MT_DECRYPT_IMG_MSG_TIMEOUT" => '图片解密超时',
@@ -204,6 +203,7 @@ class XbotCallbackController extends Controller
             'MT_RECV_REVOKE_MSG', //默认开启 消息防撤回！不再处理这个
             'MT_DATA_CHATROOM_MEMBERS_MSG',
             'MT_ZOMBIE_CHECK_MSG', //僵尸检测
+            'MT_DATA_WXID_MSG' //获取单个好友信息
         ];
         if(!in_array($type, $ignoreRAW)){
             // MT_INVITE_TO_ROOM_MSG : wait for group owner or admin approval to send invitations.
@@ -308,6 +308,8 @@ class XbotCallbackController extends Controller
             Log::debug(__CLASS__, [__LINE__, $wechatClientName, $wechatBot->wxid, '获取联系人', $type]);
             return response()->json(null);
         }
+        // 获取或更新单个联系人信息
+        if($type == 'MT_DATA_WXID_MSG') $wechatBot->syncContact($data);
         
         // 0 正常状态(不是僵尸粉) 
         // 1 检测为僵尸粉(对方把我拉黑了) 
@@ -577,7 +579,7 @@ class XbotCallbackController extends Controller
 
         // ✅ 手动同意好友请求 发送 欢迎信息
         if($type == 'MT_CONTACT_ADD_NOITFY_MSG'){
-            $xbot->getFriends();
+            $xbot->getFriend($cliendWxid);
             $switchOn = $config['isWelcome'];
             $switchOn && $xbot->sendText($cliendWxid, $config['weclomeMsg']);
             // 写入数据库
@@ -791,7 +793,7 @@ class XbotCallbackController extends Controller
                             return $xbot->getRooms();
                         }else{
                             // 陌生人还没有入库
-                            $xbot->getFriends();
+                            $xbot->getFriend($fromWxid);
                             Log::debug(__CLASS__, [__LINE__, $wechatBot->id, $fromWxid, $wechatClientName, $wechatBot->wxid, '期待有个fromId but no from!',$request->all()]);
                         }
                     }else{

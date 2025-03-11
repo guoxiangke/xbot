@@ -35,6 +35,7 @@ class WechatContact extends Model
     const CALLBACKTYPES = [
         'MT_DATA_PUBLICS_MSG'=>0, // 0
         'MT_DATA_FRIENDS_MSG'=>1, // 1
+        'MT_DATA_WXID_MSG'=>1, // 1 获取单个好友信息
         'MT_DATA_CHATROOMS_MSG'=>2, // 2 group
     ];
 

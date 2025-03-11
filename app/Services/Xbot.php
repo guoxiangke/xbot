@@ -132,6 +132,10 @@ final class Xbot {
     	$this->request('MT_DATA_FRIENDS_MSG');
     }
 
+    public function getFriend($wxid){
+        return $this->request('MT_DATA_WXID_MSG', compact('wxid'));
+    }
+
     public function getRooms(){
     	$this->request('MT_DATA_CHATROOMS_MSG');
     }

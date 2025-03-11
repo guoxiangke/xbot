@@ -373,6 +373,9 @@ class WechatBot extends Model
                     }
 
                     $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
+
+                    // https://51chat.net/api/v1/accounts/2/contacts/1013
+                    if($contact['id'] == 1013) Log::error('UPDATE_AVATAR_ERROR',[$wechatBotContact->toArray(), $avatarUrl, $data['avatar']]);
                     if($avatarUrl != $data['avatar']){
                         $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
                         Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [$wechatBotContact->toArray(), $avatarUrl]);
@@ -399,6 +402,71 @@ class WechatBot extends Model
         // @see https://laravel.com/docs/8.x/eloquent-relationships#updating-many-to-many-relationships
         $this->contacts()->syncWithoutDetaching($attachs);
         Log::debug(__CLASS__,[__FUNCTION__, __LINE__, '已同步', $xbotContactCallbackType, $this->wxid, count($attachs)]);
+    }
+
+    // 只同步一个联系人 @see MT_DATA_WXID_MSG 
+    // $data = $contact
+
+    public function syncContact($data) {
+        $wxid = $data['wxid'];
+        $type = 1; //0公众号，1联系人，2群 3群陌生人
+        $data['type'] = $type;
+        $data['nickname'] = $data['nickname']??$wxid;
+        $data['avatar'] = $data['avatar']??'';
+        // 联系人 入库
+        ($wechatContact = WechatContact::firstWhere('wxid', $wxid))
+            ? $wechatContact->update($data) // 更新资料
+            : $wechatContact = WechatContact::create($data);
+
+        // Bot联系人 关联
+        $wechatBotContact = WechatBotContact::where('wechat_bot_id', $this->id)
+            ->where('wechat_contact_id', $wechatContact->id)->first();
+
+        $remark = $data['remark']??$data['nickname']??$wechatContact->wxid;
+        // 更新同步remark
+        $attachs = [];
+        if(!$wechatBotContact || $wechatBotContact->remark!=$remark){
+            $attachs[$wechatContact->id] = [
+                'type' => $type,
+                'wxid' => $wxid,
+                'remark' => $remark,
+                'seat_user_id' => $this->user_id, //默认坐席为bot管理员
+            ];
+        }
+
+        // Only Luke 同步到 chatwoot
+        if($this->id == 13) {
+            $chatwoot = new Chatwoot($this);
+            $contact = $chatwoot->getContactByWxid($wxid);
+            if(isset($contact['id']) && $wechatBotContact) {
+                if($contact['name'] != $remark){
+                    $chatwoot->updateContactName($contact['id'], $remark);
+                    Log::debug('UPDATE_CHATWOOT_CONTACT_NAME', [$wechatBotContact->toArray(), $remark]);
+                }
+
+                $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
+                if($avatarUrl != $data['avatar']){
+                    $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
+                    Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [$wechatBotContact->toArray(), $avatarUrl]);
+                }
+            }
+            // chatwoot中么有
+            if(!isset($contact['id'])){
+                 if(!$wechatBotContact){
+                    $wechatBotContact = new WechatBotContact([
+                        'wechat_bot_id' => $this->id,
+                        'wechat_contact_id' => $wechatContact->id,
+                        'type' => $type,
+                        'wxid' => $wxid,
+                        'remark' => $remark,
+                        'seat_user_id' => $this->user_id, //默认坐席为bot管理员
+                    ]);
+                 }
+                 Log::debug('SAVING_NEW_CONTACT_TO_CHATWOOT', $wechatBotContact->toArray());
+                 $chatwoot->saveContact($wechatBotContact);
+            }
+        }
+        $this->contacts()->syncWithoutDetaching($attachs);
     }
 
     protected function syncRoomMemembers($data)
