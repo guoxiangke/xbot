@@ -189,6 +189,9 @@ class Chatwoot
     	$url = "{$this->baseUrl}/{$this->api_version}/accounts/{$this->accountId}/contacts/{$contactId}";
     	$body = [
 		  "avatar_url" => $avatarUrl,
+		  'custom_attributes' => [
+		  	"avatar_url" => $avatarUrl,
+		  ],
 	    ];
 	    return $this->http->put($url, $body)->json();
     }

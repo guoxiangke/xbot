@@ -62,7 +62,7 @@ class WechatContact extends Model
         return $this->hasMany(WechatMessage::class, 'conversation')->where('updated_at', '>', $history);
     }
     
-    // public function getAvatarAttribute($value){
-    //     return str_replace('http://', 'https://', $value);
-    // }
+    public function getAvatarAttribute($value){
+        return str_replace('http://', 'https://', $value);
+    }
 }
