@@ -373,9 +373,6 @@ class WechatBot extends Model
 
                     $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
 
-                    // https://51chat.net/api/v1/accounts/2/contacts/1013
-                    if($contact['id'] == 1013) Log::error('UPDATE_AVATAR_ERROR',[$wechatBotContact->toArray(), $avatarUrl, $data['avatar']]);
-                    
                     if($avatarUrl != $data['avatar']){
                         $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
                     }
@@ -446,7 +443,7 @@ class WechatBot extends Model
                 $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
                 if($avatarUrl != $data['avatar']){
                     $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
-                    Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [__FUNCTION__, $wechatBotContact->wxid, $avatarUrl]);
+                    Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [__FUNCTION__, $wechatBotContact->wxid, $avatarUrl, $data]);
                 }
             }
             // chatwoot中么有

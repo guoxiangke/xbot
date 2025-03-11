@@ -1010,7 +1010,7 @@ class XbotCallbackController extends Controller
 
             }
         }
-        Log::debug(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, '******************']);//已执行到最后一行
+        Log::info(__CLASS__, [__LINE__, $wechatClientName, $type, $wechatBot->wxid, '已执行到最后一行']);
         return response()->json(null);
     }
 }
