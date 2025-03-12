@@ -684,6 +684,7 @@ class XbotCallbackController extends Controller
             $originPath = $data['file']??$data['video'];
             $file = str_replace($wechatClient->file_path, '', $originPath);
             $content =  str_replace('\\', '/', $file);
+            $content = "https://webot.image.51chat.net" . $content;
             WechatMessageFile::create([
                 'wechat_bot_id' => $wechatBot->id,
                 'msgid' => $msgid,
