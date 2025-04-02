@@ -309,7 +309,7 @@ class XbotCallbackController extends Controller
             return response()->json(null);
         }
         // 获取或更新单个联系人信息
-        if($type == 'MT_DATA_WXID_MSG') $wechatBot->syncContact($data);
+        if($type == 'MT_DATA_WXID_MSG') return $wechatBot->syncContact($data);
         
         // 0 正常状态(不是僵尸粉) 
         // 1 检测为僵尸粉(对方把我拉黑了) 
@@ -597,21 +597,21 @@ class XbotCallbackController extends Controller
                 // 首次不再创建用户： 因为 首次添加好友时，微信提供的信息不全，只有一个 wxid
                 // @see WechatBot->syncContacts()
 
-                // //是否存在contact用户
-                // $data['type'] = WechatContact::TYPES['friend']; //1=friend
-                // $data['nickname'] = $data['nickname']??$cliendWxid; //默认值为null的情况
-                // $data['avatar'] = $data['avatar']??WechatBotContact::DEFAULT_AVATAR; //默认值为null的情况
-                // // $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
-                // ($contact = WechatContact::firstWhere('wxid', $cliendWxid))
-                //     ? $contact->update($data) // 更新资料
-                //     : $contact = WechatContact::create($data);
-                // WechatBotContact::create([
-                //     'wechat_bot_id' => $wechatBot->id,
-                //     'wechat_contact_id' => $contact->id,
-                //     'wxid' => $contact->wxid,
-                //     'remark' => $data['remark']??$data['nickname'],
-                //     'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
-                // ]);
+                //是否存在contact用户
+                $data['type'] = WechatContact::TYPES['friend']; //1=friend
+                $data['nickname'] = $data['nickname']??$cliendWxid; //默认值为null的情况
+                $data['avatar'] = $data['avatar']??WechatBotContact::DEFAULT_AVATAR; //默认值为null的情况
+                // $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
+                ($contact = WechatContact::firstWhere('wxid', $cliendWxid))
+                    ? $contact->update($data) // 更新资料
+                    : $contact = WechatContact::create($data);
+                WechatBotContact::create([
+                    'wechat_bot_id' => $wechatBot->id,
+                    'wechat_contact_id' => $contact->id,
+                    'wxid' => $contact->wxid,
+                    'remark' => $data['remark']??$data['nickname'],
+                    'seat_user_id' => $wechatBot->user_id, //默认坐席为bot管理员
+                ]);
             }
         }
 
