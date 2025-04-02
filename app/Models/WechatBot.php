@@ -409,7 +409,7 @@ class WechatBot extends Model
         $data['type'] = $type;
         $data['nickname'] = $data['nickname']??$wxid;
         $data['avatar'] = $data['avatar']??'';
-        if($data['sex']>2) return; // {"data":{"account":"","avatar":"","city":"","country":"","nickname":"","province":"","remark":"","sex":47575808,"
+        if($data['sex']>2) $data['sex']=0; // {"data":{"account":"","avatar":"","city":"","country":"","nickname":"","province":"","remark":"","sex":47575808,"
         // 联系人 入库
         ($wechatContact = WechatContact::firstWhere('wxid', $wxid))
             ? $wechatContact->update($data) // 更新资料
