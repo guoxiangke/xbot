@@ -367,15 +367,9 @@ class WechatBot extends Model
             if($this->id == 13) {
                 $contact = $chatwoot->getContactByWxid($wxid);
                 if(isset($contact['id']) && $wechatBotContact) {
-                    if($contact['name'] != $remark){
-                        $chatwoot->updateContactName($contact['id'], $remark);
-                    }
-
+                    $chatwoot->updateContactName($contact['id'], $remark);
                     $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
-
-                    if($avatarUrl != $data['avatar']){
-                        $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
-                    }
+                    $chatwoot->updateContactAvatarById($contact['id'], $avatarUrl);
                 }
                 // chatwoot中么有
                 if(!isset($contact['id'])){
@@ -436,16 +430,8 @@ class WechatBot extends Model
             $chatwoot = new Chatwoot($this);
             $contact = $chatwoot->getContactByWxid($wxid);
             if(isset($contact['id']) && $wechatBotContact) {
-                if($contact['name'] != $remark){
-                    $chatwoot->updateContactName($contact['id'], $remark);
-                    Log::debug('UPDATE_CHATWOOT_CONTACT_NAME', [__FUNCTION__, $wechatBotContact->wxid, $remark]);
-                }
-
-                $avatarUrl = $contact['additional_attributes']['avatar_url']??'';
-                if(str_replace('https://','http://',$avatarUrl) != $data['avatar']){
-                    $chatwoot->updateContactAvatarById($contact['id'], $data['avatar']);
-                    Log::debug('UPDATE_CHATWOOT_CONTACT_AVATAR', [__FUNCTION__, $wechatBotContact->wxid, $avatarUrl, $data]);
-                }
+                $chatwoot->updateContactName($contact['id'], $remark);
+                $chatwoot->updateContactAvatarById($contact['id'], $data['avatar']);
             }
             // chatwoot中么有
             if(!isset($contact['id'])){
