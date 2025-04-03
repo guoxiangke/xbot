@@ -413,7 +413,8 @@ class WechatBot extends Model
         $wechatBotContact = WechatBotContact::where('wechat_bot_id', $this->id)
             ->where('wechat_contact_id', $wechatContact->id)->first();
 
-        $remark = $data['remark']??$data['nickname']??$wechatContact->wxid;
+        $remark = $data['remark'];
+        if(!$remark) $remark = $data['nickname']??$wechatContact->wxid;
         // 更新同步remark
         $attachs = [];
         if(!$wechatBotContact || $wechatBotContact->remark!=$remark){
