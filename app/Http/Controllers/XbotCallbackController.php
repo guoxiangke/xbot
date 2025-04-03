@@ -352,6 +352,10 @@ class XbotCallbackController extends Controller
                 //->更新数据库中名字
                 WechatContact::where('wxid',$data['room_wxid'])->update(['nickname' => $newRoomName]);
                 //TODO 只有群主可以改，其他改，要改回去 xbot的接口
+
+                // 更新群名，不更改备注群名
+                // 修改群名为“好友检测”
+                $wechatBot->xbot()->getRooms();
             }
             if(Str::contains($rawMsg, '收到红包')){
                 // 提醒 收到🧧红包！TODO 设置一个红包提醒群
@@ -363,11 +367,7 @@ class XbotCallbackController extends Controller
                 $remark = 'A00-僵死友' . substr($msgid,12,4);
                 $wechatBot->xbot()->sendText('filehelper', strip_tags($rawMsg)."\n备注已改为：\n".$remark);
                 $wechatBot->xbot()->remark($fromWxid, $remark);
-            }
-            // 更新群名，不更改备注群名
-            // 修改群名为“好友检测”
-            if(Str::contains($rawMsg, '修改群名为“')){
-                $wechatBot->xbot()->getRooms();
+                // TODO 删除联系人和及其订阅
             }
         }
         if($type == 'MT_ROOM_ADD_MEMBER_NOTIFY_MSG' || $type == 'MT_ROOM_CREATE_NOTIFY_MSG'){
@@ -602,6 +602,7 @@ class XbotCallbackController extends Controller
                 $data['nickname'] = $data['nickname']??$cliendWxid; //默认值为null的情况
                 $data['avatar'] = $data['avatar']??WechatBotContact::DEFAULT_AVATAR; //默认值为null的情况
                 // $data['remark'] = $data['remark']??$data['nickname']; //默认值为null的情况
+                Log::error('EDBUG', $data);
                 ($contact = WechatContact::firstWhere('wxid', $cliendWxid))
                     ? $contact->update($data) // 更新资料
                     : $contact = WechatContact::create($data);
