@@ -109,7 +109,7 @@ class WechatBot extends Model
         $type = WechatContent::TYPES[$wechatContent->type];
         $xbot = $this->xbot();
         $data = $wechatContent->content;
-        if(isset($data['title'])) {
+        if(false && isset($data['title'])) {
             $data['title'] = str_replace('禱告', 'DG', $data['title']);
             $data['title'] = str_replace('經文', 'JW', $data['title']);
             $data['title'] = str_replace('经', 'J', $data['title']);
@@ -170,7 +170,7 @@ class WechatBot extends Model
                 $data['statistics']['bot'] = $this->id;
                 $tags = http_build_query($data['statistics'], '', '%26');
                 $url .= "?".$tags;
-                $url .= '%26to='.$to; //unset(to) => Field[to]=wxid;
+                $url .= '%26to='.$to . '%26random=' . now()->timestamp; //unset(to) => Field[to]=wxid;
             }
         }
 
@@ -250,7 +250,7 @@ class WechatBot extends Model
                     $res['data']['statistics'] = $res['statistics'];
                     unset($res['statistics']);
                 }
-                $isNoCache = in_array($keyword, ['603','618','680','813','814','815','816']);
+                $isNoCache = in_array($keyword, ['603','618','680','813','814','815','816','801']);
                 $isFebc = in_array($keyword, ['701','702','703','704','705','706','707','708','709','710','711','712','713']);
                 if($isFebc) {
                     $cacheDuration = 3 * 60 * 60; // 3小时（秒）
