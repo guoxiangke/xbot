@@ -170,14 +170,16 @@ class WechatBot extends Model
                 $data['statistics']['bot'] = $this->id;
                 $tags = http_build_query($data['statistics'], '', '%26');
                 $url .= "?".$tags;
-                $url .= '%26to='.$to . '%26random=' . now()->timestamp; //unset(to) => Field[to]=wxid;
+                $url .= '%26to='.$to; //unset(to) => Field[to]=wxid;
             }
         }
 
         if($type == 'music')
             $xbot->sendMusic($to, $url, $data['title'], "{$data['description']}");
-        if($type == 'link')
+        if($type == 'link'){
+            $url .= '%26random=' . now()->timestamp; //防止视频链接mp4被封！
             $xbot->sendLink($to, $url, $data['image'], $data['title'], $data['description']);
+        }
 
         // API发送朋友圈消息
         if($type == 'postImages')
