@@ -243,7 +243,7 @@ final class Xbot {
    //     ],
 
     public function sendLocation($to_wxid, $x, $y, $scale, $label, $maptype, $poiname, $poiid){
-        $xml = "<?xml version=\"1.0\"?>\n<msg>\n\t<location x=\"$x\" y=\"$y\" scale=\"$scale\" label=\"$label\" maptype=\"$maptype\" poiname=\"$poiname\" poiid=\"$poiid\" />\n</msg>\n";
+        $xml = "<?xml version=\"1.0\"?>\n<msg><location x=\"$x\" y=\"$y\" scale=\"$scale\" label=\"$label\" maptype=\"$maptype\" poiname=\"$poiname\" poiid=\"$poiid\" />\n</msg>\n";
         return $this->_sendXMLLink($xml, $to_wxid);
     }
 
@@ -304,7 +304,7 @@ final class Xbot {
 
     public function sendMusic($to_wxid, $url, $title='', $desc='',$coverUrl=null, $lrc=null){
         if($this->botWxid == 'keke302'){
-            if(!$coverUrl) $coverUrl='https://images.simai.life/images/2024/06/ec6ee85464d0c12584d308b39a601e3e.JPG'; // 小永个人号
+            $coverUrl='https://mmecoa.qpic.cn/sz_mmecoa_png/dTE2nNAecJYUksGb1XOwruv2rxedibHdNZFPGOC9hQCJu9baj7NiaAsnzunCxanUZyQjs64LfjGmKXOG6Ocl6ySQ/640?wx_fmt=png'; // 小永个人号
             return $this->sendMusicWithCoverAndLrc($to_wxid, $url, $title, $desc,$coverUrl, $lrc);
         }
         $app = $this->getRandomApp();
@@ -317,7 +317,7 @@ final class Xbot {
         $app = $this->getRandomApp();
         $botWxid = $this->botWxid;
         $appId=$app['id'];
-        $xml = "<?xml version=\"1.0\"?>\n<msg>\n\t<appmsg appid=\"{$appId}\" sdkver=\"0\">\n\t\t<title>{$title}</title>\n\t\t<des>{$desc}</des>\n\t\t<type>3</type>\n\t\t<action>view</action>\n\t\t<dataurl>{$url}</dataurl>\n\t\t<thumburl>{$coverUrl}</thumburl>\n\t\t<songlyric>{$lrc}</songlyric>\n\t\t<appattach>\n\t\t\t<cdnthumbaeskey />\n\t\t\t<aeskey />\n\t\t</appattach>\n\t\t<webviewshared>\n\t\t\t<jsAppId><![CDATA[]]></jsAppId>\n\t\t</webviewshared>\n\t\t<mpsharetrace>\n\t\t\t<hasfinderelement>0</hasfinderelement>\n\t\t</mpsharetrace>\n\t\t<secretmsg>\n\t\t\t<isscrectmsg>0</isscrectmsg>\n\t\t</secretmsg>\n\t</appmsg>\n\t<fromusername>{$botWxid}</fromusername>\n\t<scene>0</scene>\n\t<appinfo>\n\t\t<version>29</version>\n\t\t<appname>{$app['name']}</appname>\n\t</appinfo>\n\t<commenturl></commenturl>\n</msg>\n";
+        $xml = "<?xml version=\"1.0\"?>\n<msg><appmsg appid=\"{$appId}\" sdkver=\"0\"><title>{$title}</title><des>{$desc}</des><type>3</type><action>view</action><dataurl>{$url}</dataurl><thumburl>{$coverUrl}</thumburl><songlyric>{$lrc}</songlyric><appattach><cdnthumbaeskey /><aeskey /></appattach><webviewshared><jsAppId><![CDATA[]]></jsAppId></webviewshared><mpsharetrace><hasfinderelement>0</hasfinderelement></mpsharetrace><secretmsg><isscrectmsg>0</isscrectmsg></secretmsg></appmsg><fromusername>{$botWxid}</fromusername><scene>0</scene><appinfo><version>29</version><appname>{$app['name']}</appname></appinfo><commenturl></commenturl>\n</msg>\n";
         return $this->_sendXMLLink($xml, $to_wxid);
     }
 
