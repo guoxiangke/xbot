@@ -175,7 +175,7 @@ class WechatBot extends Model
         }
 
         if($type == 'music')
-            $xbot->sendMusic($to, $url, $data['title'], "{$data['description']}");
+            $xbot->sendMusic($to, $url, $data['title'], "{$data['description']}", $data['image']??null,$data['lrc']??null);
         if($type == 'link'){
             $url .= '%26random=' . now()->timestamp; //防止视频链接mp4被封！
             $xbot->sendLink($to, $url, $data['image'], $data['title'], $data['description']);

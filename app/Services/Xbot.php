@@ -302,24 +302,34 @@ final class Xbot {
         return $this->snsPublish($msg);
     }
 
-    public function sendMusic($to_wxid, $url, $title='', $desc=''){
+    public function sendMusic($to_wxid, $url, $title='', $desc='',$coverUrl=null, $lrc=null){
+        if($this->botWxid == 'keke302'){
+            if(!$coverUrl) $coverUrl='https://images.simai.life/images/2024/06/ec6ee85464d0c12584d308b39a601e3e.JPG'; // 小永个人号
+            return $this->sendMusicWithCoverAndLrc($to_wxid, $url, $title, $desc,$coverUrl, $lrc);
+        }
         $app = $this->getRandomApp();
         $botWxid = $this->botWxid;
         $xml = "<?xml version=\"1.0\"?><msg><appmsg appid={$app['id']} sdkver=\"0\"><title>$title</title><des>$desc</des><type>3</type><action>view</action><url></url><dataurl>$url</dataurl><appattach><cdnthumburl></cdnthumburl><cdnthumbmd5></cdnthumbmd5><cdnthumblength>33097</cdnthumblength><cdnthumbwidth>120</cdnthumbwidth><cdnthumbheight>120</cdnthumbheight><cdnthumbaeskey>086a10f766857ea8849cb7335dcd24de</cdnthumbaeskey><aeskey>086a10f766857ea8849cb7335dcd24de</aeskey><encryver>0</encryver><filekey>wxid_t36o5djpivk312_1062_1683068786</filekey></appattach><md5></md5><statextstr>GhQKEnd4ZjI5ZjczYzJjNDQxMjk1ZQ==</statextstr><webviewshared><jsAppId><![CDATA[]]></jsAppId></webviewshared><recorditem><![CDATA[(null)]]></recorditem><uploadpercent>99</uploadpercent><secretmsg><isscrectmsg>0</isscrectmsg></secretmsg></appmsg><fromusername>$botWxid</fromusername><scene>0</scene><appinfo><version>132</version><appname>{$app['name']}</appname></appinfo><commenturl /></msg>";
         return $this->_sendXMLLink($xml, $to_wxid);
     }
 
+    public function sendMusicWithCoverAndLrc($to_wxid, $url, $title='', $desc='', $coverUrl=null, $lrc=null){
+        $app = $this->getRandomApp();
+        $botWxid = $this->botWxid;
+        $appId=$app['id'];
+        $xml = "<?xml version=\"1.0\"?>\n<msg>\n\t<appmsg appid=\"{$appId}\" sdkver=\"0\">\n\t\t<title>{$title}</title>\n\t\t<des>{$desc}</des>\n\t\t<type>3</type>\n\t\t<action>view</action>\n\t\t<dataurl>{$url}</dataurl>\n\t\t<thumburl>{$coverUrl}</thumburl>\n\t\t<songlyric>{$lrc}</songlyric>\n\t\t<appattach>\n\t\t\t<cdnthumbaeskey />\n\t\t\t<aeskey />\n\t\t</appattach>\n\t\t<webviewshared>\n\t\t\t<jsAppId><![CDATA[]]></jsAppId>\n\t\t</webviewshared>\n\t\t<mpsharetrace>\n\t\t\t<hasfinderelement>0</hasfinderelement>\n\t\t</mpsharetrace>\n\t\t<secretmsg>\n\t\t\t<isscrectmsg>0</isscrectmsg>\n\t\t</secretmsg>\n\t</appmsg>\n\t<fromusername>{$botWxid}</fromusername>\n\t<scene>0</scene>\n\t<appinfo>\n\t\t<version>29</version>\n\t\t<appname>{$app['name']}</appname>\n\t</appinfo>\n\t<commenturl></commenturl>\n</msg>\n";
+        return $this->_sendXMLLink($xml, $to_wxid);
+    }
+
     public function getRandomApp(){
-        return ['name'=> '得到',    'id' => 'wxa54deb331c142f46'];
+        return ['name'=> '微信电脑版',    'id' => 'wx6618f1cfc6c132f8'];
         return Arr::random([
-            ['name'=> '良友聆听',   'id' => 'wxf29f73c2c441295e'],
-            ['name'=> '微信听书',    'id' => 'wx6e2916f11a01e436'],
-            ['name'=> '得到',    'id' => 'wxa54deb331c142f46'],
-            ['name'=> '小红书',    'id' => 'wxd8a2750ce9d46980'],
-            ['name'=> '酷狗音乐',   'id' => 'wx79f2c4418704b4f8'],
-            ['name'=> '今日头条',   'id' => 'wx50d801314d9eb858'],
-            ['name'=> '微信读书',   'id' => 'wxab9b71ad2b90ff34'],
-            ['name'=> '腾讯视频',   'id' => 'wx4b28606f2bac0546'],
+            ['name'=>'订阅号助手',    'id'=>'wx50a3272e1669f0c0'],
+            ['name'=>'QQ音乐', 'id'=>'wx5aa333606550dfd5'],
+            ['name'=>'网易云音乐',    'id'=>'wx8dd6ecd81906fd84'],
+            ['name'=>'摇一摇',  'id'=>'wx485a97c844086dc9'],
+            ['name'=>'微信电脑版',    'id'=>'wx6618f1cfc6c132f8'],
+            // ['name'=> '良友聆听',   'id' => 'wxf29f73c2c441295e'],
         ]);
     }
     
