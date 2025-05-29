@@ -184,6 +184,7 @@ final class Xbot {
         $title='test',
         $desc='desc'
     ){
+        $image_url='https://mmecoa.qpic.cn/sz_mmecoa_png/dTE2nNAecJYUksGb1XOwruv2rxedibHdN7j0cgcpw8DibwhS23UGjnu9QibULUSfyjtINNticX4saqZ8cYRJmUHFeQ/640?wx_fmt=png&amp;from=appmsg';
         $this->request('MT_SEND_LINKMSG', get_defined_vars());
     }
 
@@ -304,7 +305,7 @@ final class Xbot {
 
     public function sendMusic($to_wxid, $url, $title='', $desc='',$coverUrl=null, $lrc=null){
         if($this->botWxid == 'keke302'){
-            $coverUrl='https://mmecoa.qpic.cn/sz_mmecoa_png/dTE2nNAecJYUksGb1XOwruv2rxedibHdNZFPGOC9hQCJu9baj7NiaAsnzunCxanUZyQjs64LfjGmKXOG6Ocl6ySQ/640?wx_fmt=png'; // 小永个人号
+            $coverUrl='https://mmecoa.qpic.cn/sz_mmecoa_png/dTE2nNAecJYUksGb1XOwruv2rxedibHdN7j0cgcpw8DibwhS23UGjnu9QibULUSfyjtINNticX4saqZ8cYRJmUHFeQ/640?wx_fmt=png&amp;from=appmsg'; // 小永个人号
             return $this->sendMusicWithCoverAndLrc($to_wxid, $url, $title, $desc,$coverUrl, $lrc);
         }
         $app = $this->getRandomApp();
