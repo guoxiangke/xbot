@@ -184,7 +184,7 @@ final class Xbot {
         $title='test',
         $desc='desc'
     ){
-        $image_url='https://mmecoa.qpic.cn/sz_mmecoa_png/dTE2nNAecJYUksGb1XOwruv2rxedibHdN7j0cgcpw8DibwhS23UGjnu9QibULUSfyjtINNticX4saqZ8cYRJmUHFeQ/640?wx_fmt=png&amp;from=appmsg';
+        $image_url='https://mmecoa.qpic.cn/sz_mmecoa_png/dTE2nNAecJa6NSAyu8czRDDDkuZZRiayAYu74347VUy625LJ7eDibDeV6ulcLeWjkrJIe9DgdG5ibcibRazp4eyVqg/640?wx_fmt=png&amp;from=appmsg';
         $this->request('MT_SEND_LINKMSG', get_defined_vars());
     }
 
