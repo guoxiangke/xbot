@@ -932,14 +932,14 @@ class XbotCallbackController extends Controller
                     if(Str::contains($content,['youtube.','youtu.be'])){
                         //18403467252@chatroom Youtube精选
                         // TODO 根据群名字配置来发送，包含 youtube 的群才响应。
-                        if($isRoom && in_array($requestData['room_wxid'],[
-                            "26570621741@chatroom",
-                            "18403467252@chatroom",
-                            "34974119368@chatroom",
-                            "57526085509@chatroom",//LFC活力生命
-                            "58088888496@chatroom",//活泼的生命
-                            "57057092201@chatroom",//每天一章
-                        ])){
+                        if(($isRoom && in_array($requestData['room_wxid'],[
+                                                    "26570621741@chatroom",
+                                                    "18403467252@chatroom",
+                                                    "34974119368@chatroom",
+                                                    "57526085509@chatroom",//LFC活力生命
+                                                    "58088888496@chatroom",//活泼的生命
+                                                    "57057092201@chatroom",//每天一章
+                                                ])) || $toWxid=='keke302'){
                             Cache::put($cacheKeyIsRelpied, true, 10);
                             return $wechatBot->send([$conversation->wxid], $res);
                         }else{
