@@ -20,6 +20,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('xbot:islive')->hourly();
         $xbotSubscriptions = XbotSubscription::with(['wechatBotContact'])->get();
         foreach ($xbotSubscriptions as $xbotSubscription) {
+            if(is_null($xbotSubscription->wechatBotContact)){
+                $xbotSubscription->delete();
+                continue;
+            }
             // 不是群的不订阅！真爱
             $to = $xbotSubscription->wechatBotContact->wxid;
             if($xbotSubscription->wechat_bot_id==13 && !Str::endsWith($to, '@chatroom')){
